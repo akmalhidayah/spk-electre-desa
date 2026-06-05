@@ -26,7 +26,9 @@ class DashboardController extends Controller
             'totalUsulan' => (clone $query)->count(),
             'totalDiajukan' => (clone $query)->where('status', UsulanPembangunan::STATUS_DIAJUKAN)->count(),
             'totalDiproses' => (clone $query)->where('status', UsulanPembangunan::STATUS_DIPROSES)->count(),
+            'totalDiterima' => (clone $query)->where('status', UsulanPembangunan::STATUS_DITERIMA)->count(),
             'totalMasukPrioritas' => (clone $query)->where('status', UsulanPembangunan::STATUS_MASUK_PRIORITAS)->count(),
+            'latestUsulans' => (clone $query)->latest()->take(5)->get(),
         ]);
     }
 }

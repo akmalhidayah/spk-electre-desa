@@ -44,6 +44,7 @@ class Kriteria extends Model
 
     protected $appends = [
         'bobot_normal',
+        'bobot_decimal',
     ];
 
     protected function casts(): array
@@ -59,14 +60,29 @@ class Kriteria extends Model
         return (float) $this->bobot / 100;
     }
 
+    public function getBobotDecimalAttribute(): float
+    {
+        return (float) $this->bobot / 100;
+    }
+
     public function scopeAktif(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_AKTIF);
     }
 
-    public function scopeUrut(Builder $query): Builder
+    public function scopeNonaktif(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_NONAKTIF);
+    }
+
+    public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('urutan')->orderBy('kode');
+    }
+
+    public function scopeUrut(Builder $query): Builder
+    {
+        return $query->ordered();
     }
 
     public function penilaianAlternatifs(): HasMany

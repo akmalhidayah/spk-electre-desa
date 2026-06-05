@@ -69,6 +69,16 @@ class User extends Authenticatable
         return $query->where('is_active', true);
     }
 
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeInactive(Builder $query): Builder
+    {
+        return $query->where('is_active', false);
+    }
+
     public function scopeRole(Builder $query, string $role): Builder
     {
         return $query->where('role', $role);
@@ -92,6 +102,26 @@ class User extends Authenticatable
     public function electreCalculations(): HasMany
     {
         return $this->hasMany(ElectreCalculation::class, 'calculated_by');
+    }
+
+    public function keputusanAkhirs(): HasMany
+    {
+        return $this->hasMany(KeputusanAkhir::class, 'ditetapkan_oleh');
+    }
+
+    public function getRoleLabelAttribute(): string
+    {
+        return match ($this->role) {
+            self::ROLE_ADMIN => 'Admin / Perangkat Desa',
+            self::ROLE_KEPALA_DESA => 'Kepala Desa',
+            self::ROLE_KEPALA_DUSUN => 'Kepala Dusun',
+            default => 'Pengguna',
+        };
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->is_active ? 'Aktif' : 'Nonaktif';
     }
 
     public function isAdmin(): bool

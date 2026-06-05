@@ -25,10 +25,15 @@ class UpdateKriteriaRequest extends FormRequest
             'kode' => [
                 'required',
                 'string',
-                'max:255',
+                'max:20',
                 Rule::unique('kriterias', 'kode')->ignore($kriteriaId),
             ],
-            'nama_kriteria' => ['required', 'string', 'max:255'],
+            'nama_kriteria' => [
+                'required',
+                'string',
+                'max:150',
+                Rule::unique('kriterias', 'nama_kriteria')->ignore($kriteriaId),
+            ],
             'bobot' => ['required', 'numeric', 'min:0', 'max:100'],
             'tipe' => ['required', Rule::in(Kriteria::TIPES)],
             'deskripsi' => ['nullable', 'string'],

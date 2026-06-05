@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ElectreCalculation extends Model
 {
@@ -72,5 +73,11 @@ class ElectreCalculation extends Model
     public function details(): HasMany
     {
         return $this->hasMany(ElectreResultDetail::class);
+    }
+
+    public function keputusanAkhir(): HasOne
+    {
+        return $this->hasOne(\App\Models\KeputusanAkhir::class, 'electre_calculation_id')
+            ->whereIn('status', ['draft', 'ditetapkan']);
     }
 }

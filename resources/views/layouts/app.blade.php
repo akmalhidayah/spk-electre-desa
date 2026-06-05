@@ -18,26 +18,41 @@
             'kepala_desa' => 'Kepala Desa',
         ][$user->role] ?? 'Pengguna';
 
+        $roleBadgeClass = [
+            'admin' => 'badge-info',
+            'kepala_dusun' => 'badge-warning',
+            'kepala_desa' => 'badge-success',
+        ][$user->role] ?? 'badge-muted';
+
         $menus = match ($user->role) {
             'admin' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('admin.dashboard'), 'active' => request()->routeIs('admin.dashboard')],
-                ['label' => 'Data Dusun', 'icon' => 'map', 'href' => route('admin.dusuns.index'), 'active' => request()->routeIs('admin.dusuns.*')],
-                ['label' => 'Data Kriteria', 'icon' => 'list', 'href' => '#', 'active' => false],
-                ['label' => 'Usulan Pembangunan', 'icon' => 'document', 'href' => '#', 'active' => false],
-                ['label' => 'Penilaian Alternatif', 'icon' => 'clipboard', 'href' => '#', 'active' => false],
-                ['label' => 'Proses ELECTRE', 'icon' => 'calculator', 'href' => '#', 'active' => false],
-                ['label' => 'Hasil Rekomendasi', 'icon' => 'chart', 'href' => '#', 'active' => false],
-                ['label' => 'Laporan', 'icon' => 'printer', 'href' => '#', 'active' => false],
+                ['label' => 'Usulan Pembangunan', 'icon' => 'document', 'href' => route('admin.usulan.index'), 'active' => request()->routeIs('admin.usulan.*')],
+                ['label' => 'Penilaian Alternatif', 'icon' => 'clipboard', 'href' => route('admin.penilaian.index'), 'active' => request()->routeIs('admin.penilaian.*')],
+                ['label' => 'Proses ELECTRE', 'icon' => 'calculator', 'href' => route('admin.electre.index'), 'active' => request()->routeIs('admin.electre.*')],
+                ['label' => 'Hasil Rekomendasi', 'icon' => 'chart', 'href' => route('admin.hasil-rekomendasi.index'), 'active' => request()->routeIs('admin.hasil-rekomendasi.*')],
+                ['label' => 'Laporan', 'icon' => 'printer', 'href' => route('admin.hasil-rekomendasi.index'), 'active' => false],
+                [
+                    'type' => 'group',
+                    'label' => 'Master Data',
+                    'icon' => 'database',
+                    'active' => request()->routeIs('admin.dusuns.*') || request()->routeIs('admin.kriterias.*'),
+                    'children' => [
+                        ['label' => 'Data Dusun', 'icon' => 'map', 'href' => route('admin.dusuns.index'), 'active' => request()->routeIs('admin.dusuns.*')],
+                        ['label' => 'Data Kriteria', 'icon' => 'list', 'href' => route('admin.kriterias.index'), 'active' => request()->routeIs('admin.kriterias.*')],
+                    ],
+                ],
+                ['label' => 'Manajemen User', 'icon' => 'users', 'href' => route('admin.users.index'), 'active' => request()->routeIs('admin.users.*')],
             ],
             'kepala_dusun' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('kepala-dusun.dashboard'), 'active' => request()->routeIs('kepala-dusun.dashboard')],
-                ['label' => 'Ajukan Usulan', 'icon' => 'document', 'href' => '#', 'active' => false],
-                ['label' => 'Riwayat Usulan', 'icon' => 'history', 'href' => '#', 'active' => false],
+                ['label' => 'Ajukan Usulan', 'icon' => 'document', 'href' => route('kepala-dusun.usulan.create'), 'active' => request()->routeIs('kepala-dusun.usulan.create')],
+                ['label' => 'Riwayat Usulan', 'icon' => 'history', 'href' => route('kepala-dusun.usulan.index'), 'active' => request()->routeIs('kepala-dusun.usulan.*') && ! request()->routeIs('kepala-dusun.usulan.create')],
             ],
             'kepala_desa' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('kepala-desa.dashboard'), 'active' => request()->routeIs('kepala-desa.dashboard')],
-                ['label' => 'Hasil Rekomendasi', 'icon' => 'chart', 'href' => '#', 'active' => false],
-                ['label' => 'Laporan Keputusan', 'icon' => 'printer', 'href' => '#', 'active' => false],
+                ['label' => 'Hasil Rekomendasi', 'icon' => 'chart', 'href' => route('kepala-desa.hasil-rekomendasi.index'), 'active' => request()->routeIs('kepala-desa.hasil-rekomendasi.*')],
+                ['label' => 'Laporan Keputusan', 'icon' => 'printer', 'href' => route('kepala-desa.keputusan-akhir.index'), 'active' => request()->routeIs('kepala-desa.keputusan-akhir.*')],
             ],
             default => [],
         };
@@ -48,11 +63,16 @@
     <div class="app-shell">
         <aside class="sidebar" id="appSidebar" aria-label="Sidebar navigasi">
             <div class="brand">
-                <div class="brand-mark">E</div>
-                <div>
-                    <div class="brand-title">SPK ELECTRE</div>
-                    <div class="brand-subtitle">Desa Barambang</div>
+                <div class="brand-mark">SP</div>
+                <div class="brand-text">
+                    <div class="brand-title">SPK Desa</div>
+                    <div class="brand-subtitle">Metode ELECTRE</div>
                 </div>
+                <button class="icon-button sidebar-toggle" type="button" data-sidebar-toggle aria-label="Tutup atau buka sidebar" title="Tutup atau buka sidebar">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m15 18-6-6 6-6" />
+                    </svg>
+                </button>
                 <button class="icon-button sidebar-close" type="button" data-sidebar-close aria-label="Tutup menu">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M6 6l12 12M18 6 6 18" />
@@ -62,42 +82,78 @@
 
             <nav class="sidebar-nav">
                 @foreach ($menus as $menu)
-                    <a
-                        href="{{ $menu['href'] }}"
-                        class="sidebar-link {{ $menu['active'] ? 'active' : '' }}"
-                    >
-                        <span class="sidebar-icon">
-                            @switch($menu['icon'])
-                                @case('map')
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z" /><path d="M9 3v15M15 6v15" /></svg>
-                                    @break
-                                @case('list')
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h.01M3 12h.01M3 18h.01" /></svg>
-                                    @break
-                                @case('document')
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M14 3v6h6M8 13h8M8 17h5" /></svg>
-                                    @break
-                                @case('clipboard')
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h6M9 5a3 3 0 0 1 6 0M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><path d="M9 13h6M9 17h4" /></svg>
-                                    @break
-                                @case('calculator')
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h.01M16 19h.01" /></svg>
-                                    @break
-                                @case('chart')
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 16v-5M12 16V8M16 16v-7" /></svg>
-                                    @break
-                                @case('printer')
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" /><path d="M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M7 14h10v7H7Z" /></svg>
-                                    @break
-                                @case('history')
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v6h6" /><path d="M12 7v5l3 2" /></svg>
-                                    @break
-                                @default
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1Z" /></svg>
-                            @endswitch
-                        </span>
-                        <span>{{ $menu['label'] }}</span>
-                    </a>
+                    @if (($menu['type'] ?? 'item') === 'group')
+                        <details class="sidebar-group {{ $menu['active'] ? 'active' : '' }}" @if ($menu['active']) open @endif>
+                            <summary class="sidebar-group-summary">
+                                <span class="sidebar-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6c0-1.1 3.6-2 8-2s8 .9 8 2-3.6 2-8 2-8-.9-8-2Z" /><path d="M4 6v6c0 1.1 3.6 2 8 2s8-.9 8-2V6" /><path d="M4 12v6c0 1.1 3.6 2 8 2s8-.9 8-2v-6" /></svg>
+                                </span>
+                                <span class="sidebar-group-label">{{ $menu['label'] }}</span>
+                                <span class="sidebar-chevron">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                                </span>
+                            </summary>
+                            <div class="sidebar-submenu">
+                                @foreach ($menu['children'] as $child)
+                                    <a href="{{ $child['href'] }}" class="sidebar-link sidebar-sublink {{ $child['active'] ? 'active' : '' }}">
+                                        <span class="sidebar-icon">
+                                            @switch($child['icon'])
+                                                @case('map')
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z" /><path d="M9 3v15M15 6v15" /></svg>
+                                                    @break
+                                                @case('list')
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h.01M3 12h.01M3 18h.01" /></svg>
+                                                    @break
+                                                @default
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1Z" /></svg>
+                                            @endswitch
+                                        </span>
+                                        <span>{{ $child['label'] }}</span>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </details>
+                    @else
+                        <a
+                            href="{{ $menu['href'] }}"
+                            class="sidebar-link {{ $menu['active'] ? 'active' : '' }}"
+                        >
+                            <span class="sidebar-icon">
+                                @switch($menu['icon'])
+                                    @case('users')
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" /><path d="M22 21v-2a4 4 0 0 0-3-3.9" /><path d="M16 3.1a4 4 0 0 1 0 7.8" /></svg>
+                                        @break
+                                    @case('map')
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z" /><path d="M9 3v15M15 6v15" /></svg>
+                                        @break
+                                    @case('list')
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h.01M3 12h.01M3 18h.01" /></svg>
+                                        @break
+                                    @case('document')
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M14 3v6h6M8 13h8M8 17h5" /></svg>
+                                        @break
+                                    @case('clipboard')
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h6M9 5a3 3 0 0 1 6 0M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><path d="M9 13h6M9 17h4" /></svg>
+                                        @break
+                                    @case('calculator')
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h.01M16 19h.01" /></svg>
+                                        @break
+                                    @case('chart')
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 16v-5M12 16V8M16 16v-7" /></svg>
+                                        @break
+                                    @case('printer')
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" /><path d="M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M7 14h10v7H7Z" /></svg>
+                                        @break
+                                    @case('history')
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v6h6" /><path d="M12 7v5l3 2" /></svg>
+                                        @break
+                                    @default
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1Z" /></svg>
+                                @endswitch
+                            </span>
+                            <span>{{ $menu['label'] }}</span>
+                        </a>
+                    @endif
                 @endforeach
             </nav>
 
@@ -106,6 +162,9 @@
                 <div>
                     <div class="user-name">{{ $user->name }}</div>
                     <div class="user-role">{{ $roleLabel }}</div>
+                    @if ($user->role === 'kepala_dusun')
+                        <div class="user-role">{{ $user->dusun?->nama_dusun ?? 'Dusun belum terhubung' }}</div>
+                    @endif
                 </div>
             </div>
         </aside>
@@ -127,11 +186,11 @@
                     <div class="topbar-actions">
                         <div class="topbar-user">
                             <span>{{ $user->name }}</span>
-                            <small>{{ $roleLabel }}</small>
+                            <small class="badge {{ $roleBadgeClass }}">{{ $roleLabel }}</small>
                         </div>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="btn btn-outline">
+                            <button type="submit" class="btn btn-outline" data-loading-text="Logout...">
                                 <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /><path d="M21 4v16" /></svg>
                                 Logout
                             </button>
@@ -165,6 +224,11 @@
             var sidebar = document.getElementById('appSidebar');
             var openButtons = document.querySelectorAll('[data-sidebar-open]');
             var closeButtons = document.querySelectorAll('[data-sidebar-close]');
+            var toggleButtons = document.querySelectorAll('[data-sidebar-toggle]');
+
+            if (window.localStorage && localStorage.getItem('spk-sidebar-collapsed') === 'true') {
+                body.classList.add('sidebar-collapsed');
+            }
 
             openButtons.forEach(function (button) {
                 button.addEventListener('click', function () {
@@ -175,6 +239,16 @@
             closeButtons.forEach(function (button) {
                 button.addEventListener('click', function () {
                     body.classList.remove('sidebar-open');
+                });
+            });
+
+            toggleButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    body.classList.toggle('sidebar-collapsed');
+
+                    if (window.localStorage) {
+                        localStorage.setItem('spk-sidebar-collapsed', body.classList.contains('sidebar-collapsed') ? 'true' : 'false');
+                    }
                 });
             });
 
@@ -263,9 +337,29 @@
                     }).then(function (result) {
                         if (result.isConfirmed) {
                             form.dataset.confirmed = 'true';
+                            setLoadingState(form);
                             form.submit();
                         }
                     });
+                });
+            });
+
+            function setLoadingState(form) {
+                form.querySelectorAll('button[type="submit"]').forEach(function (button) {
+                    if (button.dataset.loading === 'true') {
+                        return;
+                    }
+
+                    button.dataset.loading = 'true';
+                    button.dataset.originalText = button.textContent.trim();
+                    button.disabled = true;
+                    button.textContent = button.dataset.loadingText || 'Memproses...';
+                });
+            }
+
+            document.querySelectorAll('form:not(.js-confirm)').forEach(function (form) {
+                form.addEventListener('submit', function () {
+                    setLoadingState(form);
                 });
             });
         });

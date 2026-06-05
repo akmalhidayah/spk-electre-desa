@@ -19,8 +19,8 @@ class StoreKriteriaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'kode' => ['required', 'string', 'max:255', 'unique:kriterias,kode'],
-            'nama_kriteria' => ['required', 'string', 'max:255'],
+            'kode' => ['required', 'string', 'max:20', 'unique:kriterias,kode'],
+            'nama_kriteria' => ['required', 'string', 'max:150', 'unique:kriterias,nama_kriteria'],
             'bobot' => ['required', 'numeric', 'min:0', 'max:100'],
             'tipe' => ['required', Rule::in(Kriteria::TIPES)],
             'deskripsi' => ['nullable', 'string'],

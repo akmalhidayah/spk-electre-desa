@@ -61,6 +61,53 @@ class UsulanPembangunan extends Model
         return $query->where('status', $status);
     }
 
+    public function scopeDiajukan(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_DIAJUKAN);
+    }
+
+    public function scopeDiproses(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_DIPROSES);
+    }
+
+    public function scopeDiterima(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_DITERIMA);
+    }
+
+    public function scopeDitolak(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_DITOLAK);
+    }
+
+    public function scopeMasukPrioritas(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_MASUK_PRIORITAS);
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return [
+            self::STATUS_DIAJUKAN => 'Diajukan',
+            self::STATUS_DIPROSES => 'Diproses',
+            self::STATUS_DITERIMA => 'Diterima',
+            self::STATUS_DITOLAK => 'Ditolak',
+            self::STATUS_MASUK_PRIORITAS => 'Masuk Prioritas',
+        ][$this->status] ?? ucfirst((string) $this->status);
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return [
+            self::STATUS_DIAJUKAN => 'badge-warning',
+            self::STATUS_DIPROSES => 'badge-info',
+            self::STATUS_DITERIMA => 'badge-success',
+            self::STATUS_DITOLAK => 'badge-danger',
+            self::STATUS_MASUK_PRIORITAS => 'badge-priority',
+        ][$this->status] ?? 'badge-muted';
+    }
+
     public function dusun(): BelongsTo
     {
         return $this->belongsTo(Dusun::class);

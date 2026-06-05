@@ -40,6 +40,16 @@ class PenilaianAlternatif extends Model
         return $query->where('tahun', $tahun);
     }
 
+    public function scopeByDusun(Builder $query, int $dusunId): Builder
+    {
+        return $query->where('dusun_id', $dusunId);
+    }
+
+    public function scopeByKriteria(Builder $query, int $kriteriaId): Builder
+    {
+        return $query->where('kriteria_id', $kriteriaId);
+    }
+
     public function dusun(): BelongsTo
     {
         return $this->belongsTo(Dusun::class);

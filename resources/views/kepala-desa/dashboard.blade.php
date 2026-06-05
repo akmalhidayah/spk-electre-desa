@@ -6,54 +6,62 @@
 
 @section('content')
     <div class="stack">
-        <section class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-card-row">
-                    <div>
-                        <div class="stat-label">Perhitungan Selesai</div>
-                        <div class="stat-value">{{ number_format($totalSelesai) }}</div>
-                    </div>
-                    <div class="stat-icon">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
-                    </div>
-                </div>
+        <section class="dashboard-hero">
+            <div>
+                <span class="badge badge-success">Kepala Desa</span>
+                <h2>Selamat Datang, Kepala Desa</h2>
+                <p>Pantau hasil rekomendasi dan gunakan laporan ELECTRE sebagai bahan pertimbangan keputusan pembangunan.</p>
             </div>
-
-            <div class="stat-card">
-                <div class="stat-card-row">
-                    <div>
-                        <div class="stat-label">Perhitungan Terakhir</div>
-                        <div class="stat-value">
-                            {{ $perhitunganTerakhir?->kode_perhitungan ?? '-' }}
-                        </div>
-                        <div class="stat-note">
-                            {{ $perhitunganTerakhir?->tahun ?? 'Belum ada data' }}
-                        </div>
-                    </div>
-                    <div class="stat-icon">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v6h6" /><path d="M12 7v5l3 2" /></svg>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-card-row">
-                    <div>
-                        <div class="stat-label">Dusun Aktif</div>
-                        <div class="stat-value">{{ number_format($totalDusunAktif) }}</div>
-                    </div>
-                    <div class="stat-icon">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z" /><path d="M9 3v15M15 6v15" /></svg>
-                    </div>
-                </div>
-            </div>
+            <a href="{{ route('kepala-desa.hasil-rekomendasi.index') }}" class="btn btn-primary btn-auto">Hasil Rekomendasi</a>
         </section>
 
-        <section class="panel">
-            <h2 class="panel-title">Rekomendasi dan Keputusan</h2>
-            <p class="panel-text">
-                Kepala desa dapat melihat hasil rekomendasi prioritas pembangunan, meninjau laporan perhitungan, dan menetapkan keputusan akhir berdasarkan hasil ELECTRE.
-            </p>
+        <section class="stat-grid">
+            <article class="stat-card">
+                <div class="stat-card-row">
+                    <div><div class="stat-label">Hasil Rekomendasi</div><div class="stat-value">{{ number_format($totalSelesai) }}</div></div>
+                    <span class="stat-icon icon-violet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 16v-5M12 16V8M16 16v-7" /></svg></span>
+                </div>
+            </article>
+            <article class="stat-card">
+                <div class="stat-card-row">
+                    <div><div class="stat-label">Dusun Aktif</div><div class="stat-value">{{ number_format($totalDusunAktif) }}</div></div>
+                    <span class="stat-icon icon-emerald"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z" /><path d="M9 3v15M15 6v15" /></svg></span>
+                </div>
+            </article>
+            <article class="stat-card">
+                <div class="stat-card-row">
+                    <div><div class="stat-label">Prioritas Utama Terbaru</div><div class="stat-value stat-value-code">{{ $prioritasUtamaTerbaru?->dusun?->nama_dusun ?? '-' }}</div></div>
+                    <span class="stat-icon icon-amber"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9Z" /></svg></span>
+                </div>
+            </article>
+            <article class="stat-card">
+                <div class="stat-card-row">
+                    <div><div class="stat-label">Perhitungan Terakhir</div><div class="stat-value stat-value-code">{{ $perhitunganTerakhir?->kode_perhitungan ?? '-' }}</div></div>
+                    <span class="stat-icon icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01" /></svg></span>
+                </div>
+            </article>
+        </section>
+
+        <section class="dashboard-grid">
+            <article class="panel">
+                <h2 class="panel-title">Rekomendasi Terbaru</h2>
+                @if ($perhitunganTerakhir)
+                    <p class="panel-text"><strong>{{ $perhitunganTerakhir->judul ?? $perhitunganTerakhir->kode_perhitungan }}</strong><br>Tahun {{ $perhitunganTerakhir->tahun }} - {{ $perhitunganTerakhir->calculated_at?->format('d/m/Y H:i') }}</p>
+                    <a href="{{ route('kepala-desa.hasil-rekomendasi.show', $perhitunganTerakhir) }}" class="btn btn-light btn-auto">Lihat Detail</a>
+                @else
+                    <p class="panel-text">Belum ada hasil rekomendasi yang selesai.</p>
+                @endif
+            </article>
+
+            <article class="panel">
+                <h2 class="panel-title">Quick Action</h2>
+                <div class="quick-actions in-panel">
+                    <a href="{{ route('kepala-desa.hasil-rekomendasi.index') }}" class="quick-action-card">Hasil Rekomendasi</a>
+                    @if ($perhitunganTerakhir)
+                        <a href="{{ route('kepala-desa.hasil-rekomendasi.pdf', $perhitunganTerakhir) }}" class="quick-action-card" target="_blank">Cetak Laporan</a>
+                    @endif
+                </div>
+            </article>
         </section>
     </div>
 @endsection
