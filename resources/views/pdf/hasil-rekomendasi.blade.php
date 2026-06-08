@@ -4,35 +4,74 @@
     <meta charset="utf-8">
     <title>{{ $pdfTitle ?? 'Laporan Hasil Rekomendasi' }}</title>
     <style>
-        body { background: #ffffff; color: #111827; font-family: DejaVu Sans, Arial, sans-serif; font-size: 11px; line-height: 1.5; margin: 28px; }
+        @page { margin: 24px 32px 44px; }
+        body { background: #ffffff; color: #111827; font-family: DejaVu Sans, Arial, sans-serif; font-size: 11px; line-height: 1.5; margin: 0; }
         h1, h2, h3, p { margin: 0; }
-        .header { border-bottom: 3px solid #047857; margin-bottom: 18px; padding: 4px 0 14px; text-align: center; }
-        .header h1 { color: #0f172a; font-size: 16px; letter-spacing: .03em; line-height: 1.35; text-transform: uppercase; }
-        .header h2 { color: #047857; font-size: 13px; margin-top: 5px; }
-        .header p { color: #475569; font-size: 11px; margin-top: 7px; }
-        .section { margin-top: 16px; }
-        .section h3 { background: #ecfdf5; border: 1px solid #bbf7d0; color: #065f46; font-size: 12px; padding: 8px 10px; text-transform: uppercase; }
+        .letterhead { border-bottom: 3px double #111827; margin-bottom: 18px; padding: 0 0 10px; }
+        .letterhead-table { border-collapse: collapse; margin: 0; width: 100%; }
+        .letterhead-table td { border: 0; padding: 0; vertical-align: middle; }
+        .logo-cell { text-align: center; width: 82px; }
+        .logo { height: 64px; max-width: 68px; object-fit: contain; }
+        .letterhead-title { text-align: center; }
+        .letterhead-title .agency { font-size: 13px; font-weight: bold; letter-spacing: .04em; text-transform: uppercase; }
+        .letterhead-title .village { font-size: 18px; font-weight: bold; letter-spacing: .06em; line-height: 1.3; text-transform: uppercase; }
+        .letterhead-title .address { color: #334155; font-size: 10px; line-height: 1.45; margin-top: 3px; }
+        .document-title { margin: 18px 0 16px; text-align: center; }
+        .document-title h1 { color: #111827; font-size: 15px; letter-spacing: .04em; line-height: 1.45; text-transform: uppercase; }
+        .document-title h2 { color: #0f766e; font-size: 12px; margin-top: 5px; }
+        .section { margin-top: 14px; }
+        .section h3 { background: #f1f5f9; border-left: 4px solid #0f766e; color: #0f172a; font-size: 11px; letter-spacing: .04em; padding: 7px 10px; text-transform: uppercase; }
         table { border-collapse: collapse; margin-top: 8px; width: 100%; }
-        th, td { border: 1px solid #d1d5db; padding: 7px 8px; vertical-align: top; }
-        th { background: #f8fafc; color: #334155; font-weight: bold; text-align: left; }
-        tr:nth-child(even) td { background: #fbfdff; }
+        th, td { border: 1px solid #cbd5e1; padding: 7px 8px; vertical-align: top; }
+        th { background: #e2e8f0; color: #0f172a; font-weight: bold; text-align: left; }
+        tr:nth-child(even) td { background: #f8fafc; }
         .identity td:first-child { font-weight: bold; width: 33%; }
-        .note { background: #f8fafc; border: 1px solid #e2e8f0; margin-top: 8px; padding: 10px; }
-        .priority { background: #f5f3ff; border: 1px solid #ddd6fe; color: #3b0764; margin-top: 10px; padding: 11px; }
+        .note { background: #f8fafc; border: 1px solid #dbe3ec; margin-top: 8px; padding: 10px; }
+        .priority { background: #f0fdfa; border: 1px solid #99f6e4; color: #134e4a; margin-top: 10px; padding: 11px; }
+        .ranking-table th:nth-child(1), .ranking-table td:nth-child(1) { text-align: center; width: 54px; }
+        .ranking-table th:nth-child(2), .ranking-table td:nth-child(2) { text-align: center; width: 86px; }
+        .ranking-table th:nth-child(4), .ranking-table td:nth-child(4) { text-align: center; width: 82px; }
+        .ranking-table th:nth-child(5), .ranking-table td:nth-child(5) { width: 96px; }
         .signature { margin-top: 42px; margin-left: auto; text-align: center; width: 220px; }
         .signature .line { margin-top: 56px; }
-        .footer { border-top: 1px solid #d1d5db; bottom: 0; color: #64748b; font-size: 9px; left: 28px; position: fixed; right: 28px; text-align: center; padding-top: 6px; }
+        .footer { border-top: 1px solid #cbd5e1; bottom: 18px; color: #64748b; font-size: 9px; left: 32px; position: fixed; right: 32px; text-align: center; padding-top: 6px; }
     </style>
 </head>
 <body>
     @php
         $topResult = $results->first();
+        $logoKiriPath = public_path('images/logo-kiri.png');
+        $logoKananPath = public_path('images/logo-kanan.png');
+        $logoKiri = file_exists($logoKiriPath) ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoKiriPath)) : null;
+        $logoKanan = file_exists($logoKananPath) ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoKananPath)) : null;
     @endphp
 
-    <div class="header">
+    <div class="letterhead">
+        <table class="letterhead-table">
+            <tr>
+                <td class="logo-cell">
+                    @if ($logoKiri)
+                        <img src="{{ $logoKiri }}" class="logo" alt="Logo kiri">
+                    @endif
+                </td>
+                <td class="letterhead-title">
+                    <p class="agency">Pemerintah Kabupaten Sinjai</p>
+                    <p class="agency">Kecamatan Sinjai Borong</p>
+                    <p class="village">Desa Barambang</p>
+                    <p class="address">Alamat: Desa Barambang, Kecamatan Sinjai Borong, Kabupaten Sinjai, Sulawesi Selatan</p>
+                </td>
+                <td class="logo-cell">
+                    @if ($logoKanan)
+                        <img src="{{ $logoKanan }}" class="logo" alt="Logo kanan">
+                    @endif
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="document-title">
         <h1>Laporan Hasil Rekomendasi Prioritas Pembangunan Antar Dusun</h1>
         <h2>Menggunakan Metode ELECTRE</h2>
-        <p>Desa Barambang, Kecamatan Sinjai Borong, Kabupaten Sinjai</p>
     </div>
 
     <div class="section">
@@ -51,7 +90,7 @@
     <div class="section">
         <h3>Ringkasan Rekomendasi</h3>
         <p class="note">Berdasarkan hasil perhitungan menggunakan metode ELECTRE, diperoleh urutan prioritas pembangunan antar dusun sebagai berikut.</p>
-        <table>
+        <table class="ranking-table">
             <thead>
                 <tr>
                     <th>Ranking</th>

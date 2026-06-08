@@ -7,10 +7,9 @@
 @section('content')
     @php
         $isReady = $summary['is_ready'];
-        $completionWidth = min($summary['persentase_kelengkapan'], 100);
     @endphp
 
-    <div class="stack">
+    <div class="stack electre-page">
         <section class="page-header-card">
             <div>
                 <h2>Proses ELECTRE</h2>
@@ -21,7 +20,7 @@
             </span>
         </section>
 
-        <section class="panel">
+        <section class="panel electre-control-panel">
             <div class="electre-action-row">
                 <form method="GET" action="{{ route('admin.electre.index') }}" class="filter-bar electre-year-form compact-filter electre-filter">
                     <div class="filter-field input-with-icon">
@@ -58,43 +57,8 @@
             </div>
         </section>
 
-        <section class="stat-grid">
-            <article class="stat-card">
-                <div class="stat-label">Tahun Penilaian</div>
-                <div class="stat-value">{{ $tahun }}</div>
-            </article>
-            <article class="stat-card">
-                <div class="stat-label">Dusun Aktif</div>
-                <div class="stat-value">{{ number_format($summary['total_dusun_aktif'], 0, ',', '.') }}</div>
-            </article>
-            <article class="stat-card">
-                <div class="stat-label">Kriteria Aktif</div>
-                <div class="stat-value">{{ number_format($summary['total_kriteria_aktif'], 0, ',', '.') }}</div>
-            </article>
-            <article class="stat-card">
-                <div class="stat-label">Total Bobot Aktif</div>
-                <div class="stat-value">{{ number_format($summary['total_bobot_aktif'], 2, ',', '.') }}%</div>
-            </article>
-        </section>
-
-        <section class="panel weight-card">
-            <div class="stat-card-row">
-                <div>
-                    <div class="stat-label">Kelengkapan Penilaian</div>
-                    <div class="stat-value">{{ number_format($summary['persentase_kelengkapan'], 2, ',', '.') }}%</div>
-                    <div class="stat-note">{{ $summary['total_penilaian_terisi'] }} / {{ $summary['total_penilaian_seharusnya'] }} data penilaian terisi.</div>
-                </div>
-                <span class="badge {{ $isReady ? 'badge-success' : 'badge-warning' }}">
-                    {{ $isReady ? 'Lengkap' : 'Belum Lengkap' }}
-                </span>
-            </div>
-            <div class="weight-progress completion-progress {{ $isReady ? 'complete' : 'incomplete' }}">
-                <span style="width: {{ $completionWidth }}%"></span>
-            </div>
-        </section>
-
         @if (! $isReady)
-            <section class="alert alert-warning">
+            <section class="alert alert-warning electre-status-alert">
                 <strong>Data belum siap diproses.</strong>
                 <ul>
                     @foreach ($summary['reasons'] as $reason)
@@ -103,20 +67,20 @@
                 </ul>
             </section>
         @else
-            <section class="alert alert-success">Data tahun {{ $tahun }} sudah siap diproses dengan metode ELECTRE.</section>
+            <section class="alert alert-success electre-status-alert">Data tahun {{ $tahun }} sudah siap diproses dengan metode ELECTRE.</section>
         @endif
 
-        <section class="panel">
+        <section class="panel electre-history-panel">
             <div class="matrix-toolbar">
                 <div>
                     <h2 class="panel-title">Riwayat Perhitungan</h2>
-                    <p class="panel-text">Setiap proses ELECTRE akan membuat histori baru dan menyimpan detail matriks perhitungan.</p>
                 </div>
+                <span class="badge badge-light">{{ number_format($histories->total(), 0, ',', '.') }} Riwayat</span>
             </div>
 
             @if ($histories->count() > 0)
                 <div class="table-wrap desktop-table">
-                    <table class="data-table">
+                    <table class="data-table electre-history-table">
                         <thead>
                             <tr>
                                 <th>No</th>

@@ -10,7 +10,7 @@
         $completionWidth = min($persentaseKelengkapan, 100);
     @endphp
 
-    <div class="stack">
+    <div class="stack penilaian-page">
         <section class="page-header-card">
             <div>
                 <h2>Penilaian Alternatif</h2>
@@ -25,9 +25,12 @@
         </section>
 
         <section class="panel">
-            <form method="GET" action="{{ route('admin.penilaian.preview') }}" class="filter-bar penilaian-year-form">
-                <div class="filter-field">
-                    <label for="tahun" class="form-label">Tahun Penilaian</label>
+            <form method="GET" action="{{ route('admin.penilaian.preview') }}" class="filter-bar penilaian-year-form compact-filter electre-filter">
+                <div class="filter-field input-with-icon">
+                    <label for="tahun" class="form-label sr-only">Tahun Penilaian</label>
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4M16 2v4" /><path d="M3 10h18" /><path d="M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z" /></svg>
+                    </span>
                     <input
                         id="tahun"
                         type="number"
@@ -46,57 +49,16 @@
                     </datalist>
                 </div>
                 <div class="filter-actions">
-                    <button type="submit" class="btn btn-secondary">Tampilkan</button>
-                    <a href="{{ route('admin.penilaian.index') }}" class="btn btn-light">Tahun Ini</a>
+                    <button type="submit" class="btn btn-secondary">
+                        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-4.3-4.3" /><path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" /></svg>
+                        Tampilkan
+                    </button>
+                    <a href="{{ route('admin.penilaian.index') }}" class="btn btn-light">
+                        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v6h6" /></svg>
+                        Tahun Ini
+                    </a>
                 </div>
             </form>
-        </section>
-
-        <section class="stat-grid">
-            <article class="stat-card">
-                <div class="stat-card-row">
-                    <div>
-                        <div class="stat-label">Tahun Penilaian</div>
-                        <div class="stat-value">{{ $tahun }}</div>
-                    </div>
-                    <span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4M16 2v4M3 10h18" /><path d="M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" /></svg></span>
-                </div>
-            </article>
-
-            <article class="stat-card">
-                <div class="stat-card-row">
-                    <div>
-                        <div class="stat-label">Jumlah Dusun Aktif</div>
-                        <div class="stat-value">{{ number_format($dusuns->count(), 0, ',', '.') }}</div>
-                    </div>
-                    <span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z" /><path d="M9 3v15M15 6v15" /></svg></span>
-                </div>
-            </article>
-
-            <article class="stat-card">
-                <div class="stat-card-row">
-                    <div>
-                        <div class="stat-label">Jumlah Kriteria Aktif</div>
-                        <div class="stat-value">{{ number_format($kriterias->count(), 0, ',', '.') }}</div>
-                    </div>
-                    <span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h.01M3 12h.01M3 18h.01" /></svg></span>
-                </div>
-            </article>
-
-            <article class="stat-card weight-card">
-                <div class="stat-card-row">
-                    <div>
-                        <div class="stat-label">Kelengkapan Penilaian</div>
-                        <div class="stat-value">{{ number_format($persentaseKelengkapan, 2, ',', '.') }}%</div>
-                    </div>
-                    <span class="badge {{ $isComplete ? 'badge-success' : 'badge-warning' }}">
-                        {{ $totalTerisi }} / {{ $totalSeharusnya }}
-                    </span>
-                </div>
-                <div class="weight-progress completion-progress {{ $isComplete ? 'complete' : 'incomplete' }}">
-                    <span style="width: {{ $completionWidth }}%"></span>
-                </div>
-            </article>
         </section>
 
         @if ($errors->any())
@@ -113,10 +75,10 @@
             <div class="alert alert-warning">Belum ada kriteria aktif. Silakan aktifkan data kriteria terlebih dahulu.</div>
         @endif
 
-        <section class="panel scale-panel">
+        <section class="panel scale-panel compact-scale-panel">
             <div>
                 <h2 class="panel-title">Skala Nilai</h2>
-                <p class="panel-text">Nilai menggunakan skala 1 sampai 5. Untuk kriteria Sarana dan Prasarana, nilai 5 menunjukkan kondisi sangat kurang lengkap sehingga lebih diprioritaskan.</p>
+                <p class="panel-text">Gunakan skala 1 sampai 5 untuk setiap dusun dan kriteria.</p>
             </div>
             <div class="scale-grid">
                 <span><strong>1</strong> Sangat rendah</span>
