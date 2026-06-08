@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             DusunSeeder::class,
             KriteriaSeeder::class,
             UserSeeder::class,
+            UsulanPembangunanSeeder::class,
         ]);
     }
 }

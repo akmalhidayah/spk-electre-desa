@@ -88,9 +88,12 @@
         @endif
 
         <section class="panel">
-            <form method="GET" action="{{ route('admin.kriterias.index') }}" class="filter-bar filter-bar-extended">
-                <div class="filter-field grow">
-                    <label for="q" class="form-label">Pencarian</label>
+            <form method="GET" action="{{ route('admin.kriterias.index') }}" class="filter-bar filter-bar-extended compact-filter kriteria-filter">
+                <div class="filter-field grow input-with-icon compact-filter-search">
+                    <label for="q" class="form-label sr-only">Pencarian</label>
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-4.3-4.3" /><path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" /></svg>
+                    </span>
                     <input
                         id="q"
                         type="search"
@@ -101,8 +104,11 @@
                     >
                 </div>
 
-                <div class="filter-field">
-                    <label for="status" class="form-label">Status</label>
+                <div class="filter-field input-with-icon compact-filter-status">
+                    <label for="status" class="form-label sr-only">Status</label>
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                    </span>
                     <select id="status" name="status" class="form-control">
                         <option value="">Semua</option>
                         <option value="aktif" @selected($filters['status'] === 'aktif')>Aktif</option>
@@ -110,8 +116,11 @@
                     </select>
                 </div>
 
-                <div class="filter-field">
-                    <label for="tipe" class="form-label">Tipe</label>
+                <div class="filter-field input-with-icon compact-filter-type">
+                    <label for="tipe" class="form-label sr-only">Tipe</label>
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" /><path d="M7 12h10" /><path d="M10 17h4" /></svg>
+                    </span>
                     <select id="tipe" name="tipe" class="form-control">
                         <option value="">Semua</option>
                         <option value="benefit" @selected($filters['tipe'] === 'benefit')>Benefit</option>
@@ -124,7 +133,10 @@
                         <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-4.3-4.3" /><path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" /></svg>
                         Cari
                     </button>
-                    <a href="{{ route('admin.kriterias.index') }}" class="btn btn-light">Reset</a>
+                    <a href="{{ route('admin.kriterias.index') }}" class="btn btn-light">
+                        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v6h6" /></svg>
+                        Reset
+                    </a>
                 </div>
             </form>
         </section>

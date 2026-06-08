@@ -14,6 +14,7 @@ use App\Http\Controllers\KepalaDesa\HasilRekomendasiController as KepalaDesaHasi
 use App\Http\Controllers\KepalaDesa\KeputusanAkhirController as KepalaDesaKeputusanAkhirController;
 use App\Http\Controllers\KepalaDusun\DashboardController as KepalaDusunDashboardController;
 use App\Http\Controllers\KepalaDusun\UsulanPembangunanController as KepalaDusunUsulanPembangunanController;
+use App\Http\Controllers\ProfileController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -32,10 +33,21 @@ Route::get('/', function () {
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.process');
+Route::get('/register', function () {
+    return redirect()
+        ->route('login')
+        ->with('status', 'Pendaftaran akun dilakukan melalui admin desa. Silakan hubungi perangkat desa untuk dibuatkan akun.');
+})->name('register');
 
 Route::post('/logout', [LoginController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+});
 
 Route::prefix('admin')
     ->name('admin.')

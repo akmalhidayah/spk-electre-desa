@@ -7,27 +7,35 @@
 
     <title>Login - SPK ELECTRE Desa</title>
 
-    <link rel="stylesheet" href="{{ asset('css/spk.css') }}">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v={{ filemtime(public_path('favicon.png')) }}">
+    <link rel="stylesheet" href="{{ asset('css/spk.css') }}?v={{ filemtime(public_path('css/spk.css')) }}">
 </head>
 <body>
     <main class="auth-page auth-page-polished">
         <section class="auth-hero">
-            <div class="auth-hero-mark">SPK</div>
-            <div>
-                <div class="auth-kicker">Desa Barambang</div>
-                <h1>SPK Prioritas Pembangunan Desa</h1>
-                <p>Metode ELECTRE untuk rekomendasi prioritas pembangunan antar dusun secara terukur, transparan, dan siap dipertanggungjawabkan.</p>
+            <div class="auth-hero-top">
+                <div class="auth-hero-mark">
+                    <img src="{{ asset('images/logo-kiri.png') }}" alt="Logo kiri" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span>SPK</span>
+                </div>
+                <div class="auth-hero-mark">
+                    <img src="{{ asset('images/logo-kanan.png') }}" alt="Logo kanan" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span>SPK</span>
+                </div>
             </div>
-            <div class="auth-hero-grid" aria-hidden="true">
-                <span></span><span></span><span></span><span></span>
+            <div>
+                <h1 class="auth-welcome-title">
+                    <span>Selamat Datang</span>
+                    <small>di Desa Barambang</small>
+                    <em>Kec. Sinjai Borong, Kab. Sinjai</em>
+                </h1>
+                <p>Sistem pendukung keputusan prioritas pembangunan desa dengan metode ELECTRE.</p>
             </div>
         </section>
 
         <section class="auth-card auth-card-polished">
             <div class="auth-header">
-                <div class="auth-kicker">Masuk Sistem</div>
                 <h2 class="auth-title">Selamat Datang</h2>
-                <p class="auth-subtitle">Gunakan akun sesuai peran pengguna.</p>
             </div>
 
             @if (session('status'))
@@ -87,6 +95,11 @@
                     Masuk
                 </button>
             </form>
+
+            <p class="register-hint">
+                Don't have account?
+                <a href="{{ route('register') }}">Register</a>
+            </p>
 
             <div class="demo-box">
                 <strong>Akun Demo</strong>

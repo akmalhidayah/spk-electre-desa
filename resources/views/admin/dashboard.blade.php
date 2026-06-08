@@ -40,39 +40,6 @@
             </article>
         </section>
 
-        <section class="stat-grid">
-            <article class="stat-card stat-solid stat-slate">
-                <div class="stat-card-row">
-                    <div><div class="stat-label">Total User</div><div class="stat-value">{{ number_format($totalUser) }}</div></div>
-                    <span class="stat-icon icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" /></svg></span>
-                </div>
-            </article>
-            <article class="stat-card stat-solid stat-green">
-                <div class="stat-card-row">
-                    <div><div class="stat-label">User Aktif</div><div class="stat-value">{{ number_format($totalUserAktif) }}</div></div>
-                    <span class="stat-icon icon-emerald"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m20 6-11 11-5-5" /></svg></span>
-                </div>
-            </article>
-            <article class="stat-card stat-solid stat-purple">
-                <div class="stat-card-row">
-                    <div><div class="stat-label">Admin</div><div class="stat-value">{{ number_format($totalAdmin) }}</div></div>
-                    <span class="stat-icon icon-violet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v6c0 5 3.4 7.4 8 8 4.6-.6 8-3 8-8V7Z" /></svg></span>
-                </div>
-            </article>
-            <article class="stat-card stat-solid stat-orange">
-                <div class="stat-card-row">
-                    <div><div class="stat-label">Kepala Desa</div><div class="stat-value">{{ number_format($totalKepalaDesa) }}</div></div>
-                    <span class="stat-icon icon-amber"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-7h6v7" /></svg></span>
-                </div>
-            </article>
-            <article class="stat-card stat-solid stat-cyan">
-                <div class="stat-card-row">
-                    <div><div class="stat-label">Kepala Dusun</div><div class="stat-value">{{ number_format($totalKepalaDusun) }}</div></div>
-                    <span class="stat-icon icon-emerald"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z" /><path d="M9 3v15M15 6v15" /></svg></span>
-                </div>
-            </article>
-        </section>
-
         <section class="dashboard-grid">
             <article class="panel assessment-insight">
                 <div class="assessment-head">
@@ -83,14 +50,21 @@
                     <span class="badge {{ $persentasePenilaian >= 100 ? 'badge-success' : 'badge-warning' }}">{{ number_format($persentasePenilaian, 2, ',', '.') }}%</span>
                 </div>
 
-                <div class="assessment-chart">
-                    <svg viewBox="0 0 520 150" role="img" aria-label="Grafik kelengkapan penilaian">
-                        <path class="chart-grid" d="M20 120H500M20 85H500M20 50H500" />
-                        <path class="chart-curve" d="M22 118 C95 112 122 76 188 82 C254 88 279 42 344 52 C407 61 438 34 498 26" />
-                        <circle cx="498" cy="26" r="7" class="chart-point" />
-                    </svg>
-                    <div class="assessment-meter">
-                        <span style="width: {{ min($persentasePenilaian, 100) }}%"></span>
+                <div class="assessment-visual">
+                    <div class="assessment-ring" style="--progress: {{ min($persentasePenilaian, 100) }}%;">
+                        <div>
+                            <strong>{{ number_format($persentasePenilaian, 0, ',', '.') }}%</strong>
+                            <span>Kelengkapan</span>
+                        </div>
+                    </div>
+                    <div class="assessment-progress-detail">
+                        <div class="assessment-progress-head">
+                            <span>Progress penilaian alternatif</span>
+                            <strong>{{ number_format($totalPenilaianTerisi) }}/{{ number_format($totalPenilaianSeharusnya) }}</strong>
+                        </div>
+                        <div class="assessment-meter">
+                            <span style="width: {{ min($persentasePenilaian, 100) }}%"></span>
+                        </div>
                     </div>
                 </div>
 
@@ -101,13 +75,40 @@
                 </div>
             </article>
 
-            <article class="panel">
-                <h2 class="panel-title">Perhitungan Terbaru</h2>
+            <article class="panel latest-calculation-card">
+                <div class="latest-calculation-head">
+                    <div>
+                        <span class="latest-calculation-kicker">ELECTRE</span>
+                        <h2 class="panel-title">Perhitungan Terbaru</h2>
+                    </div>
+                    @if ($latestCalculation)
+                        <span class="badge badge-info">Tahun {{ $latestCalculation->tahun }}</span>
+                    @endif
+                </div>
+
                 @if ($latestCalculation)
-                    <p class="panel-text"><strong>{{ $latestCalculation->kode_perhitungan }}</strong><br>Tahun {{ $latestCalculation->tahun }} - {{ $latestCalculation->calculated_at?->format('d/m/Y H:i') }}</p>
-                    <a href="{{ route('admin.hasil-rekomendasi.show', $latestCalculation) }}" class="btn btn-light btn-auto">Lihat Hasil</a>
+                    <div class="latest-calculation-body">
+                        <div class="latest-calculation-code">
+                            <span>Kode Perhitungan</span>
+                            <strong>{{ $latestCalculation->kode_perhitungan }}</strong>
+                        </div>
+                        <div class="latest-calculation-meta">
+                            <div>
+                                <span>Dihitung pada</span>
+                                <strong>{{ $latestCalculation->calculated_at?->format('d/m/Y H:i') }}</strong>
+                            </div>
+                            <div>
+                                <span>Status</span>
+                                <strong>Selesai</strong>
+                            </div>
+                        </div>
+                        <a href="{{ route('admin.hasil-rekomendasi.show', $latestCalculation) }}" class="btn btn-primary btn-auto">Lihat Hasil</a>
+                    </div>
                 @else
-                    <p class="panel-text">Belum ada histori perhitungan ELECTRE.</p>
+                    <div class="empty-state compact-empty">
+                        <h3>Belum ada perhitungan</h3>
+                        <p>Hasil ELECTRE terbaru akan tampil setelah proses perhitungan dijalankan.</p>
+                    </div>
                 @endif
             </article>
         </section>

@@ -7,7 +7,8 @@
 
     <title>@yield('title', 'SPK ELECTRE Desa')</title>
 
-    <link rel="stylesheet" href="{{ asset('css/spk.css') }}">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v={{ filemtime(public_path('favicon.png')) }}">
+    <link rel="stylesheet" href="{{ asset('css/spk.css') }}?v={{ filemtime(public_path('css/spk.css')) }}">
 </head>
 <body>
     @php
@@ -30,8 +31,16 @@
                 ['label' => 'Usulan Pembangunan', 'icon' => 'document', 'href' => route('admin.usulan.index'), 'active' => request()->routeIs('admin.usulan.*')],
                 ['label' => 'Penilaian Alternatif', 'icon' => 'clipboard', 'href' => route('admin.penilaian.index'), 'active' => request()->routeIs('admin.penilaian.*')],
                 ['label' => 'Proses ELECTRE', 'icon' => 'calculator', 'href' => route('admin.electre.index'), 'active' => request()->routeIs('admin.electre.*')],
-                ['label' => 'Hasil Rekomendasi', 'icon' => 'chart', 'href' => route('admin.hasil-rekomendasi.index'), 'active' => request()->routeIs('admin.hasil-rekomendasi.*')],
-                ['label' => 'Laporan', 'icon' => 'printer', 'href' => route('admin.hasil-rekomendasi.index'), 'active' => false],
+                [
+                    'type' => 'group',
+                    'label' => 'Hasil',
+                    'icon' => 'chart',
+                    'active' => request()->routeIs('admin.hasil-rekomendasi.*'),
+                    'children' => [
+                        ['label' => 'Hasil Rekomendasi', 'icon' => 'chart', 'href' => route('admin.hasil-rekomendasi.index'), 'active' => request()->routeIs('admin.hasil-rekomendasi.*')],
+                        ['label' => 'Laporan', 'icon' => 'printer', 'href' => route('admin.hasil-rekomendasi.index'), 'active' => false],
+                    ],
+                ],
                 [
                     'type' => 'group',
                     'label' => 'Master Data',
@@ -86,7 +95,13 @@
                         <details class="sidebar-group {{ $menu['active'] ? 'active' : '' }}" @if ($menu['active']) open @endif>
                             <summary class="sidebar-group-summary">
                                 <span class="sidebar-icon">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6c0-1.1 3.6-2 8-2s8 .9 8 2-3.6 2-8 2-8-.9-8-2Z" /><path d="M4 6v6c0 1.1 3.6 2 8 2s8-.9 8-2V6" /><path d="M4 12v6c0 1.1 3.6 2 8 2s8-.9 8-2v-6" /></svg>
+                                    @switch($menu['icon'])
+                                        @case('chart')
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 16v-5M12 16V8M16 16v-7" /></svg>
+                                            @break
+                                        @default
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6c0-1.1 3.6-2 8-2s8 .9 8 2-3.6 2-8 2-8-.9-8-2Z" /><path d="M4 6v6c0 1.1 3.6 2 8 2s8-.9 8-2V6" /><path d="M4 12v6c0 1.1 3.6 2 8 2s8-.9 8-2v-6" /></svg>
+                                    @endswitch
                                 </span>
                                 <span class="sidebar-group-label">{{ $menu['label'] }}</span>
                                 <span class="sidebar-chevron">
@@ -98,6 +113,12 @@
                                     <a href="{{ $child['href'] }}" class="sidebar-link sidebar-sublink {{ $child['active'] ? 'active' : '' }}">
                                         <span class="sidebar-icon">
                                             @switch($child['icon'])
+                                                @case('chart')
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 16v-5M12 16V8M16 16v-7" /></svg>
+                                                    @break
+                                                @case('printer')
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" /><path d="M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M7 14h10v7H7Z" /></svg>
+                                                    @break
                                                 @case('map')
                                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z" /><path d="M9 3v15M15 6v15" /></svg>
                                                     @break
@@ -178,23 +199,37 @@
                         </svg>
                     </button>
 
-                    <div class="topbar-title">
-                        <div class="eyebrow">@yield('eyebrow', 'Dashboard')</div>
-                        <h1 class="page-title">@yield('page-title')</h1>
+                    <div class="topbar-title topbar-logo-title">
+                        <div class="topbar-logo-pair">
+                            <img src="{{ asset('images/logo-kiri.png') }}" alt="Logo kiri">
+                            <img src="{{ asset('images/logo-kanan.png') }}" alt="Logo kanan">
+                        </div>
+                        <div class="topbar-village-text">
+                            <strong>Desa Barambang</strong>
+                            <span>Kec. Sinjai Borong, Kab. Sinjai</span>
+                            <small>Sulawesi Selatan</small>
+                        </div>
                     </div>
 
                     <div class="topbar-actions">
-                        <div class="topbar-user">
-                            <span>{{ $user->name }}</span>
-                            <small class="badge {{ $roleBadgeClass }}">{{ $roleLabel }}</small>
-                        </div>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="btn btn-outline" data-loading-text="Logout...">
-                                <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /><path d="M21 4v16" /></svg>
-                                Logout
-                            </button>
-                        </form>
+                        <details class="profile-menu">
+                            <summary class="profile-trigger">
+                                <span class="avatar profile-avatar">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                            </summary>
+                            <div class="profile-dropdown">
+                                <a href="{{ route('profile.edit') }}">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" /></svg>
+                                    Profil Saya
+                                </a>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" data-loading-text="Logout...">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /><path d="M21 4v16" /></svg>
+                                        Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </details>
                     </div>
                 </div>
             </header>

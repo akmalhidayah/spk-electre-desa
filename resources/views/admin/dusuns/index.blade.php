@@ -18,9 +18,12 @@
         </section>
 
         <section class="panel">
-            <form method="GET" action="{{ route('admin.dusuns.index') }}" class="filter-bar">
-                <div class="filter-field grow">
-                    <label for="q" class="form-label">Pencarian</label>
+            <form method="GET" action="{{ route('admin.dusuns.index') }}" class="filter-bar dusun-filter compact-filter">
+                <div class="filter-field grow input-with-icon compact-filter-search">
+                    <label for="q" class="form-label sr-only">Pencarian</label>
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-4.3-4.3" /><path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" /></svg>
+                    </span>
                     <input
                         id="q"
                         type="search"
@@ -31,8 +34,11 @@
                     >
                 </div>
 
-                <div class="filter-field">
-                    <label for="status" class="form-label">Status</label>
+                <div class="filter-field input-with-icon compact-filter-status">
+                    <label for="status" class="form-label sr-only">Status</label>
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                    </span>
                     <select id="status" name="status" class="form-control">
                         <option value="">Semua</option>
                         <option value="aktif" @selected($filters['status'] === 'aktif')>Aktif</option>
@@ -45,7 +51,10 @@
                         <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-4.3-4.3" /><path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" /></svg>
                         Cari
                     </button>
-                    <a href="{{ route('admin.dusuns.index') }}" class="btn btn-light">Reset</a>
+                    <a href="{{ route('admin.dusuns.index') }}" class="btn btn-light">
+                        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v6h6" /></svg>
+                        Reset
+                    </a>
                 </div>
             </form>
         </section>
