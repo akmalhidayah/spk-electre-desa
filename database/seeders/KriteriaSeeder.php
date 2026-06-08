@@ -36,10 +36,10 @@ class KriteriaSeeder extends Seeder
             ],
             [
                 'kode' => 'C4',
-                'nama_kriteria' => 'Kondisi Topografis',
+                'nama_kriteria' => 'Kondisi Jalan',
                 'bobot' => 15,
                 'urutan' => 4,
-                'deskripsi' => 'Semakin membutuhkan penanganan karena kondisi topografis, semakin tinggi prioritas.',
+                'deskripsi' => 'Menggambarkan kondisi akses jalan pada masing-masing dusun sebagai pertimbangan prioritas pembangunan. Semakin buruk kondisi jalan, maka semakin tinggi kebutuhan pembangunan.',
             ],
             [
                 'kode' => 'C5',

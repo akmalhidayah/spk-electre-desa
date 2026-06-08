@@ -8,6 +8,13 @@
     @php
         $isComplete = $totalSeharusnya > 0 && $totalTerisi === $totalSeharusnya;
         $completionWidth = min($persentaseKelengkapan, 100);
+        $c4Scale = [
+            1 => 'Kondisi jalan sangat baik',
+            2 => 'Kondisi jalan baik',
+            3 => 'Kondisi jalan cukup',
+            4 => 'Kondisi jalan rusak',
+            5 => 'Kondisi jalan sangat rusak',
+        ];
     @endphp
 
     <div class="stack penilaian-page">
@@ -87,6 +94,16 @@
                 <span><strong>4</strong> Tinggi</span>
                 <span><strong>5</strong> Sangat tinggi</span>
             </div>
+            @if ($kriterias->contains('kode', 'C4'))
+                <div>
+                    <h3 class="panel-title">C4 - Kondisi Jalan</h3>
+                    <div class="scale-grid">
+                        @foreach ($c4Scale as $nilai => $label)
+                            <span><strong>{{ $nilai }}</strong> {{ $label }}</span>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         </section>
 
         @if ($dusuns->isNotEmpty() && $kriterias->isNotEmpty())
@@ -151,7 +168,9 @@
                                                 >
                                                     <option value="">Pilih</option>
                                                     @for ($nilai = 1; $nilai <= 5; $nilai++)
-                                                        <option value="{{ $nilai }}" @selected((string) $selectedValue === (string) $nilai)>{{ $nilai }}</option>
+                                                        <option value="{{ $nilai }}" @selected((string) $selectedValue === (string) $nilai)>
+                                                            {{ $nilai }}{{ $kriteria->kode === 'C4' ? ' - '.$c4Scale[$nilai] : '' }}
+                                                        </option>
                                                     @endfor
                                                 </select>
                                             </td>
@@ -191,7 +210,9 @@
                                             >
                                                 <option value="">Pilih nilai</option>
                                                 @for ($nilai = 1; $nilai <= 5; $nilai++)
-                                                    <option value="{{ $nilai }}" @selected((string) $selectedValue === (string) $nilai)>{{ $nilai }}</option>
+                                                    <option value="{{ $nilai }}" @selected((string) $selectedValue === (string) $nilai)>
+                                                        {{ $nilai }}{{ $kriteria->kode === 'C4' ? ' - '.$c4Scale[$nilai] : '' }}
+                                                    </option>
                                                 @endfor
                                             </select>
                                         </div>

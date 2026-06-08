@@ -11,9 +11,12 @@
                 <h2>Detail Keputusan Akhir</h2>
                 <p>{{ $calculation?->kode_perhitungan ?? '-' }}</p>
             </div>
-            @if ($calculation)
-                <a href="{{ route('kepala-desa.hasil-rekomendasi.show', $calculation) }}" class="btn btn-light">Kembali</a>
-            @endif
+            <div class="form-actions">
+                <a href="{{ route('kepala-desa.keputusan-akhir.show', ['keputusanAkhir' => $keputusan, 'pdf' => 1]) }}" class="btn btn-primary btn-auto" target="_blank">Cetak PDF Penetapan</a>
+                @if ($calculation)
+                    <a href="{{ route('kepala-desa.hasil-rekomendasi.show', $calculation) }}" class="btn btn-light">Kembali</a>
+                @endif
+            </div>
         </section>
 
         <section class="panel priority-highlight">

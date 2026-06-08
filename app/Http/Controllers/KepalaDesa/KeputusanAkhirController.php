@@ -7,6 +7,8 @@ use App\Http\Requests\StoreKeputusanAkhirRequest;
 use App\Models\ElectreCalculation;
 use App\Models\ElectreResult;
 use App\Models\KeputusanAkhir;
+use App\Models\Kriteria;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -171,14 +173,47 @@ class KeputusanAkhirController extends Controller
         }
     }
 
-    public function show(KeputusanAkhir $keputusanAkhir): View
+    public function show(Request $request, KeputusanAkhir $keputusanAkhir)
     {
-        $keputusanAkhir->load(['calculation.results.dusun', 'dusun', 'decider', 'penetap', 'result']);
+        try {
+            $data = $this->viewData($keputusanAkhir);
 
-        return view('kepala-desa.keputusan-akhir.show', [
+            if ($request->boolean('pdf')) {
+                $data['kriterias'] = Kriteria::aktif()->ordered()->get();
+
+                return Pdf::loadView('pdf.keputusan-akhir', $data)
+                    ->setPaper('a4', 'portrait')
+                    ->stream('laporan-penetapan-hasil-'.$keputusanAkhir->id.'.pdf');
+            }
+
+            return view('kepala-desa.keputusan-akhir.show', $data);
+        } catch (Throwable $e) {
+            Log::error('[KEPUTUSAN_AKHIR_SHOW_FAILED] Gagal menampilkan keputusan akhir', [
+                'user_id' => $request->user()?->id,
+                'keputusan_id' => $keputusanAkhir->id,
+                'pdf' => $request->boolean('pdf'),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return redirect()
+                ->route('kepala-desa.keputusan-akhir.index')
+                ->with('error', 'Keputusan akhir tidak dapat ditampilkan. Kode Error: KEPUTUSAN_AKHIR_SHOW_FAILED');
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function viewData(KeputusanAkhir $keputusanAkhir): array
+    {
+        $keputusanAkhir->load(['calculation.results.dusun', 'calculation.calculator', 'dusun', 'decider', 'penetap', 'result']);
+
+        return [
             'keputusan' => $keputusanAkhir,
             'calculation' => $keputusanAkhir->calculation,
             'results' => $keputusanAkhir->calculation?->results?->sortBy('ranking')->values() ?? collect(),
-        ]);
+        ];
     }
 }
