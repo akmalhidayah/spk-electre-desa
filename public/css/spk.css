@@ -491,11 +491,14 @@ svg {
     display: inline-flex;
     font-size: 13px;
     font-weight: 950;
-    gap: 8px;
+    gap: 0;
+    height: 44px;
+    justify-content: center;
     min-height: 44px;
-    padding: 10px 14px;
+    padding: 0;
     transition: 150ms ease;
     white-space: nowrap;
+    width: 44px;
 }
 
 .topbar-landing-link:hover,
@@ -4374,6 +4377,7 @@ body {
 }
 
 .landing-menu-panel {
+    display: none;
     position: relative;
 }
 
@@ -4407,10 +4411,6 @@ body {
     align-items: center;
     display: flex;
     gap: 8px;
-}
-
-.landing-menu-panel:not([open]) .landing-menu {
-    display: flex;
 }
 
 .landing-menu a {
@@ -4917,7 +4917,15 @@ body {
         display: inline-flex;
     }
 
-    .landing-menu {
+    .landing-menu-desktop {
+        display: none;
+    }
+
+    .landing-menu-panel {
+        display: block;
+    }
+
+    .landing-menu-dropdown {
         background: #ffffff;
         border: 1px solid #dbe3ec;
         border-radius: 18px;
@@ -4932,15 +4940,15 @@ body {
         z-index: 1000;
     }
 
-    .landing-menu-panel:not([open]) .landing-menu {
+    .landing-menu-panel:not([open]) .landing-menu-dropdown {
         display: none;
     }
 
-    .landing-menu-panel[open] .landing-menu {
+    .landing-menu-panel[open] .landing-menu-dropdown {
         display: grid;
     }
 
-    .landing-menu a {
+    .landing-menu-dropdown a {
         border-radius: 12px;
         display: flex;
         justify-content: center;

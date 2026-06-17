@@ -215,10 +215,6 @@
                     </button>
 
                     <div class="topbar-title topbar-logo-title">
-                        <div class="topbar-logo-pair">
-                            <img src="{{ asset('images/logo-kiri.png') }}" alt="Logo kiri">
-                            <img src="{{ asset('images/logo-kanan.png') }}" alt="Logo kanan">
-                        </div>
                         <div class="topbar-village-text">
                             <strong>Desa Barambang</strong>
                             <span>Kec. Sinjai Borong, Kab. Sinjai</span>
@@ -234,7 +230,7 @@
                                 title="Edit Landing Page"
                             >
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
-                                <span>Landing Page</span>
+                                <span class="sr-only">Landing Page</span>
                             </a>
                         @endif
                         <details class="profile-menu">
