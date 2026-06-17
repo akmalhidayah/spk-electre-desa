@@ -4373,10 +4373,44 @@ body {
     overflow-wrap: anywhere;
 }
 
+.landing-menu-panel {
+    position: relative;
+}
+
+.landing-menu-panel summary {
+    list-style: none;
+}
+
+.landing-menu-panel summary::-webkit-details-marker {
+    display: none;
+}
+
+.landing-menu-toggle {
+    align-items: center;
+    background: #047857;
+    border: 0;
+    border-radius: 999px;
+    color: #ffffff;
+    cursor: pointer;
+    display: none;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
+}
+
+.landing-menu-toggle svg {
+    height: 22px;
+    width: 22px;
+}
+
 .landing-menu {
     align-items: center;
     display: flex;
     gap: 8px;
+}
+
+.landing-menu-panel:not([open]) .landing-menu {
+    display: flex;
 }
 
 .landing-menu a {
@@ -4866,22 +4900,59 @@ body {
 
 @media (max-width: 860px) {
     .landing-navbar {
-        align-items: stretch;
-        flex-direction: column;
-        gap: 10px;
+        align-items: center;
+        flex-direction: row;
+        gap: 12px;
         min-height: 0;
+        padding: 10px 12px;
         top: 12px;
         width: calc(100% - 24px);
     }
 
+    .landing-brand {
+        flex: 1;
+    }
+
+    .landing-menu-toggle {
+        display: inline-flex;
+    }
+
     .landing-menu {
-        overflow-x: auto;
-        padding-bottom: 2px;
+        background: #ffffff;
+        border: 1px solid #dbe3ec;
+        border-radius: 18px;
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
+        display: none;
+        gap: 6px;
+        min-width: min(280px, calc(100vw - 48px));
+        padding: 10px;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 12px);
+        z-index: 1000;
+    }
+
+    .landing-menu-panel:not([open]) .landing-menu {
+        display: none;
+    }
+
+    .landing-menu-panel[open] .landing-menu {
+        display: grid;
+    }
+
+    .landing-menu a {
+        border-radius: 12px;
+        display: flex;
+        justify-content: center;
+        min-height: 44px;
+        padding: 12px 14px;
+        white-space: normal;
+        width: 100%;
     }
 
     .landing-hero {
         min-height: 92vh;
-        padding-top: 174px;
+        padding-top: 118px;
     }
 
     .landing-profile-grid,
@@ -4899,13 +4970,18 @@ body {
 }
 
 @media (max-width: 560px) {
+    .landing-brand img,
+    .landing-brand span {
+        height: 38px;
+        width: 38px;
+    }
+
     .landing-brand strong {
-        font-size: 14px;
+        font-size: 13px;
     }
 
     .landing-menu a {
         font-size: 13px;
-        padding: 9px 10px;
     }
 
     .landing-hero-actions .landing-btn {

@@ -17,5 +17,17 @@
     <a href="#home" class="landing-back-top" aria-label="Kembali ke atas">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m18 15-6-6-6 6" /></svg>
     </a>
+
+    <script>
+        document.querySelectorAll('.landing-menu a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                var panel = link.closest('.landing-menu-panel');
+
+                if (panel) {
+                    panel.removeAttribute('open');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
