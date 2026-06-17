@@ -4447,11 +4447,11 @@ body {
 }
 
 .landing-hero h1 {
-    font-size: clamp(34px, 6vw, 62px);
+    font-size: clamp(30px, 4.6vw, 52px);
     letter-spacing: 0;
-    line-height: 1.04;
+    line-height: 1.1;
     margin: 0;
-    max-width: 820px;
+    max-width: 760px;
     text-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
 }
 
