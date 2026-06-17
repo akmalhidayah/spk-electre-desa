@@ -28,6 +28,7 @@
         $menus = match ($user->role) {
             'admin' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('admin.dashboard'), 'active' => request()->routeIs('admin.dashboard')],
+                ['label' => 'Welcome Desa', 'icon' => 'home', 'href' => route('admin.welcome-desa.index'), 'active' => request()->routeIs('admin.welcome-desa.*')],
                 ['label' => 'Usulan Pembangunan', 'icon' => 'document', 'href' => route('admin.usulan.index'), 'active' => request()->routeIs('admin.usulan.*')],
                 ['label' => 'Penilaian Alternatif', 'icon' => 'clipboard', 'href' => route('admin.penilaian.index'), 'active' => request()->routeIs('admin.penilaian.*')],
                 ['label' => 'Proses ELECTRE', 'icon' => 'calculator', 'href' => route('admin.electre.index'), 'active' => request()->routeIs('admin.electre.*')],

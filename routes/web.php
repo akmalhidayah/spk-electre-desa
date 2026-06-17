@@ -8,28 +8,23 @@ use App\Http\Controllers\Admin\KriteriaController;
 use App\Http\Controllers\Admin\PenilaianAlternatifController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UsulanPembangunanController as AdminUsulanPembangunanController;
+use App\Http\Controllers\Admin\WelcomeDesaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\KepalaDesa\DashboardController as KepalaDesaDashboardController;
 use App\Http\Controllers\KepalaDesa\HasilRekomendasiController as KepalaDesaHasilRekomendasiController;
 use App\Http\Controllers\KepalaDesa\KeputusanAkhirController as KepalaDesaKeputusanAkhirController;
 use App\Http\Controllers\KepalaDusun\DashboardController as KepalaDusunDashboardController;
 use App\Http\Controllers\KepalaDusun\UsulanPembangunanController as KepalaDusunUsulanPembangunanController;
+use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\ProfileController;
-use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-Route::get('/', function () {
-    if (! auth()->check()) {
-        return redirect()->route('login');
-    }
-
-    return match (auth()->user()->role) {
-        User::ROLE_ADMIN => redirect()->route('admin.dashboard'),
-        User::ROLE_KEPALA_DUSUN => redirect()->route('kepala-dusun.dashboard'),
-        User::ROLE_KEPALA_DESA => redirect()->route('kepala-desa.dashboard'),
-        default => redirect()->route('login'),
-    };
-});
+Route::get('/', [LandingPageController::class, 'index'])
+    ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, VerifyCsrfToken::class])
+    ->name('landing.index');
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.process');
@@ -54,6 +49,13 @@ Route::prefix('admin')
     ->middleware(['auth', 'role:admin'])
     ->group(function () {
         Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
+
+        Route::get('/welcome-desa', [WelcomeDesaController::class, 'index'])->name('welcome-desa.index');
+        Route::put('/welcome-desa', [WelcomeDesaController::class, 'update'])->name('welcome-desa.update');
+        Route::post('/welcome-desa/struktur', [WelcomeDesaController::class, 'storeStruktur'])->name('welcome-desa.struktur.store');
+        Route::put('/welcome-desa/struktur/{struktur}', [WelcomeDesaController::class, 'updateStruktur'])->name('welcome-desa.struktur.update');
+        Route::patch('/welcome-desa/struktur/{struktur}/toggle', [WelcomeDesaController::class, 'toggleStrukturStatus'])->name('welcome-desa.struktur.toggle');
+        Route::delete('/welcome-desa/struktur/{struktur}', [WelcomeDesaController::class, 'destroyStruktur'])->name('welcome-desa.struktur.destroy');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');

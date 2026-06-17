@@ -21,6 +21,28 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Catatan Instalasi SPK ELECTRE Desa
+
+Setelah dependency terpasang, jalankan migration dan seeder agar data awal aplikasi serta landing page desa tersedia:
+
+```bash
+php artisan migrate --seed
+```
+
+Buat symbolic link storage agar logo, hero image, peta, dan foto struktur organisasi yang diupload dari admin dapat tampil:
+
+```bash
+php artisan storage:link
+```
+
+Jalankan aplikasi:
+
+```bash
+php artisan serve
+```
+
+Buka halaman depan di `/`. Login sebagai admin, lalu masuk ke menu `Welcome Desa` untuk mengubah konten landing page, logo, hero image, visi, misi, peta, kontak, dan struktur organisasi.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
