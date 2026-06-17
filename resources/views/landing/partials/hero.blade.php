@@ -3,7 +3,7 @@
 <section
     id="home"
     class="landing-hero"
-    @if ($heroUrl) style="background-image: linear-gradient(90deg, rgba(6, 78, 59, 0.86), rgba(15, 23, 42, 0.46)), url('{{ $heroUrl }}')" @endif
+    @if ($heroUrl) style="background-image: linear-gradient(90deg, rgba(0, 70, 52, 0.46) 0%, rgba(0, 70, 52, 0.34) 45%, rgba(0, 0, 0, 0.18) 100%), url('{{ $heroUrl }}')" @endif
 >
     <div class="landing-hero-inner">
         <div class="landing-logo-large">
@@ -14,7 +14,7 @@
             @endif
         </div>
         <p class="landing-kicker">
-            {{ $setting->kecamatan ?? 'Kecamatan Sinjai Borong' }} • {{ $setting->kabupaten ?? 'Kabupaten Sinjai' }}
+            {{ $setting->kecamatan ?? 'Kecamatan Sinjai Borong' }} - {{ $setting->kabupaten ?? 'Kabupaten Sinjai' }}
         </p>
         <h1>{{ $setting->judul_welcome ?? 'Selamat Datang di Website Resmi Desa' }}</h1>
         <p class="landing-hero-copy">{{ $setting->deskripsi_welcome ?? 'Sistem informasi desa dan pendukung keputusan prioritas pembangunan antar dusun.' }}</p>

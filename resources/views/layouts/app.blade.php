@@ -25,10 +25,22 @@
             'kepala_desa' => 'badge-success',
         ][$user->role] ?? 'badge-muted';
 
+        $welcomeDesaSetting = null;
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('welcome_desa_settings')) {
+                $welcomeDesaSetting = \App\Models\WelcomeDesaSetting::query()
+                    ->aktif()
+                    ->latest('id')
+                    ->first();
+            }
+        } catch (\Throwable) {
+            $welcomeDesaSetting = null;
+        }
+
         $menus = match ($user->role) {
             'admin' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('admin.dashboard'), 'active' => request()->routeIs('admin.dashboard')],
-                ['label' => 'Welcome Desa', 'icon' => 'home', 'href' => route('admin.welcome-desa.index'), 'active' => request()->routeIs('admin.welcome-desa.*')],
                 ['label' => 'Usulan Pembangunan', 'icon' => 'document', 'href' => route('admin.usulan.index'), 'active' => request()->routeIs('admin.usulan.*')],
                 ['label' => 'Penilaian Alternatif', 'icon' => 'clipboard', 'href' => route('admin.penilaian.index'), 'active' => request()->routeIs('admin.penilaian.*')],
                 ['label' => 'Proses ELECTRE', 'icon' => 'calculator', 'href' => route('admin.electre.index'), 'active' => request()->routeIs('admin.electre.*')],
@@ -73,10 +85,12 @@
     <div class="app-shell">
         <aside class="sidebar" id="appSidebar" aria-label="Sidebar navigasi">
             <div class="brand">
-                <div class="brand-mark">SP</div>
-                <div class="brand-text">
-                    <div class="brand-title">SPK Desa</div>
-                    <div class="brand-subtitle">Metode ELECTRE</div>
+                <div class="brand-mark brand-logo-mark">
+                    @if ($welcomeDesaSetting?->logoUrl())
+                        <img src="{{ $welcomeDesaSetting->logoUrl() }}" alt="Logo {{ $welcomeDesaSetting->nama_desa ?? 'desa' }}">
+                    @else
+                        <img src="{{ asset('images/logo-kiri.png') }}" alt="Logo desa">
+                    @endif
                 </div>
                 <button class="icon-button sidebar-toggle" type="button" data-sidebar-toggle aria-label="Tutup atau buka sidebar" title="Tutup atau buka sidebar">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -213,6 +227,16 @@
                     </div>
 
                     <div class="topbar-actions">
+                        @if ($user->isAdmin())
+                            <a
+                                href="{{ route('admin.welcome-desa.index') }}"
+                                class="topbar-landing-link {{ request()->routeIs('admin.welcome-desa.*') ? 'active' : '' }}"
+                                title="Edit Landing Page"
+                            >
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                                <span>Landing Page</span>
+                            </a>
+                        @endif
                         <details class="profile-menu">
                             <summary class="profile-trigger">
                                 <span class="avatar profile-avatar">{{ strtoupper(substr($user->name, 0, 1)) }}</span>

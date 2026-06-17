@@ -61,8 +61,10 @@
                                     <div class="landing-org-photo">
                                         @if ($item->fotoUrl())
                                             <img src="{{ $item->fotoUrl() }}" alt="Foto {{ $item->nama }}">
+                                        @elseif ($setting->logoUrl())
+                                            <img src="{{ $setting->logoUrl() }}" alt="Logo {{ $setting->nama_desa ?? 'desa' }}" class="landing-org-logo">
                                         @else
-                                            <span>{{ strtoupper(substr($item->nama, 0, 1)) }}</span>
+                                            <img src="{{ asset('images/logo-kiri.png') }}" alt="Logo desa" class="landing-org-logo">
                                         @endif
                                     </div>
                                     <div>

@@ -1,4 +1,4 @@
-<header class="landing-navbar">
+<header class="landing-navbar floating-navbar">
     <a href="#home" class="landing-brand" aria-label="Beranda">
         @if ($setting->logoUrl())
             <img src="{{ $setting->logoUrl() }}" alt="Logo {{ $setting->nama_desa ?? 'desa' }}">
