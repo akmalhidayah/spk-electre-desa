@@ -212,6 +212,7 @@
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
+                        <span class="hamburger-label">Menu</span>
                     </button>
 
                     <div class="topbar-title topbar-logo-title">

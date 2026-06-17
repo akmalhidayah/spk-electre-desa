@@ -115,6 +115,42 @@
                     <div><dt>Urutan</dt><dd>{{ $item->urutan }}</dd></div>
                     <div><dt>Keterangan</dt><dd>{{ $item->deskripsi ?: '-' }}</dd></div>
                 </dl>
+                <details class="mobile-edit-details">
+                    <summary class="btn btn-sm btn-light">Edit Struktur</summary>
+                    <form method="POST" action="{{ route('admin.welcome-desa.struktur.update', $item) }}" enctype="multipart/form-data" class="form-stack mobile-edit-form">
+                        @csrf
+                        @method('PUT')
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="mobile_nama_{{ $item->id }}">Nama</label>
+                                <input id="mobile_nama_{{ $item->id }}" type="text" name="nama" value="{{ old('nama', $item->nama) }}" class="form-control" maxlength="150" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="mobile_jabatan_{{ $item->id }}">Jabatan</label>
+                                <input id="mobile_jabatan_{{ $item->id }}" type="text" name="jabatan" value="{{ old('jabatan', $item->jabatan) }}" class="form-control" maxlength="150" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="mobile_urutan_{{ $item->id }}">Urutan</label>
+                                <input id="mobile_urutan_{{ $item->id }}" type="number" name="urutan" value="{{ old('urutan', $item->urutan) }}" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="mobile_foto_{{ $item->id }}">Ganti Foto</label>
+                                <input id="mobile_foto_{{ $item->id }}" type="file" name="foto" accept="image/jpeg,image/png,image/webp" class="form-control">
+                            </div>
+                            <div class="form-group form-group-full">
+                                <label class="form-label" for="mobile_deskripsi_{{ $item->id }}">Keterangan</label>
+                                <textarea id="mobile_deskripsi_{{ $item->id }}" name="deskripsi" rows="3" class="form-control">{{ old('deskripsi', $item->deskripsi) }}</textarea>
+                            </div>
+                            <div class="form-group form-group-full">
+                                <label class="checkbox-row">
+                                    <input type="checkbox" name="status_aktif" value="1" @checked(old('status_aktif', $item->status_aktif))>
+                                    <span>Aktif</span>
+                                </label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                    </form>
+                </details>
                 <div class="mobile-actions">
                     <form method="POST" action="{{ route('admin.welcome-desa.struktur.toggle', $item) }}" class="js-confirm" data-title="Ubah status struktur?" data-text="Status tampil struktur organisasi akan diubah." data-icon="question" data-confirm-button="Ya, ubah">
                         @csrf

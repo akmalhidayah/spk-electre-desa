@@ -5005,3 +5005,414 @@ body {
         flex-direction: column;
     }
 }
+
+/* Mobile usability pass for auth, admin, kepala desa, and kepala dusun screens. */
+@media (max-width: 899px) {
+    html,
+    body {
+        overflow-x: hidden;
+    }
+
+    input,
+    select,
+    textarea,
+    .form-control {
+        font-size: 16px;
+    }
+
+    .auth-card .form-control {
+        font-size: 16px;
+    }
+
+    .app-shell,
+    .main-area,
+    .content,
+    .panel,
+    .page-header-card,
+    .mobile-card {
+        min-width: 0;
+    }
+
+    .hamburger {
+        border-radius: 999px;
+        gap: 8px;
+        min-width: 92px;
+        padding: 0 13px;
+        width: auto;
+    }
+
+    .hamburger-label {
+        display: inline-flex;
+        font-size: 13px;
+        font-weight: 950;
+    }
+
+    .sidebar {
+        max-width: none;
+        width: min(312px, calc(100vw - 28px));
+    }
+
+    .sidebar-nav {
+        gap: 8px;
+        padding: 16px 13px;
+    }
+
+    .sidebar-link,
+    .sidebar-group-summary {
+        min-height: 48px;
+    }
+
+    .sidebar-user {
+        align-items: flex-start;
+    }
+
+    .content {
+        padding: 16px 12px 28px;
+    }
+
+    .topbar-inner {
+        gap: 10px;
+        min-height: 64px;
+        padding: 10px 12px;
+    }
+
+    .topbar-title {
+        min-width: 0;
+    }
+
+    .topbar-village-text strong,
+    .topbar-village-text span,
+    .topbar-village-text small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .topbar-village-text strong {
+        font-size: 15px;
+    }
+
+    .topbar-village-text span,
+    .topbar-village-text small {
+        font-size: 11px;
+    }
+
+    .page-header-card {
+        align-items: stretch;
+        gap: 14px;
+        padding: 18px;
+    }
+
+    .page-header-card h2 {
+        font-size: 18px;
+        line-height: 1.25;
+    }
+
+    .page-header-card p,
+    .panel-text {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .panel {
+        padding: 16px;
+    }
+
+    .stat-grid,
+    .stats-grid,
+    .usulan-stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-dashboard .stat-grid,
+    .role-dashboard .stat-grid,
+    .dashboard-grid,
+    .kepala-desa-main-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-card {
+        padding: 16px;
+    }
+
+    .stat-card-inline {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .stat-value,
+    .stat-card-inline .stat-value {
+        font-size: 26px;
+    }
+
+    .stat-value-code,
+    .latest-calculation-code strong,
+    .latest-calculation-meta strong,
+    .latest-recommendation-body strong {
+        overflow-wrap: anywhere;
+    }
+
+    .dashboard-hero,
+    .admin-dashboard .dashboard-hero,
+    .role-dashboard .dashboard-hero {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 16px;
+        padding: 18px;
+    }
+
+    .dashboard-hero h2 {
+        font-size: 22px;
+    }
+
+    .assessment-head,
+    .latest-calculation-head,
+    .latest-recommendation-head,
+    .mini-list-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .assessment-visual,
+    .assessment-mini-grid,
+    .latest-calculation-meta,
+    .latest-recommendation-body,
+    .threshold-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .assessment-progress-detail,
+    .latest-calculation-card .btn,
+    .latest-recommendation-body .btn {
+        justify-self: stretch;
+        width: 100%;
+    }
+
+    .assessment-visual {
+        justify-items: center;
+    }
+
+    .mini-list-item {
+        width: 100%;
+    }
+
+    .mini-list-item .badge {
+        align-self: flex-start;
+    }
+
+    .filter-bar,
+    .filter-grid,
+    .filter-bar-extended,
+    .compact-filter,
+    .compact-filter.kriteria-filter,
+    .compact-filter.usulan-filter,
+    .compact-filter.hasil-filter,
+    .compact-filter.electre-filter {
+        align-items: stretch;
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .filter-actions,
+    .compact-filter .filter-actions {
+        display: grid;
+        flex-wrap: initial;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .filter-actions .btn,
+    .compact-filter .filter-actions .btn {
+        width: 100%;
+    }
+
+    .form-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+    }
+
+    .matrix-toolbar,
+    .scale-panel,
+    .compact-scale-panel,
+    .submit-panel,
+    .penilaian-page .matrix-toolbar,
+    .electre-history-panel .matrix-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .matrix-toolbar .btn,
+    .matrix-toolbar a.btn {
+        width: 100%;
+    }
+
+    .electre-page .panel {
+        padding: 16px;
+    }
+
+    .electre-page .electre-action-row {
+        align-items: stretch;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr;
+    }
+
+    .electre-page .electre-year-form,
+    .penilaian-year-form {
+        width: 100%;
+    }
+
+    .electre-page .js-confirm,
+    .electre-page .js-confirm .btn {
+        width: 100%;
+    }
+
+    .electre-status-alert {
+        padding: 13px 15px;
+    }
+
+    .table-wrap,
+    .table-responsive,
+    .matrix-detail-wrap {
+        border-radius: 12px;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .matrix-detail-table,
+    .data-table {
+        min-width: 680px;
+    }
+
+    .matrix-detail-table th,
+    .matrix-detail-table td {
+        padding: 10px 12px;
+        white-space: nowrap;
+    }
+
+    .mobile-list,
+    .mobile-card-list {
+        display: grid;
+        gap: 12px;
+    }
+
+    .mobile-card {
+        padding: 16px;
+    }
+
+    .mobile-card-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .mobile-card-head h3 {
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+    }
+
+    .meta-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mobile-actions,
+    .action-group {
+        display: grid;
+        grid-template-columns: 1fr;
+        justify-content: stretch;
+        width: 100%;
+    }
+
+    .mobile-actions .btn,
+    .mobile-actions form,
+    .action-group .btn,
+    .action-group form {
+        width: 100%;
+    }
+
+    .accordion-list summary {
+        line-height: 1.4;
+        padding-right: 28px;
+    }
+
+    .assessment-card-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .assessment-field .form-control,
+    .score-select {
+        min-height: 46px;
+        width: 100%;
+    }
+
+    .welcome-edit-panel {
+        left: 0;
+        right: auto;
+        width: calc(100vw - 48px);
+    }
+
+    .mobile-edit-details {
+        display: grid;
+        gap: 12px;
+    }
+
+    .mobile-edit-details summary {
+        list-style: none;
+        width: 100%;
+    }
+
+    .mobile-edit-details summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .mobile-edit-form {
+        background: #f8fafc;
+        border: 1px solid #dbe3ec;
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-page.auth-page-polished {
+        padding: 16px 12px;
+    }
+
+    .auth-hero {
+        border-radius: 20px;
+        padding: 18px;
+    }
+
+    .auth-card.auth-card-polished {
+        border-radius: 20px;
+        padding: 22px 18px;
+    }
+
+    .auth-welcome-title span {
+        font-size: 34px;
+    }
+
+    .auth-welcome-title small {
+        font-size: 24px;
+    }
+
+    .auth-welcome-title em,
+    .auth-hero p {
+        font-size: 15px;
+    }
+
+    .profile-trigger,
+    .topbar-landing-link {
+        height: 42px;
+        width: 42px;
+    }
+}
