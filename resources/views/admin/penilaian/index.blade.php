@@ -8,12 +8,12 @@
     @php
         $isComplete = $totalSeharusnya > 0 && $totalTerisi === $totalSeharusnya;
         $completionWidth = min($persentaseKelengkapan, 100);
-        $c4Scale = [
-            1 => 'Kondisi jalan sangat baik',
-            2 => 'Kondisi jalan baik',
-            3 => 'Kondisi jalan cukup',
-            4 => 'Kondisi jalan rusak',
-            5 => 'Kondisi jalan sangat rusak',
+        $scaleLabels = [
+            1 => 'Sangat rendah',
+            2 => 'Rendah',
+            3 => 'Sedang',
+            4 => 'Tinggi',
+            5 => 'Sangat tinggi',
         ];
     @endphp
 
@@ -88,22 +88,10 @@
                 <p class="panel-text">Gunakan skala 1 sampai 5 untuk setiap dusun dan kriteria.</p>
             </div>
             <div class="scale-grid">
-                <span><strong>1</strong> Sangat rendah</span>
-                <span><strong>2</strong> Rendah</span>
-                <span><strong>3</strong> Sedang</span>
-                <span><strong>4</strong> Tinggi</span>
-                <span><strong>5</strong> Sangat tinggi</span>
+                @foreach ($scaleLabels as $nilai => $label)
+                    <span><strong>{{ $nilai }}</strong> {{ $label }}</span>
+                @endforeach
             </div>
-            @if ($kriterias->contains('kode', 'C4'))
-                <div>
-                    <h3 class="panel-title">C4 - Kondisi Jalan</h3>
-                    <div class="scale-grid">
-                        @foreach ($c4Scale as $nilai => $label)
-                            <span><strong>{{ $nilai }}</strong> {{ $label }}</span>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
         </section>
 
         @if ($dusuns->isNotEmpty() && $kriterias->isNotEmpty())
@@ -169,7 +157,7 @@
                                                     <option value="">Pilih</option>
                                                     @for ($nilai = 1; $nilai <= 5; $nilai++)
                                                         <option value="{{ $nilai }}" @selected((string) $selectedValue === (string) $nilai)>
-                                                            {{ $nilai }}{{ $kriteria->kode === 'C4' ? ' - '.$c4Scale[$nilai] : '' }}
+                                                            {{ $nilai }} - {{ $scaleLabels[$nilai] }}
                                                         </option>
                                                     @endfor
                                                 </select>
@@ -211,7 +199,7 @@
                                                 <option value="">Pilih nilai</option>
                                                 @for ($nilai = 1; $nilai <= 5; $nilai++)
                                                     <option value="{{ $nilai }}" @selected((string) $selectedValue === (string) $nilai)>
-                                                        {{ $nilai }}{{ $kriteria->kode === 'C4' ? ' - '.$c4Scale[$nilai] : '' }}
+                                                        {{ $nilai }} - {{ $scaleLabels[$nilai] }}
                                                     </option>
                                                 @endfor
                                             </select>
