@@ -26,27 +26,58 @@
             </article>
         </div>
 
-        <div class="landing-org-grid">
-            @forelse ($struktur as $item)
-                <article class="landing-org-card">
-                    <div class="landing-org-photo">
-                        @if ($item->fotoUrl())
-                            <img src="{{ $item->fotoUrl() }}" alt="Foto {{ $item->nama }}">
-                        @else
-                            <span>{{ strtoupper(substr($item->nama, 0, 1)) }}</span>
-                        @endif
+        <?php
+            $strukturGroups = $struktur->groupBy(function ($item) {
+                return match (true) {
+                    $item->jabatan === 'Kepala Desa' => 'Pimpinan Desa',
+                    $item->jabatan === 'Sekretaris Desa' => 'Sekretariat Desa',
+                    str_contains($item->jabatan, 'Seksi') => 'Kepala Seksi',
+                    str_contains($item->jabatan, 'Kaur') => 'Kepala Urusan',
+                    str_contains($item->jabatan, 'Dusun') => 'Kepala Dusun',
+                    default => 'Perangkat Desa',
+                };
+            });
+
+            $groupOrder = [
+                'Pimpinan Desa',
+                'Sekretariat Desa',
+                'Kepala Seksi',
+                'Kepala Urusan',
+                'Kepala Dusun',
+                'Perangkat Desa',
+            ];
+        ?>
+
+        @if ($strukturGroups->isEmpty())
+            <div class="landing-empty">Struktur organisasi belum tersedia.</div>
+        @else
+            @foreach ($groupOrder as $groupName)
+                @if ($strukturGroups->has($groupName))
+                    <div class="landing-org-group">
+                        <h3>{{ $groupName }}</h3>
+                        <div class="landing-org-grid">
+                            @foreach ($strukturGroups->get($groupName) as $item)
+                                <article class="landing-org-card">
+                                    <div class="landing-org-photo">
+                                        @if ($item->fotoUrl())
+                                            <img src="{{ $item->fotoUrl() }}" alt="Foto {{ $item->nama }}">
+                                        @else
+                                            <span>{{ strtoupper(substr($item->nama, 0, 1)) }}</span>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <h3>{{ $item->nama }}</h3>
+                                        <strong>{{ $item->jabatan }}</strong>
+                                        @if ($item->deskripsi)
+                                            <p>{{ $item->deskripsi }}</p>
+                                        @endif
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
                     </div>
-                    <div>
-                        <h3>{{ $item->nama }}</h3>
-                        <strong>{{ $item->jabatan }}</strong>
-                        @if ($item->deskripsi)
-                            <p>{{ $item->deskripsi }}</p>
-                        @endif
-                    </div>
-                </article>
-            @empty
-                <div class="landing-empty">Struktur organisasi belum tersedia.</div>
-            @endforelse
-        </div>
+                @endif
+            @endforeach
+        @endif
     </div>
 </section>

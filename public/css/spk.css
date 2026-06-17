@@ -4521,6 +4521,19 @@ body {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.landing-org-group {
+    display: grid;
+    gap: 14px;
+    margin-top: 24px;
+}
+
+.landing-org-group > h3 {
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 950;
+    margin: 0;
+}
+
 .landing-org-card {
     align-items: flex-start;
     display: flex;
