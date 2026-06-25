@@ -30,6 +30,7 @@ return new class extends Migration
             $table->string('status')->default('draft')->index();
             $table->text('dasar_pertimbangan')->nullable();
             $table->text('catatan_keputusan')->nullable();
+            $table->longText('tanda_tangan')->nullable();
             $table->text('catatan')->nullable();
             $table->foreignId('ditetapkan_oleh')
                 ->nullable()

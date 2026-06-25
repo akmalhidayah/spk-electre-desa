@@ -1,3 +1,8 @@
+@php
+    $dusunPdfRouteName = $dusunPdfRouteName ?? null;
+    $showDusunPdf = isset($calculation) && $dusunPdfRouteName;
+@endphp
+
 <section class="panel">
     <div class="matrix-toolbar">
         <div>
@@ -17,6 +22,9 @@
                         <th>Skor Dominasi</th>
                         <th>Status Prioritas</th>
                         <th>Keterangan</th>
+                        @if ($showDusunPdf)
+                            <th class="text-right">PDF Usulan</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -28,6 +36,19 @@
                             <td>{{ $result->skor_dominasi }}</td>
                             <td><span class="badge {{ $result->ranking === 1 ? 'badge-priority' : 'badge-info' }}">{{ $result->status_prioritas }}</span></td>
                             <td>{{ $result->keterangan ?? '-' }}</td>
+                            @if ($showDusunPdf)
+                                <td>
+                                    @if ($result->dusun)
+                                        <div class="action-group icon-actions">
+                                            <a href="{{ route($dusunPdfRouteName, [$calculation, $result->dusun]) }}" class="btn btn-sm btn-secondary action-icon-btn" target="_blank" title="Cetak PDF usulan {{ $result->dusun->nama_dusun }}" aria-label="Cetak PDF usulan {{ $result->dusun->nama_dusun }}">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" /><path d="M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M7 14h10v7H7Z" /></svg>
+                                            </a>
+                                        </div>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>
@@ -49,6 +70,13 @@
                         <div><dt>Skor Dominasi</dt><dd>{{ $result->skor_dominasi }}</dd></div>
                     </dl>
                     <p>{{ $result->keterangan ?? '-' }}</p>
+                    @if ($showDusunPdf && $result->dusun)
+                        <div class="mobile-actions icon-actions">
+                            <a href="{{ route($dusunPdfRouteName, [$calculation, $result->dusun]) }}" class="btn btn-sm btn-secondary action-icon-btn" target="_blank" title="Cetak PDF usulan {{ $result->dusun->nama_dusun }}" aria-label="Cetak PDF usulan {{ $result->dusun->nama_dusun }}">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" /><path d="M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M7 14h10v7H7Z" /></svg>
+                            </a>
+                        </div>
+                    @endif
                 </article>
             @endforeach
         </div>

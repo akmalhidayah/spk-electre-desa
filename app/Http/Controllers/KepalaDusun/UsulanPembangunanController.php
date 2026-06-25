@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUsulanPembangunanRequest;
 use App\Http\Requests\UpdateUsulanPembangunanRequest;
 use App\Models\UsulanPembangunan;
+use App\Services\TahunAktifService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -15,14 +16,18 @@ use Throwable;
 
 class UsulanPembangunanController extends Controller
 {
-    public function index(Request $request): View|RedirectResponse
+    public function index(Request $request, TahunAktifService $tahunAktifService): View|RedirectResponse
     {
         try {
             $user = $request->user();
-            $baseQuery = UsulanPembangunan::with(['dusun', 'pengaju']);
+            $tahun = $tahunAktifService->resolveYear($request->filled('tahun') ? $request->integer('tahun') : null);
+            $baseQuery = UsulanPembangunan::with(['dusun', 'dusunsTerkait', 'pengaju'])->tahun($tahun);
 
             if ($user->dusun_id) {
-                $baseQuery->where('dusun_id', $user->dusun_id);
+                $baseQuery->where(function ($query) use ($user): void {
+                    $query->where('dusun_id', $user->dusun_id)
+                        ->orWhereHas('dusunsTerkait', fn ($query) => $query->where('dusuns.id', $user->dusun_id));
+                });
             } else {
                 $baseQuery->whereRaw('1 = 0');
             }
@@ -36,13 +41,9 @@ class UsulanPembangunanController extends Controller
                             ->orWhere('deskripsi', 'like', "%{$keyword}%");
                     });
                 })
-                ->when($request->filled('tahun'), function ($query) use ($request): void {
-                    $query->where('tahun', $request->integer('tahun'));
-                })
                 ->when($request->filled('status'), function ($query) use ($request): void {
                     $query->where('status', $request->string('status')->toString());
                 })
-                ->orderByDesc('tahun')
                 ->latest()
                 ->paginate(10)
                 ->withQueryString();
@@ -52,10 +53,10 @@ class UsulanPembangunanController extends Controller
                 'usulans' => $usulans,
                 'statuses' => UsulanPembangunan::STATUSES,
                 'tahunTersedia' => (clone $baseQuery)->select('tahun')->distinct()->orderByDesc('tahun')->pluck('tahun'),
-                'stats' => $this->stats($user->dusun_id),
+                'stats' => $this->stats($user->dusun_id, $tahun),
                 'filters' => [
                     'q' => $request->string('q')->toString(),
-                    'tahun' => $request->string('tahun')->toString(),
+                    'tahun' => (string) $tahun,
                     'status' => $request->string('status')->toString(),
                 ],
             ]);
@@ -68,7 +69,7 @@ class UsulanPembangunanController extends Controller
         }
     }
 
-    public function create(Request $request): View|RedirectResponse
+    public function create(Request $request, TahunAktifService $tahunAktifService): View|RedirectResponse
     {
         if (! $request->user()->dusun_id) {
             return back()->with('error', 'Akun Anda belum terhubung dengan data dusun. Silakan hubungi admin.');
@@ -76,7 +77,13 @@ class UsulanPembangunanController extends Controller
 
         return view('kepala-dusun.usulan.create', [
             'dusun' => $request->user()->dusun,
-            'usulan' => new UsulanPembangunan(['tahun' => now()->year]),
+            'usulan' => new UsulanPembangunan([
+                'tahun' => $tahunAktifService->getActiveYear(),
+                'jumlah_usulan' => 1,
+                'tipe_usulan' => UsulanPembangunan::TIPE_DUSUN,
+                'sumber_usulan' => 'Usulan Kepala Dusun',
+                'status' => UsulanPembangunan::STATUS_DIAJUKAN,
+            ]),
         ]);
     }
 
@@ -89,13 +96,31 @@ class UsulanPembangunanController extends Controller
                 return back()->with('error', 'Akun Anda belum terhubung dengan data dusun. Silakan hubungi admin.');
             }
 
-            $data = $request->safe()->only(['tahun', 'nama_kegiatan', 'jumlah_usulan', 'estimasi_anggaran', 'deskripsi']);
+            $data = $request->safe()->only([
+                'tahun',
+                'nama_kegiatan',
+                'lokasi_kegiatan',
+                'prakiraan_volume',
+                'satuan',
+                'penerima_manfaat_lk',
+                'penerima_manfaat_pr',
+                'penerima_manfaat_a_rtm',
+                'kategori_kegiatan',
+                'deskripsi',
+            ]);
             $data['dusun_id'] = $user->dusun_id;
             $data['user_id'] = $user->id;
+            $data['tipe_usulan'] = UsulanPembangunan::TIPE_DUSUN;
+            $data['jumlah_usulan'] = 1;
+            $data['estimasi_anggaran'] = null;
+            $data['sumber_usulan'] = 'Usulan Kepala Dusun';
             $data['status'] = UsulanPembangunan::STATUS_DIAJUKAN;
+            $data['status_prioritas'] = UsulanPembangunan::PRIORITAS_BELUM_DINILAI;
+            $data['is_data_pendukung_penilaian'] = false;
             $data['catatan_admin'] = null;
 
             $usulan = UsulanPembangunan::create($data);
+            $usulan->dusunsTerkait()->sync([$user->dusun_id]);
 
             Log::info('[USULAN_KEPALA_DUSUN_CREATED] Usulan kepala dusun berhasil dibuat', [
                 'user_id' => $user->id,
@@ -142,10 +167,24 @@ class UsulanPembangunanController extends Controller
             $usulanPembangunan->update($request->safe()->only([
                 'tahun',
                 'nama_kegiatan',
-                'jumlah_usulan',
-                'estimasi_anggaran',
+                'lokasi_kegiatan',
+                'prakiraan_volume',
+                'satuan',
+                'penerima_manfaat_lk',
+                'penerima_manfaat_pr',
+                'penerima_manfaat_a_rtm',
+                'kategori_kegiatan',
                 'deskripsi',
             ]));
+            $usulanPembangunan->forceFill([
+                'tipe_usulan' => UsulanPembangunan::TIPE_DUSUN,
+                'dusun_id' => $request->user()->dusun_id,
+                'jumlah_usulan' => 1,
+                'estimasi_anggaran' => null,
+                'sumber_usulan' => 'Usulan Kepala Dusun',
+                'is_data_pendukung_penilaian' => false,
+            ])->save();
+            $usulanPembangunan->dusunsTerkait()->sync([$request->user()->dusun_id]);
 
             Log::info('[USULAN_KEPALA_DUSUN_UPDATED] Usulan kepala dusun berhasil diperbarui', [
                 'user_id' => $request->user()->id,
@@ -216,12 +255,15 @@ class UsulanPembangunanController extends Controller
     /**
      * @return array<string, int>
      */
-    private function stats(?int $dusunId): array
+    private function stats(?int $dusunId, int $tahun): array
     {
-        $query = UsulanPembangunan::query();
+        $query = UsulanPembangunan::tahun($tahun);
 
         if ($dusunId) {
-            $query->where('dusun_id', $dusunId);
+            $query->where(function ($query) use ($dusunId): void {
+                $query->where('dusun_id', $dusunId)
+                    ->orWhereHas('dusunsTerkait', fn ($query) => $query->where('dusuns.id', $dusunId));
+            });
         } else {
             $query->whereRaw('1 = 0');
         }

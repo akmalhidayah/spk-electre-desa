@@ -22,7 +22,7 @@
             </div>
             <div class="action-group">
                 <a href="{{ route('kepala-desa.hasil-rekomendasi.index') }}" class="btn btn-light">Kembali</a>
-                <a href="{{ route('kepala-desa.hasil-rekomendasi.pdf', $calculation) }}" class="btn btn-primary btn-auto" target="_blank">Cetak Laporan</a>
+                <a href="{{ route('kepala-desa.hasil-rekomendasi.pdf', $calculation->tahun) }}" class="btn btn-primary btn-auto" target="_blank">Cetak Laporan</a>
                 @if ($keputusanAkhir)
                     <span class="badge badge-success">Keputusan akhir sudah dibuat</span>
                     <a href="{{ route('kepala-desa.keputusan-akhir.show', $keputusanAkhir) }}" class="btn btn-secondary btn-auto">Lihat Keputusan Akhir</a>
@@ -44,7 +44,11 @@
             </section>
         @endif
 
-        @include('admin.hasil-rekomendasi._ranking-table', ['results' => $results])
+        @include('admin.hasil-rekomendasi._ranking-table', [
+            'results' => $results,
+            'calculation' => $calculation,
+            'dusunPdfRouteName' => 'kepala-desa.hasil-rekomendasi.dusun-pdf',
+        ])
 
         <section class="panel">
             <h2 class="panel-title">Detail Ringkas Perhitungan</h2>

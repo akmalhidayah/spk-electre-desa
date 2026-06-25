@@ -95,8 +95,10 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="action-group">
-                                            <a href="{{ route('admin.dusuns.edit', $dusun) }}" class="btn btn-sm btn-light">Edit</a>
+                                        <div class="action-group icon-actions">
+                                            <a href="{{ route('admin.dusuns.edit', $dusun) }}" class="btn btn-sm btn-light action-icon-btn" title="Edit dusun" aria-label="Edit dusun">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                                            </a>
                                             <form
                                                 method="POST"
                                                 action="{{ route('admin.dusuns.toggle-status', $dusun) }}"
@@ -108,8 +110,8 @@
                                             >
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="submit" class="btn btn-sm btn-secondary">
-                                                    {{ $dusun->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}
+                                                <button type="submit" class="btn btn-sm btn-secondary action-icon-btn" title="{{ $dusun->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}" aria-label="{{ $dusun->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}">
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10" /><path d="M18.4 6.6a9 9 0 1 1-12.8 0" /></svg>
                                                 </button>
                                             </form>
                                             <form
@@ -123,7 +125,9 @@
                                             >
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                                <button type="submit" class="btn btn-sm btn-danger action-icon-btn" title="Hapus dusun" aria-label="Hapus dusun">
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v5M14 11v5" /></svg>
+                                                </button>
                                             </form>
                                         </div>
                                     </td>
@@ -159,7 +163,9 @@
                                 <p>{{ $dusun->keterangan }}</p>
                             @endif
                             <div class="mobile-actions">
-                                <a href="{{ route('admin.dusuns.edit', $dusun) }}" class="btn btn-sm btn-light">Edit</a>
+                                <a href="{{ route('admin.dusuns.edit', $dusun) }}" class="btn btn-sm btn-light action-icon-btn" title="Edit dusun" aria-label="Edit dusun">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                                </a>
                                 <form
                                     method="POST"
                                     action="{{ route('admin.dusuns.toggle-status', $dusun) }}"
@@ -171,8 +177,8 @@
                                 >
                                     @csrf
                                     @method('PATCH')
-                                    <button type="submit" class="btn btn-sm btn-secondary">
-                                        {{ $dusun->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}
+                                    <button type="submit" class="btn btn-sm btn-secondary action-icon-btn" title="{{ $dusun->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}" aria-label="{{ $dusun->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10" /><path d="M18.4 6.6a9 9 0 1 1-12.8 0" /></svg>
                                     </button>
                                 </form>
                                 <form
@@ -186,7 +192,9 @@
                                 >
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                    <button type="submit" class="btn btn-sm btn-danger action-icon-btn" title="Hapus dusun" aria-label="Hapus dusun">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v5M14 11v5" /></svg>
+                                    </button>
                                 </form>
                             </div>
                         </article>

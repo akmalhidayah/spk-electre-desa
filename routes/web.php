@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\ElectreCalculationController;
 use App\Http\Controllers\Admin\HasilRekomendasiController as AdminHasilRekomendasiController;
 use App\Http\Controllers\Admin\KriteriaController;
 use App\Http\Controllers\Admin\PenilaianAlternatifController;
+use App\Http\Controllers\Admin\TahunPerencanaanController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UsulanPembangunanController as AdminUsulanPembangunanController;
 use App\Http\Controllers\Admin\WelcomeDesaController;
@@ -57,6 +58,14 @@ Route::prefix('admin')
         Route::patch('/welcome-desa/struktur/{struktur}/toggle', [WelcomeDesaController::class, 'toggleStrukturStatus'])->name('welcome-desa.struktur.toggle');
         Route::delete('/welcome-desa/struktur/{struktur}', [WelcomeDesaController::class, 'destroyStruktur'])->name('welcome-desa.struktur.destroy');
 
+        Route::get('/tahun-perencanaan', [TahunPerencanaanController::class, 'index'])->name('tahun-perencanaan.index');
+        Route::get('/tahun-perencanaan/create', [TahunPerencanaanController::class, 'create'])->name('tahun-perencanaan.create');
+        Route::post('/tahun-perencanaan', [TahunPerencanaanController::class, 'store'])->name('tahun-perencanaan.store');
+        Route::get('/tahun-perencanaan/{tahunPerencanaan}/edit', [TahunPerencanaanController::class, 'edit'])->name('tahun-perencanaan.edit');
+        Route::put('/tahun-perencanaan/{tahunPerencanaan}', [TahunPerencanaanController::class, 'update'])->name('tahun-perencanaan.update');
+        Route::patch('/tahun-perencanaan/{tahunPerencanaan}/set-active', [TahunPerencanaanController::class, 'setActive'])->name('tahun-perencanaan.set-active');
+        Route::patch('/tahun-perencanaan/{tahunPerencanaan}/toggle-lock', [TahunPerencanaanController::class, 'toggleLock'])->name('tahun-perencanaan.toggle-lock');
+
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
@@ -86,6 +95,7 @@ Route::prefix('admin')
         Route::get('/usulan-pembangunan', [AdminUsulanPembangunanController::class, 'index'])->name('usulan.index');
         Route::get('/usulan-pembangunan/create', [AdminUsulanPembangunanController::class, 'create'])->name('usulan.create');
         Route::post('/usulan-pembangunan', [AdminUsulanPembangunanController::class, 'store'])->name('usulan.store');
+        Route::post('/usulan-pembangunan/export-pdf', [AdminUsulanPembangunanController::class, 'exportAcceptedPdf'])->name('usulan.export-pdf');
         Route::get('/usulan-pembangunan/{usulanPembangunan}/edit', [AdminUsulanPembangunanController::class, 'edit'])->name('usulan.edit');
         Route::put('/usulan-pembangunan/{usulanPembangunan}', [AdminUsulanPembangunanController::class, 'update'])->name('usulan.update');
         Route::patch('/usulan-pembangunan/{usulanPembangunan}/status', [AdminUsulanPembangunanController::class, 'updateStatus'])->name('usulan.update-status');
@@ -102,7 +112,9 @@ Route::prefix('admin')
 
         Route::get('/hasil-rekomendasi', [AdminHasilRekomendasiController::class, 'index'])->name('hasil-rekomendasi.index');
         Route::get('/hasil-rekomendasi/{electreCalculation}', [AdminHasilRekomendasiController::class, 'show'])->name('hasil-rekomendasi.show');
-        Route::get('/hasil-rekomendasi/{electreCalculation}/pdf', [AdminHasilRekomendasiController::class, 'pdf'])->name('hasil-rekomendasi.pdf');
+        Route::get('/hasil-rekomendasi/{tahun}/pdf', [AdminHasilRekomendasiController::class, 'pdf'])->whereNumber('tahun')->name('hasil-rekomendasi.pdf');
+        Route::get('/hasil-rekomendasi/{electreCalculation}/keputusan/pdf', [AdminHasilRekomendasiController::class, 'keputusanPdf'])->name('hasil-rekomendasi.keputusan-pdf');
+        Route::get('/hasil-rekomendasi/{electreCalculation}/dusun/{dusun}/pdf', [AdminHasilRekomendasiController::class, 'dusunPdf'])->name('hasil-rekomendasi.dusun-pdf');
     });
 
 Route::prefix('kepala-dusun')
@@ -125,7 +137,8 @@ Route::prefix('kepala-desa')
         Route::get('/dashboard', KepalaDesaDashboardController::class)->name('dashboard');
         Route::get('/hasil-rekomendasi', [KepalaDesaHasilRekomendasiController::class, 'index'])->name('hasil-rekomendasi.index');
         Route::get('/hasil-rekomendasi/{electreCalculation}', [KepalaDesaHasilRekomendasiController::class, 'show'])->name('hasil-rekomendasi.show');
-        Route::get('/hasil-rekomendasi/{electreCalculation}/pdf', [KepalaDesaHasilRekomendasiController::class, 'pdf'])->name('hasil-rekomendasi.pdf');
+        Route::get('/hasil-rekomendasi/{tahun}/pdf', [KepalaDesaHasilRekomendasiController::class, 'pdf'])->whereNumber('tahun')->name('hasil-rekomendasi.pdf');
+        Route::get('/hasil-rekomendasi/{electreCalculation}/dusun/{dusun}/pdf', [KepalaDesaHasilRekomendasiController::class, 'dusunPdf'])->name('hasil-rekomendasi.dusun-pdf');
         Route::get('/keputusan-akhir', [KepalaDesaKeputusanAkhirController::class, 'index'])->name('keputusan-akhir.index');
         Route::get('/keputusan-akhir/{electreCalculation}/create', [KepalaDesaKeputusanAkhirController::class, 'create'])->name('keputusan-akhir.create');
         Route::post('/keputusan-akhir', [KepalaDesaKeputusanAkhirController::class, 'store'])->name('keputusan-akhir.store');

@@ -3,8 +3,14 @@
 namespace App\Http\Controllers\KepalaDesa;
 
 use App\Http\Controllers\Controller;
+use App\Models\Dusun;
 use App\Models\ElectreCalculation;
 use App\Models\Kriteria;
+use App\Models\TahunPerencanaan;
+use App\Models\UsulanPembangunan;
+use App\Models\User;
+use App\Services\PejabatDesaService;
+use App\Services\TahunAktifService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,11 +21,13 @@ use Throwable;
 
 class HasilRekomendasiController extends Controller
 {
-    public function index(Request $request): View|RedirectResponse
+    public function index(Request $request, TahunAktifService $tahunAktifService): View|RedirectResponse
     {
         try {
-            $query = ElectreCalculation::with('calculator')
+            $tahun = $tahunAktifService->resolveYear($request->filled('tahun') ? $request->integer('tahun') : null);
+            $query = ElectreCalculation::with(['calculator', 'keputusanAkhir'])
                 ->selesai()
+                ->tahun($tahun)
                 ->when($request->filled('q'), function ($query) use ($request): void {
                     $keyword = $request->string('q')->toString();
 
@@ -27,18 +35,16 @@ class HasilRekomendasiController extends Controller
                         $query->where('kode_perhitungan', 'like', "%{$keyword}%")
                             ->orWhere('judul', 'like', "%{$keyword}%");
                     });
-                })
-                ->when($request->filled('tahun'), function ($query) use ($request): void {
-                    $query->where('tahun', $request->integer('tahun'));
                 });
 
             return view('kepala-desa.hasil-rekomendasi.index', [
                 'calculations' => $query->latest('calculated_at')->latest()->paginate(10)->withQueryString(),
-                'tahunList' => ElectreCalculation::selesai()->select('tahun')->distinct()->orderByDesc('tahun')->pluck('tahun'),
-                'stats' => $this->stats(),
+                'tahunList' => TahunPerencanaan::orderByDesc('tahun')->pluck('tahun'),
+                'periode' => TahunPerencanaan::where('tahun', $tahun)->first(),
+                'stats' => $this->stats($tahun),
                 'filters' => [
                     'q' => $request->string('q')->toString(),
-                    'tahun' => $request->string('tahun')->toString(),
+                    'tahun' => (string) $tahun,
                 ],
             ]);
         } catch (Throwable $e) {
@@ -67,18 +73,28 @@ class HasilRekomendasiController extends Controller
         }
     }
 
-    public function pdf(Request $request, ElectreCalculation $electreCalculation)
+    public function pdf(Request $request, int $tahun, PejabatDesaService $pejabatDesaService)
     {
+        $electreCalculation = null;
+
         try {
+            $electreCalculation = $this->latestFinishedCalculationForYear($tahun);
+
+            if (! $electreCalculation) {
+                return back()->with('error', "Hasil rekomendasi selesai untuk tahun {$tahun} belum tersedia.");
+            }
+
             $this->ensureFinished($electreCalculation);
 
             $data = $this->viewData($electreCalculation);
             $data['pdfTitle'] = 'Laporan Keputusan Prioritas Pembangunan';
             $data['kriterias'] = Kriteria::aktif()->ordered()->get();
+            $data['acceptedUsulans'] = $this->acceptedUsulansForYear($tahun);
+            $data['kepalaDesaName'] = $pejabatDesaService->kepalaDesaName();
 
             return Pdf::loadView('pdf.hasil-rekomendasi', $data)
                 ->setPaper('a4', 'portrait')
-                ->stream('laporan-hasil-rekomendasi-'.$electreCalculation->kode_perhitungan.'.pdf');
+                ->stream('laporan-hasil-rekomendasi-'.$tahun.'.pdf');
         } catch (HttpException $e) {
             throw $e;
         } catch (Throwable $e) {
@@ -86,6 +102,78 @@ class HasilRekomendasiController extends Controller
 
             return back()->with('error', 'Terjadi kesalahan saat membuat PDF hasil rekomendasi. Silakan coba kembali. Kode Error: KEPALA_DESA_HASIL_PDF_FAILED');
         }
+    }
+
+    public function dusunPdf(Request $request, ElectreCalculation $electreCalculation, Dusun $dusun, PejabatDesaService $pejabatDesaService)
+    {
+        try {
+            $this->ensureFinished($electreCalculation);
+
+            $usulans = $this->acceptedUsulansForDusun($electreCalculation, $dusun);
+            $kepalaDusunName = $pejabatDesaService->kepalaDusunName($dusun) ?? $this->kepalaDusunForDusun($dusun)?->name;
+
+            return Pdf::loadView('pdf.usulan-diterima-dusun', [
+                'pdfTitle' => 'Daftar Usulan Pembangunan Diterima '.$dusun->nama_dusun,
+                'calculation' => $electreCalculation,
+                'dusun' => $dusun,
+                'kepalaDusunName' => $kepalaDusunName,
+                'usulans' => $usulans,
+            ])
+                ->setPaper('a4', 'portrait')
+                ->stream('usulan-diterima-'.$electreCalculation->tahun.'-'.$dusun->id.'.pdf');
+        } catch (HttpException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('[KEPALA_DESA_HASIL_DUSUN_PDF_FAILED] Gagal membuat PDF usulan per dusun kepala desa', $this->logContext($e, $request, $electreCalculation));
+
+            return back()->with('error', 'Terjadi kesalahan saat membuat PDF usulan dusun. Silakan coba kembali. Kode Error: KEPALA_DESA_HASIL_DUSUN_PDF_FAILED');
+        }
+    }
+
+    private function latestFinishedCalculationForYear(int $tahun): ?ElectreCalculation
+    {
+        return ElectreCalculation::tahun($tahun)
+            ->selesai()
+            ->latestVersion()
+            ->latest('calculated_at')
+            ->latest()
+            ->first()
+            ?? ElectreCalculation::tahun($tahun)
+                ->selesai()
+                ->latest('calculated_at')
+                ->latest()
+                ->first();
+    }
+
+    private function acceptedUsulansForYear(int $tahun)
+    {
+        return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
+            ->tahun($tahun)
+            ->diterima()
+            ->orderBy('dusun_id')
+            ->orderBy('nama_kegiatan')
+            ->get();
+    }
+
+    private function acceptedUsulansForDusun(ElectreCalculation $calculation, Dusun $dusun)
+    {
+        return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
+            ->tahun((int) $calculation->tahun)
+            ->diterima()
+            ->where(function ($query) use ($dusun): void {
+                $query->where('dusun_id', $dusun->id)
+                    ->orWhereHas('dusunsTerkait', fn ($query) => $query->where('dusuns.id', $dusun->id));
+            })
+            ->orderBy('nama_kegiatan')
+            ->get();
+    }
+
+    private function kepalaDusunForDusun(Dusun $dusun): ?User
+    {
+        return User::aktif()
+            ->role(User::ROLE_KEPALA_DUSUN)
+            ->where('dusun_id', $dusun->id)
+            ->first();
     }
 
     private function ensureFinished(ElectreCalculation $calculation): void
@@ -121,12 +209,12 @@ class HasilRekomendasiController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function stats(): array
+    private function stats(int $tahun): array
     {
         return [
-            'total' => ElectreCalculation::selesai()->count(),
-            'terbaru' => ElectreCalculation::selesai()->latest('calculated_at')->latest()->first(),
-            'tahun_berjalan' => ElectreCalculation::selesai()->where('tahun', date('Y'))->count(),
+            'total' => ElectreCalculation::tahun($tahun)->selesai()->count(),
+            'terbaru' => ElectreCalculation::tahun($tahun)->selesai()->latestVersion()->latest('calculated_at')->latest()->first(),
+            'tahun_berjalan' => ElectreCalculation::tahun($tahun)->selesai()->count(),
         ];
     }
 

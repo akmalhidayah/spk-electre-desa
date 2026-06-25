@@ -5,20 +5,6 @@
 @section('page-title', 'Data Kriteria')
 
 @section('content')
-    @php
-        $progressBobot = min($totalBobotAktif, 100);
-        $bobotBadgeClass = match ($statusBobotAktif) {
-            'valid' => 'badge-success',
-            'lebih' => 'badge-danger',
-            default => 'badge-warning',
-        };
-        $bobotBadgeText = match ($statusBobotAktif) {
-            'valid' => 'Valid 100%',
-            'lebih' => 'Melebihi 100%',
-            default => 'Kurang dari 100%',
-        };
-    @endphp
-
     <div class="stack">
         <section class="page-header-card">
             <div>
@@ -29,54 +15,6 @@
                 <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
                 Tambah Kriteria
             </a>
-        </section>
-
-        <section class="stat-grid">
-            <article class="stat-card">
-                <div class="stat-card-row">
-                    <div>
-                        <div class="stat-label">Total Kriteria</div>
-                        <div class="stat-value">{{ number_format($totalKriteria, 0, ',', '.') }}</div>
-                    </div>
-                    <span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h.01M3 12h.01M3 18h.01" /></svg></span>
-                </div>
-                <div class="stat-note">Seluruh kriteria tersimpan.</div>
-            </article>
-
-            <article class="stat-card">
-                <div class="stat-card-row">
-                    <div>
-                        <div class="stat-label">Kriteria Aktif</div>
-                        <div class="stat-value">{{ number_format($totalKriteriaAktif, 0, ',', '.') }}</div>
-                    </div>
-                    <span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg></span>
-                </div>
-                <div class="stat-note">Digunakan dalam perhitungan.</div>
-            </article>
-
-            <article class="stat-card">
-                <div class="stat-card-row">
-                    <div>
-                        <div class="stat-label">Kriteria Nonaktif</div>
-                        <div class="stat-value">{{ number_format($totalKriteriaNonaktif, 0, ',', '.') }}</div>
-                    </div>
-                    <span class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg></span>
-                </div>
-                <div class="stat-note">Tidak dihitung sementara.</div>
-            </article>
-
-            <article class="stat-card weight-card">
-                <div class="stat-card-row">
-                    <div>
-                        <div class="stat-label">Total Bobot Aktif</div>
-                        <div class="stat-value">{{ number_format($totalBobotAktif, 2, ',', '.') }}%</div>
-                    </div>
-                    <span class="badge {{ $bobotBadgeClass }}">{{ $bobotBadgeText }}</span>
-                </div>
-                <div class="weight-progress" aria-label="Progress total bobot aktif">
-                    <span style="width: {{ $progressBobot }}%"></span>
-                </div>
-            </article>
         </section>
 
         @if ($statusBobotAktif === 'kurang')
@@ -177,8 +115,10 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="action-group">
-                                            <a href="{{ route('admin.kriterias.edit', $kriteria) }}" class="btn btn-sm btn-light">Edit</a>
+                                        <div class="action-group icon-actions">
+                                            <a href="{{ route('admin.kriterias.edit', $kriteria) }}" class="btn btn-sm btn-light action-icon-btn" title="Edit kriteria" aria-label="Edit kriteria">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                                            </a>
                                             <form
                                                 method="POST"
                                                 action="{{ route('admin.kriterias.toggle-status', $kriteria) }}"
@@ -190,8 +130,8 @@
                                             >
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="submit" class="btn btn-sm btn-secondary">
-                                                    {{ $kriteria->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}
+                                                <button type="submit" class="btn btn-sm btn-secondary action-icon-btn" title="{{ $kriteria->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}" aria-label="{{ $kriteria->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}">
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10" /><path d="M18.4 6.6a9 9 0 1 1-12.8 0" /></svg>
                                                 </button>
                                             </form>
                                             <form
@@ -205,7 +145,9 @@
                                             >
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                                <button type="submit" class="btn btn-sm btn-danger action-icon-btn" title="Hapus kriteria" aria-label="Hapus kriteria">
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v5M14 11v5" /></svg>
+                                                </button>
                                             </form>
                                         </div>
                                     </td>
@@ -245,7 +187,9 @@
                                 <p>{{ $kriteria->deskripsi }}</p>
                             @endif
                             <div class="mobile-actions">
-                                <a href="{{ route('admin.kriterias.edit', $kriteria) }}" class="btn btn-sm btn-light">Edit</a>
+                                <a href="{{ route('admin.kriterias.edit', $kriteria) }}" class="btn btn-sm btn-light action-icon-btn" title="Edit kriteria" aria-label="Edit kriteria">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                                </a>
                                 <form
                                     method="POST"
                                     action="{{ route('admin.kriterias.toggle-status', $kriteria) }}"
@@ -257,8 +201,8 @@
                                 >
                                     @csrf
                                     @method('PATCH')
-                                    <button type="submit" class="btn btn-sm btn-secondary">
-                                        {{ $kriteria->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}
+                                    <button type="submit" class="btn btn-sm btn-secondary action-icon-btn" title="{{ $kriteria->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}" aria-label="{{ $kriteria->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10" /><path d="M18.4 6.6a9 9 0 1 1-12.8 0" /></svg>
                                     </button>
                                 </form>
                                 <form
@@ -272,7 +216,9 @@
                                 >
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                    <button type="submit" class="btn btn-sm btn-danger action-icon-btn" title="Hapus kriteria" aria-label="Hapus kriteria">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v5M14 11v5" /></svg>
+                                    </button>
                                 </form>
                             </div>
                         </article>

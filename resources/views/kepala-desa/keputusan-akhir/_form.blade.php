@@ -55,6 +55,29 @@
             <textarea id="catatan_keputusan" name="catatan_keputusan" rows="4" class="form-control @error('catatan_keputusan') is-invalid @enderror" placeholder="Catatan tambahan keputusan akhir.">{{ old('catatan_keputusan') }}</textarea>
             @error('catatan_keputusan')<div class="field-error">{{ $message }}</div>@enderror
         </div>
+
+        <div class="form-group form-group-full signature-field">
+            <label class="form-label">Tanda Tangan Kepala Desa</label>
+            <input type="hidden" id="tanda_tangan" name="tanda_tangan" value="{{ old('tanda_tangan') }}">
+            <div class="signature-control">
+                <div class="signature-preview" data-signature-preview>
+                    @if (old('tanda_tangan'))
+                        <img src="{{ old('tanda_tangan') }}" alt="Pratinjau tanda tangan">
+                    @else
+                        <span>Belum ada tanda tangan</span>
+                    @endif
+                </div>
+                <div class="signature-actions">
+                    <button type="button" class="btn btn-secondary btn-auto" data-open-signature-modal>
+                        Buat Tanda Tangan
+                    </button>
+                    <button type="button" class="btn btn-light btn-auto" data-clear-saved-signature>
+                        Hapus
+                    </button>
+                </div>
+            </div>
+            @error('tanda_tangan')<div class="field-error">{{ $message }}</div>@enderror
+        </div>
     </div>
 
     <div class="form-actions">
@@ -64,3 +87,165 @@
         </button>
     </div>
 </form>
+
+<div class="modal-backdrop" data-signature-modal hidden>
+    <div class="modal-card signature-modal-card" role="dialog" aria-modal="true" aria-labelledby="signatureModalTitle">
+        <div class="modal-head">
+            <div>
+                <h3 id="signatureModalTitle">Tanda Tangan Kepala Desa</h3>
+                <p>Gambar tanda tangan pada area di bawah ini.</p>
+            </div>
+            <button type="button" class="icon-button" data-close-signature-modal aria-label="Tutup modal">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+            </button>
+        </div>
+        <div class="signature-pad-wrap">
+            <canvas id="signatureCanvas" class="signature-canvas" width="720" height="260"></canvas>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-light" data-clear-signature-canvas>Bersihkan</button>
+            <button type="button" class="btn btn-light" data-close-signature-modal>Batal</button>
+            <button type="button" class="btn btn-primary" data-save-signature-canvas>Simpan Tanda Tangan</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var modal = document.querySelector('[data-signature-modal]');
+        var canvas = document.getElementById('signatureCanvas');
+        var input = document.getElementById('tanda_tangan');
+        var preview = document.querySelector('[data-signature-preview]');
+        var openButton = document.querySelector('[data-open-signature-modal]');
+
+        if (!modal || !canvas || !input || !preview || !openButton) {
+            return;
+        }
+
+        var context = canvas.getContext('2d');
+        var drawing = false;
+        var hasInk = false;
+
+        function prepareCanvas() {
+            context.lineWidth = 3;
+            context.lineCap = 'round';
+            context.lineJoin = 'round';
+            context.strokeStyle = '#0f172a';
+        }
+
+        function position(event) {
+            var rect = canvas.getBoundingClientRect();
+            var point = event.touches ? event.touches[0] : event;
+
+            return {
+                x: (point.clientX - rect.left) * (canvas.width / rect.width),
+                y: (point.clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function startDraw(event) {
+            event.preventDefault();
+            drawing = true;
+            hasInk = true;
+            var point = position(event);
+            context.beginPath();
+            context.moveTo(point.x, point.y);
+        }
+
+        function draw(event) {
+            if (!drawing) {
+                return;
+            }
+
+            event.preventDefault();
+            var point = position(event);
+            context.lineTo(point.x, point.y);
+            context.stroke();
+        }
+
+        function endDraw() {
+            drawing = false;
+        }
+
+        function clearCanvas() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            hasInk = false;
+            prepareCanvas();
+        }
+
+        function updatePreview(dataUrl) {
+            preview.innerHTML = '';
+
+            if (!dataUrl) {
+                var empty = document.createElement('span');
+                empty.textContent = 'Belum ada tanda tangan';
+                preview.appendChild(empty);
+                return;
+            }
+
+            var image = document.createElement('img');
+            image.src = dataUrl;
+            image.alt = 'Pratinjau tanda tangan';
+            preview.appendChild(image);
+        }
+
+        prepareCanvas();
+
+        openButton.addEventListener('click', function () {
+            modal.hidden = false;
+            document.body.classList.add('modal-open');
+            clearCanvas();
+        });
+
+        modal.querySelectorAll('[data-close-signature-modal]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                modal.hidden = true;
+                document.body.classList.remove('modal-open');
+            });
+        });
+
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) {
+                modal.hidden = true;
+                document.body.classList.remove('modal-open');
+            }
+        });
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', endDraw);
+        canvas.addEventListener('touchstart', startDraw, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', endDraw);
+
+        document.querySelector('[data-clear-signature-canvas]').addEventListener('click', clearCanvas);
+
+        document.querySelector('[data-save-signature-canvas]').addEventListener('click', function () {
+            if (!hasInk) {
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Tanda tangan masih kosong',
+                        text: 'Silakan gambar tanda tangan terlebih dahulu.',
+                        confirmButtonColor: '#047857'
+                    });
+                } else {
+                    window.alert('Silakan gambar tanda tangan terlebih dahulu.');
+                }
+
+                return;
+            }
+
+            var dataUrl = canvas.toDataURL('image/png');
+            input.value = dataUrl;
+            updatePreview(dataUrl);
+            modal.hidden = true;
+            document.body.classList.remove('modal-open');
+        });
+
+        document.querySelector('[data-clear-saved-signature]').addEventListener('click', function () {
+            input.value = '';
+            updatePreview('');
+        });
+    });
+</script>

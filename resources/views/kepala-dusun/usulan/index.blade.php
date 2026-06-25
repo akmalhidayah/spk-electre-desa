@@ -21,28 +21,6 @@
             <div class="alert alert-warning">Akun Anda belum terhubung dengan data dusun. Silakan hubungi admin.</div>
         @endif
 
-        <section class="stat-grid">
-            @foreach ([
-                ['label' => 'Total Usulan', 'value' => $stats['total']],
-                ['label' => 'Diajukan', 'value' => $stats['diajukan']],
-                ['label' => 'Diproses', 'value' => $stats['diproses']],
-                ['label' => 'Diterima', 'value' => $stats['diterima']],
-            ] as $stat)
-                <article class="stat-card">
-                    <div class="stat-label">{{ $stat['label'] }}</div>
-                    <div class="stat-value">{{ number_format($stat['value'], 0, ',', '.') }}</div>
-                </article>
-            @endforeach
-        </section>
-
-        <section class="panel stat-card-inline">
-            <div>
-                <div class="stat-label">Masuk Prioritas</div>
-                <div class="stat-value">{{ number_format($stats['masuk_prioritas'], 0, ',', '.') }}</div>
-            </div>
-            <span class="badge badge-priority">{{ $dusun?->nama_dusun ?? 'Belum Ada Dusun' }}</span>
-        </section>
-
         <section class="panel">
             <form method="GET" action="{{ route('kepala-dusun.usulan.index') }}" class="filter-bar filter-bar-extended">
                 <div class="filter-field grow">
@@ -77,16 +55,14 @@
         <section class="panel">
             @if ($usulans->count() > 0)
                 <div class="table-wrap desktop-table">
-                    <table class="data-table">
+                    <table class="data-table kepala-dusun-usulan-table">
                         <thead>
                             <tr>
                                 <th>No</th>
                                 <th>Tahun</th>
-                                <th>Nama Kegiatan</th>
-                                <th>Jumlah</th>
-                                <th>Estimasi Anggaran</th>
+                                <th>Usulan</th>
+                                <th>Detail</th>
                                 <th>Status</th>
-                                <th>Catatan Admin</th>
                                 <th class="text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -97,14 +73,16 @@
                                     <td><strong>{{ $usulan->tahun }}</strong></td>
                                     <td>
                                         <strong>{{ $usulan->nama_kegiatan }}</strong>
-                                        @if ($usulan->deskripsi)
-                                            <small>{{ \Illuminate\Support\Str::limit($usulan->deskripsi, 70) }}</small>
-                                        @endif
+                                        <small>{{ $usulan->lokasi_kegiatan ?: '-' }}</small>
                                     </td>
-                                    <td>{{ $usulan->jumlah_usulan !== null ? number_format($usulan->jumlah_usulan, 0, ',', '.') : '-' }}</td>
-                                    <td>{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format((float) $usulan->estimasi_anggaran, 0, ',', '.') : '-' }}</td>
+                                    <td>
+                                        <strong>{{ $usulan->kategori_kegiatan ?: '-' }}</strong>
+                                        <small>
+                                            {{ $usulan->prakiraan_volume !== null ? number_format((float) $usulan->prakiraan_volume, 0, ',', '.').' '.$usulan->satuan : 'Volume belum diisi' }}
+                                            · {{ number_format($usulan->total_penerima_manfaat, 0, ',', '.') }} penerima
+                                        </small>
+                                    </td>
                                     <td><span class="badge {{ $usulan->status_badge_class }}">{{ $usulan->status_label }}</span></td>
-                                    <td>{{ $usulan->catatan_admin ? \Illuminate\Support\Str::limit($usulan->catatan_admin, 50) : '-' }}</td>
                                     <td>
                                         @if ($usulan->status === \App\Models\UsulanPembangunan::STATUS_DIAJUKAN)
                                             <div class="action-group">
@@ -136,8 +114,10 @@
                                 <span class="badge {{ $usulan->status_badge_class }}">{{ $usulan->status_label }}</span>
                             </div>
                             <dl class="meta-grid">
-                                <div><dt>Jumlah</dt><dd>{{ $usulan->jumlah_usulan !== null ? number_format($usulan->jumlah_usulan, 0, ',', '.') : '-' }}</dd></div>
-                                <div><dt>Anggaran</dt><dd>{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format((float) $usulan->estimasi_anggaran, 0, ',', '.') : '-' }}</dd></div>
+                                <div><dt>Lokasi</dt><dd>{{ $usulan->lokasi_kegiatan ?: '-' }}</dd></div>
+                                <div><dt>Volume</dt><dd>{{ $usulan->prakiraan_volume !== null ? number_format((float) $usulan->prakiraan_volume, 0, ',', '.').' '.$usulan->satuan : '-' }}</dd></div>
+                                <div><dt>Penerima</dt><dd>{{ number_format($usulan->total_penerima_manfaat, 0, ',', '.') }}</dd></div>
+                                <div><dt>Kategori</dt><dd>{{ $usulan->kategori_kegiatan ?: '-' }}</dd></div>
                             </dl>
                             @if ($usulan->catatan_admin)
                                 <p><strong>Catatan:</strong> {{ $usulan->catatan_admin }}</p>

@@ -4,11 +4,26 @@
         @method($method)
     @endif
 
+    @php
+        $selectedTipe = old('tipe_usulan', $usulan->tipe_usulan ?? \App\Models\UsulanPembangunan::TIPE_DUSUN);
+        $selectedDusunTerkait = collect(old('dusun_terkait_ids', $usulan->relationLoaded('dusunsTerkait') ? $usulan->dusunsTerkait->pluck('id')->all() : []))->map(fn ($id) => (int) $id)->all();
+    @endphp
+
     <div class="form-grid">
         <div class="form-group">
-            <label for="dusun_id" class="form-label">Dusun <span class="required">*</span></label>
-            <select id="dusun_id" name="dusun_id" class="form-control @error('dusun_id') is-invalid @enderror" required>
-                <option value="">Pilih dusun</option>
+            <label for="tipe_usulan" class="form-label">Tipe Usulan <span class="required">*</span></label>
+            <select id="tipe_usulan" name="tipe_usulan" class="form-control @error('tipe_usulan') is-invalid @enderror" required>
+                @foreach ($tipeUsulans as $tipe)
+                    <option value="{{ $tipe }}" @selected($selectedTipe === $tipe)>{{ ucwords(str_replace('_', ' ', $tipe)) }}</option>
+                @endforeach
+            </select>
+            @error('tipe_usulan')<div class="field-error">{{ $message }}</div>@enderror
+        </div>
+
+        <div class="form-group">
+            <label for="dusun_id" class="form-label">Dusun Utama</label>
+            <select id="dusun_id" name="dusun_id" class="form-control @error('dusun_id') is-invalid @enderror">
+                <option value="">Tidak ada</option>
                 @foreach ($dusuns as $dusun)
                     <option value="{{ $dusun->id }}" @selected(old('dusun_id', $usulan->dusun_id) == $dusun->id)>{{ $dusun->nama_dusun }}</option>
                 @endforeach
@@ -23,9 +38,67 @@
         </div>
 
         <div class="form-group form-group-full">
+            <label for="dusun_terkait_ids" class="form-label">Dusun Terkait</label>
+            <select id="dusun_terkait_ids" name="dusun_terkait_ids[]" class="form-control @error('dusun_terkait_ids') is-invalid @enderror" multiple>
+                @foreach ($dusuns as $dusun)
+                    <option value="{{ $dusun->id }}" @selected(in_array((int) $dusun->id, $selectedDusunTerkait, true))>{{ $dusun->nama_dusun }}</option>
+                @endforeach
+            </select>
+            @error('dusun_terkait_ids')<div class="field-error">{{ $message }}</div>@enderror
+        </div>
+
+        <div class="form-group form-group-full">
             <label for="nama_kegiatan" class="form-label">Nama Kegiatan <span class="required">*</span></label>
-            <input id="nama_kegiatan" type="text" name="nama_kegiatan" value="{{ old('nama_kegiatan', $usulan->nama_kegiatan) }}" class="form-control @error('nama_kegiatan') is-invalid @enderror" maxlength="200" required placeholder="Contoh: Pembangunan jalan tani">
+            <input id="nama_kegiatan" type="text" name="nama_kegiatan" value="{{ old('nama_kegiatan', $usulan->nama_kegiatan) }}" class="form-control @error('nama_kegiatan') is-invalid @enderror" maxlength="255" required placeholder="Contoh: Pembangunan jalan tani">
             @error('nama_kegiatan')<div class="field-error">{{ $message }}</div>@enderror
+        </div>
+
+        <div class="form-group form-group-full">
+            <label for="lokasi_kegiatan" class="form-label">Lokasi Kegiatan</label>
+            <input id="lokasi_kegiatan" type="text" name="lokasi_kegiatan" value="{{ old('lokasi_kegiatan', $usulan->lokasi_kegiatan) }}" class="form-control @error('lokasi_kegiatan') is-invalid @enderror" maxlength="255" placeholder="Contoh: RT.001/RW.001 Dusun Katute">
+            @error('lokasi_kegiatan')<div class="field-error">{{ $message }}</div>@enderror
+        </div>
+
+        <div class="form-group">
+            <label for="prakiraan_volume" class="form-label">Prakiraan Volume</label>
+            <input id="prakiraan_volume" type="number" min="0" step="0.01" name="prakiraan_volume" value="{{ old('prakiraan_volume', $usulan->prakiraan_volume) }}" class="form-control @error('prakiraan_volume') is-invalid @enderror">
+            @error('prakiraan_volume')<div class="field-error">{{ $message }}</div>@enderror
+        </div>
+
+        <div class="form-group">
+            <label for="satuan" class="form-label">Satuan</label>
+            <input id="satuan" type="text" name="satuan" value="{{ old('satuan', $usulan->satuan) }}" class="form-control @error('satuan') is-invalid @enderror" maxlength="50">
+            @error('satuan')<div class="field-error">{{ $message }}</div>@enderror
+        </div>
+
+        <div class="form-group">
+            <label for="penerima_manfaat_lk" class="form-label">Penerima Manfaat LK</label>
+            <input id="penerima_manfaat_lk" type="number" min="0" name="penerima_manfaat_lk" value="{{ old('penerima_manfaat_lk', $usulan->penerima_manfaat_lk) }}" class="form-control @error('penerima_manfaat_lk') is-invalid @enderror">
+            @error('penerima_manfaat_lk')<div class="field-error">{{ $message }}</div>@enderror
+        </div>
+
+        <div class="form-group">
+            <label for="penerima_manfaat_pr" class="form-label">Penerima Manfaat PR</label>
+            <input id="penerima_manfaat_pr" type="number" min="0" name="penerima_manfaat_pr" value="{{ old('penerima_manfaat_pr', $usulan->penerima_manfaat_pr) }}" class="form-control @error('penerima_manfaat_pr') is-invalid @enderror">
+            @error('penerima_manfaat_pr')<div class="field-error">{{ $message }}</div>@enderror
+        </div>
+
+        <div class="form-group">
+            <label for="penerima_manfaat_a_rtm" class="form-label">Penerima Manfaat A-RTM</label>
+            <input id="penerima_manfaat_a_rtm" type="number" min="0" name="penerima_manfaat_a_rtm" value="{{ old('penerima_manfaat_a_rtm', $usulan->penerima_manfaat_a_rtm) }}" class="form-control @error('penerima_manfaat_a_rtm') is-invalid @enderror">
+            @error('penerima_manfaat_a_rtm')<div class="field-error">{{ $message }}</div>@enderror
+        </div>
+
+        <div class="form-group">
+            <label for="kategori_kegiatan" class="form-label">Kategori Kegiatan</label>
+            <input id="kategori_kegiatan" type="text" name="kategori_kegiatan" value="{{ old('kategori_kegiatan', $usulan->kategori_kegiatan) }}" class="form-control @error('kategori_kegiatan') is-invalid @enderror" maxlength="100">
+            @error('kategori_kegiatan')<div class="field-error">{{ $message }}</div>@enderror
+        </div>
+
+        <div class="form-group">
+            <label for="sumber_usulan" class="form-label">Sumber Usulan</label>
+            <input id="sumber_usulan" type="text" name="sumber_usulan" value="{{ old('sumber_usulan', $usulan->sumber_usulan) }}" class="form-control @error('sumber_usulan') is-invalid @enderror">
+            @error('sumber_usulan')<div class="field-error">{{ $message }}</div>@enderror
         </div>
 
         <div class="form-group">

@@ -26,6 +26,7 @@ class KeputusanAkhir extends Model
         'status',
         'dasar_pertimbangan',
         'catatan_keputusan',
+        'tanda_tangan',
         'catatan',
         'ditetapkan_oleh',
         'decided_by',

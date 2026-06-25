@@ -33,6 +33,8 @@ class ElectreCalculation extends Model
         'judul',
         'deskripsi',
         'status',
+        'versi',
+        'is_latest',
         'total_alternatif',
         'total_kriteria',
         'calculated_by',
@@ -44,6 +46,8 @@ class ElectreCalculation extends Model
     {
         return [
             'tahun' => 'integer',
+            'versi' => 'integer',
+            'is_latest' => 'boolean',
             'total_alternatif' => 'integer',
             'total_kriteria' => 'integer',
             'calculated_at' => 'datetime',
@@ -58,6 +62,11 @@ class ElectreCalculation extends Model
     public function scopeSelesai(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_SELESAI);
+    }
+
+    public function scopeLatestVersion(Builder $query): Builder
+    {
+        return $query->where('is_latest', true);
     }
 
     public function calculator(): BelongsTo

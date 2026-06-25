@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('judul')->nullable();
             $table->text('deskripsi')->nullable();
             $table->string('status')->default('draft')->index();
+            $table->unsignedInteger('versi')->default(1);
+            $table->boolean('is_latest')->default(true)->index();
             $table->unsignedInteger('total_alternatif')->default(0);
             $table->unsignedInteger('total_kriteria')->default(0);
             $table->foreignId('calculated_by')
@@ -30,6 +32,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['tahun', 'status']);
+            $table->index(['tahun', 'is_latest']);
+            $table->unique(['tahun', 'versi'], 'electre_calculation_tahun_versi_unique');
         });
     }
 

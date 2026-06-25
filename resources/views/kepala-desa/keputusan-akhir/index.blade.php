@@ -14,21 +14,6 @@
             <a href="{{ route('kepala-desa.hasil-rekomendasi.index') }}" class="btn btn-primary btn-auto">Buat dari Rekomendasi</a>
         </section>
 
-        <section class="stats-grid">
-            <div class="stat-card">
-                <span class="stat-label">Total Keputusan</span>
-                <strong>{{ $totalKeputusan }}</strong>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Draft</span>
-                <strong>{{ $totalDraft }}</strong>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Ditetapkan</span>
-                <strong>{{ $totalDitetapkan }}</strong>
-            </div>
-        </section>
-
         <section class="panel">
             <form method="GET" action="{{ route('kepala-desa.keputusan-akhir.index') }}" class="filter-grid">
                 <div class="form-group">

@@ -25,6 +25,7 @@ class StoreKeputusanAkhirRequest extends FormRequest
             'status' => ['required', Rule::in(['draft', 'ditetapkan'])],
             'dasar_pertimbangan' => ['nullable', 'string'],
             'catatan_keputusan' => ['nullable', 'string'],
+            'tanda_tangan' => ['nullable', 'string', 'starts_with:data:image/png;base64,'],
         ];
     }
 }

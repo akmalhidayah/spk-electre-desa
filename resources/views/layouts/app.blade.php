@@ -44,16 +44,7 @@
                 ['label' => 'Usulan Pembangunan', 'icon' => 'document', 'href' => route('admin.usulan.index'), 'active' => request()->routeIs('admin.usulan.*')],
                 ['label' => 'Penilaian Alternatif', 'icon' => 'clipboard', 'href' => route('admin.penilaian.index'), 'active' => request()->routeIs('admin.penilaian.*')],
                 ['label' => 'Proses ELECTRE', 'icon' => 'calculator', 'href' => route('admin.electre.index'), 'active' => request()->routeIs('admin.electre.*')],
-                [
-                    'type' => 'group',
-                    'label' => 'Hasil',
-                    'icon' => 'chart',
-                    'active' => request()->routeIs('admin.hasil-rekomendasi.*'),
-                    'children' => [
-                        ['label' => 'Hasil Rekomendasi', 'icon' => 'chart', 'href' => route('admin.hasil-rekomendasi.index'), 'active' => request()->routeIs('admin.hasil-rekomendasi.*')],
-                        ['label' => 'Laporan', 'icon' => 'printer', 'href' => route('admin.hasil-rekomendasi.index'), 'active' => false],
-                    ],
-                ],
+                ['label' => 'Hasil Rekomendasi', 'icon' => 'chart', 'href' => route('admin.hasil-rekomendasi.index'), 'active' => request()->routeIs('admin.hasil-rekomendasi.*')],
                 [
                     'type' => 'group',
                     'label' => 'Master Data',
@@ -416,6 +407,10 @@
 
             document.querySelectorAll('form:not(.js-confirm)').forEach(function (form) {
                 form.addEventListener('submit', function () {
+                    if (form.dataset.noLoading === 'true') {
+                        return;
+                    }
+
                     setLoadingState(form);
                 });
             });

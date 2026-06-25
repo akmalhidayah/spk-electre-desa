@@ -108,12 +108,16 @@
                                     <td>{{ $history->calculator?->name ?? '-' }}</td>
                                     <td>{{ $history->calculated_at?->format('d/m/Y H:i') ?? '-' }}</td>
                                     <td>
-                                        <div class="action-group">
-                                            <a href="{{ route('admin.electre.show', $history) }}" class="btn btn-sm btn-light">Lihat Hasil</a>
+                                        <div class="action-group icon-actions">
+                                            <a href="{{ route('admin.electre.show', $history) }}" class="btn btn-sm btn-light action-icon-btn" title="Lihat hasil" aria-label="Lihat hasil">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /></svg>
+                                            </a>
                                             <form method="POST" action="{{ route('admin.electre.destroy', $history) }}" class="js-confirm" data-title="Hapus Histori?" data-text="Histori perhitungan dan detail hasil akan dihapus. Lanjutkan?" data-icon="warning" data-confirm-button="Ya, Hapus">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                                <button type="submit" class="btn btn-sm btn-danger action-icon-btn" title="Hapus histori" aria-label="Hapus histori">
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v5M14 11v5" /></svg>
+                                                </button>
                                             </form>
                                         </div>
                                     </td>
@@ -140,11 +144,15 @@
                                 <div><dt>Kriteria</dt><dd>{{ $history->total_kriteria }}</dd></div>
                             </dl>
                             <div class="mobile-actions">
-                                <a href="{{ route('admin.electre.show', $history) }}" class="btn btn-sm btn-light">Lihat Hasil</a>
+                                <a href="{{ route('admin.electre.show', $history) }}" class="btn btn-sm btn-light action-icon-btn" title="Lihat hasil" aria-label="Lihat hasil">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /></svg>
+                                </a>
                                 <form method="POST" action="{{ route('admin.electre.destroy', $history) }}" class="js-confirm" data-title="Hapus Histori?" data-text="Histori perhitungan dan detail hasil akan dihapus. Lanjutkan?" data-icon="warning" data-confirm-button="Ya, Hapus">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                    <button type="submit" class="btn btn-sm btn-danger action-icon-btn" title="Hapus histori" aria-label="Hapus histori">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v5M14 11v5" /></svg>
+                                    </button>
                                 </form>
                             </div>
                         </article>

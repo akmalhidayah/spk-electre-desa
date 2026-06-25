@@ -7,7 +7,9 @@ use App\Models\Dusun;
 use App\Models\ElectreCalculation;
 use App\Models\Kriteria;
 use App\Models\PenilaianAlternatif;
+use App\Models\TahunPerencanaan;
 use App\Services\ElectreService;
+use App\Services\TahunAktifService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -17,10 +19,10 @@ use Throwable;
 
 class ElectreCalculationController extends Controller
 {
-    public function index(Request $request): View|RedirectResponse
+    public function index(Request $request, TahunAktifService $tahunAktifService): View|RedirectResponse
     {
         try {
-            $tahun = $request->filled('tahun') ? $request->integer('tahun') : (int) date('Y');
+            $tahun = $tahunAktifService->resolveYear($request->filled('tahun') ? $request->integer('tahun') : null);
 
             if ($tahun < 2020 || $tahun > 2100) {
                 return redirect()
@@ -30,6 +32,7 @@ class ElectreCalculationController extends Controller
 
             $summary = $this->buildReadinessSummary($tahun);
             $histories = ElectreCalculation::with('calculator')
+                ->tahun($tahun)
                 ->latest('calculated_at')
                 ->latest()
                 ->paginate(10)
@@ -39,6 +42,8 @@ class ElectreCalculationController extends Controller
                 'tahun' => $tahun,
                 'summary' => $summary,
                 'histories' => $histories,
+                'periode' => TahunPerencanaan::where('tahun', $tahun)->first(),
+                'tahunList' => TahunPerencanaan::orderByDesc('tahun')->pluck('tahun'),
             ]);
         } catch (Throwable $e) {
             Log::error('[ELECTRE_INDEX_FAILED] Gagal memuat halaman proses ELECTRE', $this->logContext($e, $request));

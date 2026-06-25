@@ -8,6 +8,8 @@ use App\Models\ElectreCalculation;
 use App\Models\ElectreResult;
 use App\Models\KeputusanAkhir;
 use App\Models\Kriteria;
+use App\Models\UsulanPembangunan;
+use App\Services\PejabatDesaService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -130,6 +132,7 @@ class KeputusanAkhirController extends Controller
                 'status' => $data['status'],
                 'dasar_pertimbangan' => $data['dasar_pertimbangan'] ?? null,
                 'catatan_keputusan' => $data['catatan_keputusan'] ?? null,
+                'tanda_tangan' => $data['tanda_tangan'] ?? null,
             ];
 
             if (Schema::hasColumn('keputusan_akhirs', 'decided_by')) {
@@ -173,13 +176,17 @@ class KeputusanAkhirController extends Controller
         }
     }
 
-    public function show(Request $request, KeputusanAkhir $keputusanAkhir)
+    public function show(Request $request, KeputusanAkhir $keputusanAkhir, PejabatDesaService $pejabatDesaService)
     {
         try {
             $data = $this->viewData($keputusanAkhir);
 
             if ($request->boolean('pdf')) {
+                $tahun = (int) ($keputusanAkhir->tahun ?? $keputusanAkhir->calculation?->tahun ?? now()->year);
+
                 $data['kriterias'] = Kriteria::aktif()->ordered()->get();
+                $data['kepalaDesaName'] = $pejabatDesaService->kepalaDesaName();
+                $data['acceptedUsulans'] = $this->acceptedUsulansForYear($tahun);
 
                 return Pdf::loadView('pdf.keputusan-akhir', $data)
                     ->setPaper('a4', 'portrait')
@@ -215,5 +222,15 @@ class KeputusanAkhirController extends Controller
             'calculation' => $keputusanAkhir->calculation,
             'results' => $keputusanAkhir->calculation?->results?->sortBy('ranking')->values() ?? collect(),
         ];
+    }
+
+    private function acceptedUsulansForYear(int $tahun)
+    {
+        return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
+            ->tahun($tahun)
+            ->diterima()
+            ->orderBy('dusun_id')
+            ->orderBy('nama_kegiatan')
+            ->get();
     }
 }

@@ -17,23 +17,7 @@
             </div>
             <div class="action-group">
                 <a href="{{ route('admin.hasil-rekomendasi.index') }}" class="btn btn-light">Kembali</a>
-                <a href="{{ route('admin.hasil-rekomendasi.pdf', $calculation) }}" class="btn btn-primary btn-auto" target="_blank">Cetak PDF</a>
-            </div>
-        </section>
-
-        <section class="stat-grid">
-            <article class="stat-card"><div class="stat-label">Kode Perhitungan</div><div class="stat-value stat-value-code">{{ $calculation->kode_perhitungan }}</div></article>
-            <article class="stat-card"><div class="stat-label">Tahun</div><div class="stat-value">{{ $calculation->tahun }}</div></article>
-            <article class="stat-card"><div class="stat-label">Status</div><div class="stat-value">{{ ucfirst($calculation->status) }}</div></article>
-            <article class="stat-card"><div class="stat-label">Alternatif / Kriteria</div><div class="stat-value">{{ $calculation->total_alternatif }} / {{ $calculation->total_kriteria }}</div></article>
-        </section>
-
-        <section class="panel">
-            <div class="meta-grid electre-info-grid">
-                <div><dt>Judul</dt><dd>{{ $calculation->judul ?? '-' }}</dd></div>
-                <div><dt>Dihitung Oleh</dt><dd>{{ $calculation->calculator?->name ?? '-' }}</dd></div>
-                <div><dt>Waktu Perhitungan</dt><dd>{{ $calculation->calculated_at?->format('d/m/Y H:i') ?? '-' }}</dd></div>
-                <div><dt>Catatan</dt><dd>{{ $calculation->notes ?? '-' }}</dd></div>
+                <a href="{{ route('admin.hasil-rekomendasi.pdf', $calculation->tahun) }}" class="btn btn-primary btn-auto" target="_blank">Cetak PDF</a>
             </div>
         </section>
 
@@ -45,7 +29,11 @@
             </section>
         @endif
 
-        @include('admin.hasil-rekomendasi._ranking-table', ['results' => $results])
+        @include('admin.hasil-rekomendasi._ranking-table', [
+            'results' => $results,
+            'calculation' => $calculation,
+            'dusunPdfRouteName' => 'admin.hasil-rekomendasi.dusun-pdf',
+        ])
 
         <section class="panel">
             <h2 class="panel-title">Detail Perhitungan</h2>

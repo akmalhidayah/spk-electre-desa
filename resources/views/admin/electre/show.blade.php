@@ -22,35 +22,6 @@
             <a href="{{ route('admin.electre.index', ['tahun' => $calculation->tahun]) }}" class="btn btn-light">Kembali</a>
         </section>
 
-        <section class="stat-grid">
-            <article class="stat-card">
-                <div class="stat-label">Kode Perhitungan</div>
-                <div class="stat-value stat-value-code">{{ $calculation->kode_perhitungan }}</div>
-            </article>
-            <article class="stat-card">
-                <div class="stat-label">Tahun</div>
-                <div class="stat-value">{{ $calculation->tahun }}</div>
-            </article>
-            <article class="stat-card">
-                <div class="stat-label">Status</div>
-                <div class="stat-value">{{ ucfirst($calculation->status) }}</div>
-            </article>
-            <article class="stat-card">
-                <div class="stat-label">Total Data</div>
-                <div class="stat-value">{{ $calculation->total_alternatif }} / {{ $calculation->total_kriteria }}</div>
-                <div class="stat-note">Alternatif / Kriteria</div>
-            </article>
-        </section>
-
-        <section class="panel">
-            <div class="meta-grid electre-info-grid">
-                <div><dt>Dihitung Oleh</dt><dd>{{ $calculation->calculator?->name ?? '-' }}</dd></div>
-                <div><dt>Waktu Perhitungan</dt><dd>{{ $calculation->calculated_at?->format('d/m/Y H:i') ?? '-' }}</dd></div>
-                <div><dt>Judul</dt><dd>{{ $calculation->judul ?? '-' }}</dd></div>
-                <div><dt>Catatan</dt><dd>{{ $calculation->notes ?? '-' }}</dd></div>
-            </div>
-        </section>
-
         <section class="panel">
             <div class="matrix-toolbar">
                 <div>

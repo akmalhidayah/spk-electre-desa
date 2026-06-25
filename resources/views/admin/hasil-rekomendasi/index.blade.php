@@ -5,20 +5,13 @@
 @section('page-title', 'Hasil Rekomendasi')
 
 @section('content')
-    <div class="stack">
+    <div class="stack hasil-rekomendasi-page">
         <section class="page-header-card">
             <div>
                 <h2>Hasil Rekomendasi</h2>
                 <p>Riwayat hasil perhitungan ELECTRE prioritas pembangunan antar dusun.</p>
             </div>
             <a href="{{ route('admin.electre.index') }}" class="btn btn-primary btn-auto">Proses ELECTRE</a>
-        </section>
-
-        <section class="stat-grid">
-            <article class="stat-card"><div class="stat-label">Total Perhitungan</div><div class="stat-value">{{ number_format($stats['total'], 0, ',', '.') }}</div></article>
-            <article class="stat-card"><div class="stat-label">Perhitungan Selesai</div><div class="stat-value">{{ number_format($stats['selesai'], 0, ',', '.') }}</div></article>
-            <article class="stat-card"><div class="stat-label">Tahun Berjalan</div><div class="stat-value">{{ number_format($stats['tahun_berjalan'], 0, ',', '.') }}</div></article>
-            <article class="stat-card"><div class="stat-label">Perhitungan Terbaru</div><div class="stat-value stat-value-code">{{ $stats['terbaru']?->kode_perhitungan ?? '-' }}</div></article>
         </section>
 
         <section class="panel">
@@ -39,18 +32,6 @@
                         <option value="">Semua</option>
                         @foreach ($tahunList as $tahun)
                             <option value="{{ $tahun }}" @selected($filters['tahun'] == $tahun)>{{ $tahun }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="filter-field input-with-icon">
-                    <label for="status" class="form-label sr-only">Status</label>
-                    <span class="input-icon">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-                    </span>
-                    <select id="status" name="status" class="form-control">
-                        <option value="">Semua</option>
-                        @foreach ($statuses as $status)
-                            <option value="{{ $status }}" @selected($filters['status'] === $status)>{{ ucfirst($status) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -77,30 +58,40 @@
                                 <th>Kode Perhitungan</th>
                                 <th>Tahun</th>
                                 <th>Judul</th>
-                                <th>Alternatif</th>
-                                <th>Kriteria</th>
                                 <th>Status</th>
-                                <th>Dihitung Oleh</th>
                                 <th>Waktu</th>
                                 <th class="text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($calculations as $calculation)
+                                @php
+                                    $keputusan = $calculation->keputusanAkhir;
+                                    $isDitetapkan = $keputusan?->status === \App\Models\KeputusanAkhir::STATUS_DITETAPKAN;
+                                    $statusLabel = $isDitetapkan ? 'Ditetapkan' : ($keputusan ? 'Draft' : 'Belum Ditetapkan');
+                                    $statusClass = $isDitetapkan ? 'badge-success' : ($keputusan ? 'badge-warning' : 'badge-muted');
+                                    $displayTitle = 'Perhitungan Pembangunan Usulan Tahun '.$calculation->tahun;
+                                @endphp
                                 <tr>
                                     <td>{{ ($calculations->firstItem() ?? 0) + $loop->index }}</td>
                                     <td><span class="code-pill">{{ $calculation->kode_perhitungan }}</span></td>
                                     <td>{{ $calculation->tahun }}</td>
-                                    <td><strong>{{ $calculation->judul ?? '-' }}</strong></td>
-                                    <td>{{ $calculation->total_alternatif }}</td>
-                                    <td>{{ $calculation->total_kriteria }}</td>
-                                    <td><span class="badge {{ $calculation->status === 'selesai' ? 'badge-success' : 'badge-muted' }}">{{ ucfirst($calculation->status) }}</span></td>
-                                    <td>{{ $calculation->calculator?->name ?? '-' }}</td>
+                                    <td><strong>{{ $displayTitle }}</strong></td>
+                                    <td><span class="badge {{ $statusClass }}">{{ $statusLabel }}</span></td>
                                     <td>{{ $calculation->calculated_at?->format('d/m/Y H:i') ?? '-' }}</td>
                                     <td>
-                                        <div class="action-group">
-                                            <a href="{{ route('admin.hasil-rekomendasi.show', $calculation) }}" class="btn btn-sm btn-light">Lihat Hasil</a>
-                                            <a href="{{ route('admin.hasil-rekomendasi.pdf', $calculation) }}" class="btn btn-sm btn-secondary" target="_blank">Cetak PDF</a>
+                                        <div class="action-group icon-actions">
+                                            <a href="{{ route('admin.hasil-rekomendasi.show', $calculation) }}" class="btn btn-sm btn-light action-icon-btn" title="Lihat hasil" aria-label="Lihat hasil">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /></svg>
+                                            </a>
+                                            <a href="{{ route('admin.hasil-rekomendasi.pdf', $calculation->tahun) }}" class="btn btn-sm btn-secondary action-icon-btn" target="_blank" title="Cetak PDF" aria-label="Cetak PDF">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" /><path d="M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M7 14h10v7H7Z" /></svg>
+                                            </a>
+                                            @if ($keputusan)
+                                                <a href="{{ route('admin.hasil-rekomendasi.keputusan-pdf', $calculation) }}" class="btn btn-sm btn-secondary action-icon-btn" target="_blank" title="Cetak PDF keputusan akhir" aria-label="Cetak PDF keputusan akhir">
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M14 3v6h6" /><path d="M8 14h8M8 17h5" /></svg>
+                                                </a>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -111,23 +102,37 @@
 
                 <div class="mobile-list">
                     @foreach ($calculations as $calculation)
+                        @php
+                            $keputusan = $calculation->keputusanAkhir;
+                            $isDitetapkan = $keputusan?->status === \App\Models\KeputusanAkhir::STATUS_DITETAPKAN;
+                            $statusLabel = $isDitetapkan ? 'Ditetapkan' : ($keputusan ? 'Draft' : 'Belum Ditetapkan');
+                            $statusClass = $isDitetapkan ? 'badge-success' : ($keputusan ? 'badge-warning' : 'badge-muted');
+                            $displayTitle = 'Perhitungan Pembangunan Usulan Tahun '.$calculation->tahun;
+                        @endphp
                         <article class="mobile-card">
                             <div class="mobile-card-head">
                                 <div>
                                     <span class="code-pill">{{ $calculation->kode_perhitungan }}</span>
-                                    <h3>{{ $calculation->judul ?? 'Hasil ELECTRE' }}</h3>
+                                    <h3>{{ $displayTitle }}</h3>
                                 </div>
-                                <span class="badge {{ $calculation->status === 'selesai' ? 'badge-success' : 'badge-muted' }}">{{ ucfirst($calculation->status) }}</span>
+                                <span class="badge {{ $statusClass }}">{{ $statusLabel }}</span>
                             </div>
                             <dl class="meta-grid">
                                 <div><dt>Tahun</dt><dd>{{ $calculation->tahun }}</dd></div>
                                 <div><dt>Waktu</dt><dd>{{ $calculation->calculated_at?->format('d/m/Y H:i') ?? '-' }}</dd></div>
-                                <div><dt>Alternatif</dt><dd>{{ $calculation->total_alternatif }}</dd></div>
-                                <div><dt>Kriteria</dt><dd>{{ $calculation->total_kriteria }}</dd></div>
                             </dl>
                             <div class="mobile-actions">
-                                <a href="{{ route('admin.hasil-rekomendasi.show', $calculation) }}" class="btn btn-sm btn-light">Lihat Hasil</a>
-                                <a href="{{ route('admin.hasil-rekomendasi.pdf', $calculation) }}" class="btn btn-sm btn-secondary" target="_blank">PDF</a>
+                                <a href="{{ route('admin.hasil-rekomendasi.show', $calculation) }}" class="btn btn-sm btn-light action-icon-btn" title="Lihat hasil" aria-label="Lihat hasil">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /></svg>
+                                </a>
+                                <a href="{{ route('admin.hasil-rekomendasi.pdf', $calculation->tahun) }}" class="btn btn-sm btn-secondary action-icon-btn" target="_blank" title="Cetak PDF" aria-label="Cetak PDF">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" /><path d="M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M7 14h10v7H7Z" /></svg>
+                                </a>
+                                @if ($keputusan)
+                                    <a href="{{ route('admin.hasil-rekomendasi.keputusan-pdf', $calculation) }}" class="btn btn-sm btn-secondary action-icon-btn" target="_blank" title="Cetak PDF keputusan akhir" aria-label="Cetak PDF keputusan akhir">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M14 3v6h6" /><path d="M8 14h8M8 17h5" /></svg>
+                                    </a>
+                                @endif
                             </div>
                         </article>
                     @endforeach

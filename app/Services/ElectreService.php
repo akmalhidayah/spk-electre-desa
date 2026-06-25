@@ -8,6 +8,7 @@ use App\Models\ElectreResult;
 use App\Models\ElectreResultDetail;
 use App\Models\Kriteria;
 use App\Models\PenilaianAlternatif;
+use App\Models\TahunPerencanaan;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -32,6 +33,9 @@ class ElectreService
                 $dominantMatrices = $this->buildDominantMatrices($concordanceMatrix, $discordanceMatrix, $thresholds, $dusuns);
                 $aggregateDominance = $this->buildAggregateDominanceMatrix($dominantMatrices['concordance'], $dominantMatrices['discordance'], $dusuns);
                 $ranking = $this->buildRanking($aggregateDominance, $weightedMatrix, $dusuns);
+                $versi = ((int) ElectreCalculation::tahun($tahun)->max('versi')) + 1;
+
+                ElectreCalculation::tahun($tahun)->update(['is_latest' => false]);
 
                 $calculation = ElectreCalculation::create([
                     'kode_perhitungan' => $this->generateCalculationCode($tahun),
@@ -39,6 +43,8 @@ class ElectreService
                     'judul' => "Perhitungan ELECTRE Tahun {$tahun}",
                     'deskripsi' => 'Perhitungan prioritas pembangunan antar dusun menggunakan metode ELECTRE.',
                     'status' => ElectreCalculation::STATUS_SELESAI,
+                    'versi' => $versi,
+                    'is_latest' => true,
                     'total_alternatif' => $dusuns->count(),
                     'total_kriteria' => $kriterias->count(),
                     'calculated_by' => $userId,
@@ -79,6 +85,12 @@ class ElectreService
                     'dominant_discordance' => $this->readablePairMatrix($dominantMatrices['discordance'], $dusuns, false),
                     'aggregate_dominance' => $this->readablePairMatrix($aggregateDominance, $dusuns, false),
                     'ranking_summary' => $ranking,
+                ]);
+
+                TahunPerencanaan::where('tahun', $tahun)->update([
+                    'perlu_hitung_ulang' => false,
+                    'alasan_hitung_ulang' => null,
+                    'last_electre_calculation_id' => $calculation->id,
                 ]);
 
                 return $calculation->load(['results.dusun', 'details', 'calculator']);

@@ -24,16 +24,33 @@
         table { border-collapse: collapse; margin-top: 8px; width: 100%; }
         th, td { border: 1px solid #cbd5e1; padding: 7px 8px; vertical-align: top; }
         th { background: #e2e8f0; text-align: left; }
-        .identity td:first-child { font-weight: bold; width: 33%; }
-        .decision { background: #f0fdfa; border: 1px solid #99f6e4; margin-top: 10px; padding: 12px; }
-        .decision strong { color: #134e4a; font-size: 14px; }
-        .note { background: #f8fafc; border: 1px solid #dbe3ec; margin-top: 8px; padding: 10px; white-space: pre-line; }
-        .ranking th:nth-child(1), .ranking td:nth-child(1) { text-align: center; width: 55px; }
-        .ranking th:nth-child(2), .ranking td:nth-child(2) { text-align: center; width: 85px; }
-        .ranking th:nth-child(4), .ranking td:nth-child(4) { text-align: center; width: 85px; }
+        .identity td:nth-child(1),
+        .identity td:nth-child(3) { font-weight: bold; width: 21%; }
+        .identity td:nth-child(2),
+        .identity td:nth-child(4) { width: 29%; }
+        .decision { background: #f0fdfa; border: 1px solid #99f6e4; color: #134e4a; margin-top: 10px; padding: 12px; }
+        .decision strong { font-size: 14px; }
+        .note { background: #f8fafc; border: 1px solid #dbe3ec; margin-top: 8px; padding: 10px; }
+        .ranking th:nth-child(1), .ranking td:nth-child(1) { text-align: center; width: 54px; }
+        .ranking th:nth-child(2), .ranking td:nth-child(2) { text-align: center; width: 86px; }
+        .ranking th:nth-child(4), .ranking td:nth-child(4) { text-align: center; width: 82px; }
+        .ranking th:nth-child(5), .ranking td:nth-child(5) { width: 96px; }
         .selected td { background: #ecfdf5; font-weight: bold; }
+        .page-break { page-break-before: always; }
+        .appendix-note { color: #475569; font-size: 10px; margin-top: 8px; }
+        .appendix-table th, .appendix-table td { font-size: 8px; padding: 4px 5px; }
+        .appendix-table th { text-align: center; }
+        .appendix-table .text-center { text-align: center; }
+        .appendix-table .nowrap { white-space: nowrap; }
+        .appendix-table .col-no { width: 24px; }
+        .appendix-table .col-sdgs { width: 42px; }
+        .appendix-table .col-volume { width: 50px; }
+        .appendix-table .col-satuan { width: 44px; }
+        .appendix-table .col-benefit { width: 38px; }
         .signature { margin-left: auto; margin-top: 36px; text-align: center; width: 230px; }
         .signature .line { margin-top: 54px; }
+        .signature-image { height: 54px; margin: 10px auto 4px; max-width: 190px; object-fit: contain; }
+        .signature .line.with-image { margin-top: 6px; }
         .footer { border-top: 1px solid #cbd5e1; bottom: 18px; color: #64748b; font-size: 9px; left: 32px; padding-top: 6px; position: fixed; right: 32px; text-align: center; }
     </style>
 </head>
@@ -43,6 +60,13 @@
         $logoKananPath = public_path('images/logo-kanan.png');
         $logoKiri = file_exists($logoKiriPath) ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoKiriPath)) : null;
         $logoKanan = file_exists($logoKananPath) ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoKananPath)) : null;
+        $bulanIndonesia = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+        $tanggalKeputusan = $keputusan->tanggal_keputusan;
+        $tanggalSurat = $tanggalKeputusan
+            ? $tanggalKeputusan->format('d').' '.$bulanIndonesia[(int) $tanggalKeputusan->format('n')].' '.$tanggalKeputusan->format('Y')
+            : now()->format('d').' '.$bulanIndonesia[(int) now()->format('n')].' '.now()->format('Y');
+        $tahunDokumen = $keputusan->tahun ?? $calculation?->tahun ?? '-';
+        $namaKepalaDesa = $kepalaDesaName ?? $keputusan->penetap?->name ?? $keputusan->decider?->name ?? '-';
     @endphp
 
     <div class="letterhead">
@@ -65,40 +89,56 @@
     </div>
 
     <div class="document-title">
-        <h1>Laporan Penetapan Hasil Prioritas Pembangunan Antar Dusun</h1>
+        <h1>Laporan Keputusan Prioritas Pembangunan Antar Dusun</h1>
         <h2>Nomor: {{ $keputusan->nomor_keputusan ?: '-' }}</h2>
     </div>
 
     <div class="section">
         <h3>Identitas Penetapan</h3>
         <table class="identity">
-            <tr><td>Kode Perhitungan</td><td>{{ $calculation?->kode_perhitungan ?? '-' }}</td></tr>
-            <tr><td>Judul Perhitungan</td><td>{{ $calculation?->judul ?? '-' }}</td></tr>
-            <tr><td>Tahun</td><td>{{ $keputusan->tahun ?? $calculation?->tahun ?? '-' }}</td></tr>
-            <tr><td>Tanggal Keputusan</td><td>{{ $keputusan->tanggal_keputusan?->translatedFormat('d F Y') ?? '-' }}</td></tr>
-            <tr><td>Status</td><td>{{ ucfirst($keputusan->status) }}</td></tr>
-            <tr><td>Ditetapkan Oleh</td><td>{{ $keputusan->penetap?->name ?? $keputusan->decider?->name ?? '-' }}</td></tr>
+            <tr>
+                <td>Nomor Keputusan</td>
+                <td>{{ $keputusan->nomor_keputusan ?: '-' }}</td>
+                <td>Tahun</td>
+                <td>{{ $tahunDokumen }}</td>
+            </tr>
+            <tr>
+                <td>Tanggal Penetapan</td>
+                <td>{{ $tanggalSurat }}</td>
+                <td>Ditetapkan Oleh</td>
+                <td>{{ $namaKepalaDesa }}</td>
+            </tr>
+            <tr>
+                <td>Dasar Penilaian</td>
+                <td>{{ $calculation?->kode_perhitungan ?? '-' }}</td>
+                <td>Jumlah Dusun Dinilai</td>
+                <td>{{ $calculation?->total_alternatif ?? $results->count() }}</td>
+            </tr>
         </table>
     </div>
 
     <div class="section">
-        <h3>Hasil Penetapan</h3>
+        <h3>Penetapan Keputusan</h3>
+        <p class="note">
+            Berdasarkan hasil penilaian prioritas pembangunan tahun {{ $tahunDokumen }}, data usulan pembangunan yang telah diterima, serta pertimbangan Pemerintah Desa Barambang dalam musyawarah, maka ditetapkan dusun prioritas pembangunan sebagai berikut.
+        </p>
         <div class="decision">
-            Dusun yang ditetapkan sebagai prioritas pembangunan adalah<br>
             <strong>{{ $keputusan->dusun?->nama_dusun ?? '-' }}</strong>
-            ({{ $keputusan->dusun?->kode_alternatif ?? '-' }}).
+            ({{ $keputusan->dusun?->kode_alternatif ?? '-' }}) ditetapkan sebagai prioritas pembangunan Desa Barambang Tahun {{ $tahunDokumen }}.
         </div>
-        <p class="note"><strong>Dasar Pertimbangan</strong><br>{{ $keputusan->dasar_pertimbangan ?: 'Berdasarkan hasil perhitungan metode ELECTRE dan pertimbangan Pemerintah Desa.' }}</p>
+        @if ($keputusan->dasar_pertimbangan)
+            <p class="note"><strong>Pertimbangan Tambahan</strong><br>{{ $keputusan->dasar_pertimbangan }}</p>
+        @endif
         @if ($keputusan->catatan_keputusan)
             <p class="note"><strong>Catatan Keputusan</strong><br>{{ $keputusan->catatan_keputusan }}</p>
         @endif
     </div>
 
     <div class="section">
-        <h3>Hasil Ranking ELECTRE</h3>
+        <h3>Urutan Rekomendasi</h3>
         <table class="ranking">
             <thead>
-                <tr><th>Ranking</th><th>Kode</th><th>Nama Dusun</th><th>Skor</th><th>Status Prioritas</th></tr>
+                <tr><th>Urutan</th><th>Kode Dusun</th><th>Nama Dusun</th><th>Nilai Akhir</th><th>Keterangan Prioritas</th></tr>
             </thead>
             <tbody>
                 @forelse ($results as $result)
@@ -117,9 +157,9 @@
     </div>
 
     <div class="section">
-        <h3>Kriteria yang Digunakan</h3>
+        <h3>Dasar Penilaian</h3>
         <table>
-            <thead><tr><th>Kode</th><th>Nama Kriteria</th><th>Bobot</th></tr></thead>
+            <thead><tr><th>Kode</th><th>Dasar Penilaian</th><th>Bobot Penilaian</th></tr></thead>
             <tbody>
                 @forelse ($kriterias as $kriteria)
                     <tr>
@@ -134,14 +174,58 @@
         </table>
     </div>
 
+    <div class="section page-break">
+        <h3>Lampiran Daftar Usulan Pembangunan Diterima Tahun {{ $tahunDokumen }}</h3>
+        <p class="appendix-note">Lampiran ini berisi seluruh usulan pembangunan berstatus diterima pada tahun keputusan.</p>
+        <table class="appendix-table">
+            <thead>
+                <tr>
+                    <th class="col-no">No</th>
+                    <th>Gagasan/Kegiatan</th>
+                    <th>Lokasi Kegiatan</th>
+                    <th class="col-sdgs">SDGs Ke</th>
+                    <th class="col-volume">Volume</th>
+                    <th class="col-satuan">Satuan</th>
+                    <th class="col-benefit">LK</th>
+                    <th class="col-benefit">PR</th>
+                    <th class="col-benefit">A-RTM</th>
+                    <th>Kategori</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse (($acceptedUsulans ?? collect()) as $usulan)
+                    <tr>
+                        <td class="text-center">{{ $loop->iteration }}</td>
+                        <td>{{ $usulan->nama_kegiatan }}</td>
+                        <td>{{ $usulan->lokasi_kegiatan ?: ($usulan->dusun?->nama_dusun ?? 'Desa Barambang') }}</td>
+                        <td class="text-center">{{ $usulan->sdgs_ke ?: '-' }}</td>
+                        <td class="text-center nowrap">
+                            {{ $usulan->prakiraan_volume !== null ? rtrim(rtrim(number_format((float) $usulan->prakiraan_volume, 2, ',', '.'), '0'), ',') : '-' }}
+                        </td>
+                        <td class="text-center">{{ $usulan->satuan ?: '-' }}</td>
+                        <td class="text-center">{{ $usulan->penerima_manfaat_lk !== null ? number_format($usulan->penerima_manfaat_lk, 0, ',', '.') : '-' }}</td>
+                        <td class="text-center">{{ $usulan->penerima_manfaat_pr !== null ? number_format($usulan->penerima_manfaat_pr, 0, ',', '.') : '-' }}</td>
+                        <td class="text-center">{{ $usulan->penerima_manfaat_a_rtm !== null ? number_format($usulan->penerima_manfaat_a_rtm, 0, ',', '.') : '-' }}</td>
+                        <td>{{ $usulan->kategori_kegiatan ?: '-' }}</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="10" class="text-center">Belum ada usulan pembangunan diterima pada tahun keputusan ini.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
     <div class="signature">
-        <p>Barambang, {{ $keputusan->tanggal_keputusan?->translatedFormat('d F Y') ?? '....................' }}</p>
+        <p>Barambang, {{ $tanggalSurat }}</p>
         <p>Kepala Desa Barambang</p>
-        <p class="line"><strong>{{ $keputusan->penetap?->name ?? $keputusan->decider?->name ?? '(................................)' }}</strong></p>
+        @if ($keputusan->tanda_tangan)
+            <img src="{{ $keputusan->tanda_tangan }}" class="signature-image" alt="Tanda tangan kepala desa">
+        @endif
+        <p class="line {{ $keputusan->tanda_tangan ? 'with-image' : '' }}"><strong>{{ $namaKepalaDesa !== '-' ? $namaKepalaDesa : '................................' }}</strong></p>
     </div>
 
     <div class="footer">
-        Dicetak pada {{ now()->format('d/m/Y H:i') }} | Sistem Pendukung Keputusan Prioritas Pembangunan Desa
+        Dicetak pada {{ now()->format('d/m/Y H:i') }} | Dokumen keputusan prioritas pembangunan Desa Barambang
     </div>
 </body>
 </html>

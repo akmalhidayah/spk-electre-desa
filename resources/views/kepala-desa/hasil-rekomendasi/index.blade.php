@@ -5,18 +5,12 @@
 @section('page-title', 'Hasil Rekomendasi Prioritas')
 
 @section('content')
-    <div class="stack">
+    <div class="stack hasil-rekomendasi-page">
         <section class="page-header-card">
             <div>
                 <h2>Hasil Rekomendasi Prioritas</h2>
                 <p>Lihat hasil rekomendasi prioritas pembangunan berdasarkan metode ELECTRE.</p>
             </div>
-        </section>
-
-        <section class="stat-grid">
-            <article class="stat-card"><div class="stat-label">Total Hasil Rekomendasi</div><div class="stat-value">{{ number_format($stats['total'], 0, ',', '.') }}</div></article>
-            <article class="stat-card"><div class="stat-label">Perhitungan Terbaru</div><div class="stat-value stat-value-code">{{ $stats['terbaru']?->kode_perhitungan ?? '-' }}</div></article>
-            <article class="stat-card"><div class="stat-label">Tahun Berjalan</div><div class="stat-value">{{ number_format($stats['tahun_berjalan'], 0, ',', '.') }}</div></article>
         </section>
 
         <section class="panel">
@@ -51,22 +45,40 @@
                                 <th>Kode Perhitungan</th>
                                 <th>Tahun</th>
                                 <th>Judul</th>
+                                <th>Status</th>
                                 <th>Waktu Perhitungan</th>
                                 <th class="text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($calculations as $calculation)
+                                @php
+                                    $keputusan = $calculation->keputusanAkhir;
+                                    $isDitetapkan = $keputusan?->status === \App\Models\KeputusanAkhir::STATUS_DITETAPKAN;
+                                    $statusLabel = $isDitetapkan ? 'Ditetapkan' : ($keputusan ? 'Draft' : 'Belum Ditetapkan');
+                                    $statusClass = $isDitetapkan ? 'badge-success' : ($keputusan ? 'badge-warning' : 'badge-muted');
+                                    $displayTitle = 'Perhitungan Pembangunan Usulan Tahun '.$calculation->tahun;
+                                @endphp
                                 <tr>
                                     <td>{{ ($calculations->firstItem() ?? 0) + $loop->index }}</td>
                                     <td><span class="code-pill">{{ $calculation->kode_perhitungan }}</span></td>
                                     <td>{{ $calculation->tahun }}</td>
-                                    <td><strong>{{ $calculation->judul ?? '-' }}</strong></td>
+                                    <td><strong>{{ $displayTitle }}</strong></td>
+                                    <td><span class="badge {{ $statusClass }}">{{ $statusLabel }}</span></td>
                                     <td>{{ $calculation->calculated_at?->format('d/m/Y H:i') ?? '-' }}</td>
                                     <td>
-                                        <div class="action-group">
-                                            <a href="{{ route('kepala-desa.hasil-rekomendasi.show', $calculation) }}" class="btn btn-sm btn-light">Lihat Rekomendasi</a>
-                                            <a href="{{ route('kepala-desa.hasil-rekomendasi.pdf', $calculation) }}" class="btn btn-sm btn-secondary" target="_blank">Cetak Laporan</a>
+                                        <div class="action-group icon-actions">
+                                            <a href="{{ route('kepala-desa.hasil-rekomendasi.show', $calculation) }}" class="btn btn-sm btn-light action-icon-btn" title="Lihat rekomendasi" aria-label="Lihat rekomendasi">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /></svg>
+                                            </a>
+                                            <a href="{{ route('kepala-desa.hasil-rekomendasi.pdf', $calculation->tahun) }}" class="btn btn-sm btn-secondary action-icon-btn" target="_blank" title="Cetak PDF rekomendasi" aria-label="Cetak PDF rekomendasi">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" /><path d="M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M7 14h10v7H7Z" /></svg>
+                                            </a>
+                                            @if ($keputusan)
+                                                <a href="{{ route('kepala-desa.keputusan-akhir.show', ['keputusanAkhir' => $keputusan, 'pdf' => 1]) }}" class="btn btn-sm btn-secondary action-icon-btn" target="_blank" title="Cetak PDF keputusan akhir" aria-label="Cetak PDF keputusan akhir">
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M14 3v6h6" /><path d="M8 14h8M8 17h5" /></svg>
+                                                </a>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -77,13 +89,20 @@
 
                 <div class="mobile-list">
                     @foreach ($calculations as $calculation)
+                        @php
+                            $keputusan = $calculation->keputusanAkhir;
+                            $isDitetapkan = $keputusan?->status === \App\Models\KeputusanAkhir::STATUS_DITETAPKAN;
+                            $statusLabel = $isDitetapkan ? 'Ditetapkan' : ($keputusan ? 'Draft' : 'Belum Ditetapkan');
+                            $statusClass = $isDitetapkan ? 'badge-success' : ($keputusan ? 'badge-warning' : 'badge-muted');
+                            $displayTitle = 'Perhitungan Pembangunan Usulan Tahun '.$calculation->tahun;
+                        @endphp
                         <article class="mobile-card">
                             <div class="mobile-card-head">
                                 <div>
                                     <span class="code-pill">{{ $calculation->kode_perhitungan }}</span>
-                                    <h3>{{ $calculation->judul ?? 'Hasil ELECTRE' }}</h3>
+                                    <h3>{{ $displayTitle }}</h3>
                                 </div>
-                                <span class="badge badge-success">Selesai</span>
+                                <span class="badge {{ $statusClass }}">{{ $statusLabel }}</span>
                             </div>
                             <dl class="meta-grid">
                                 <div><dt>Tahun</dt><dd>{{ $calculation->tahun }}</dd></div>
@@ -91,7 +110,10 @@
                             </dl>
                             <div class="mobile-actions">
                                 <a href="{{ route('kepala-desa.hasil-rekomendasi.show', $calculation) }}" class="btn btn-sm btn-light">Lihat</a>
-                                <a href="{{ route('kepala-desa.hasil-rekomendasi.pdf', $calculation) }}" class="btn btn-sm btn-secondary" target="_blank">PDF</a>
+                                <a href="{{ route('kepala-desa.hasil-rekomendasi.pdf', $calculation->tahun) }}" class="btn btn-sm btn-secondary" target="_blank">PDF</a>
+                                @if ($keputusan)
+                                    <a href="{{ route('kepala-desa.keputusan-akhir.show', ['keputusanAkhir' => $keputusan, 'pdf' => 1]) }}" class="btn btn-sm btn-secondary" target="_blank">PDF Keputusan</a>
+                                @endif
                             </div>
                         </article>
                     @endforeach

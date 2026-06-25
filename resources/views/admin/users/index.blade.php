@@ -25,39 +25,6 @@
             </a>
         </section>
 
-        <section class="stat-grid">
-            <article class="stat-card">
-                <div class="stat-card-row">
-                    <div><div class="stat-label">Total User</div><div class="stat-value">{{ number_format($totalUser) }}</div></div>
-                    <span class="stat-icon icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" /></svg></span>
-                </div>
-            </article>
-            <article class="stat-card">
-                <div class="stat-card-row">
-                    <div><div class="stat-label">User Aktif</div><div class="stat-value">{{ number_format($totalAktif) }}</div></div>
-                    <span class="stat-icon icon-emerald"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m20 6-11 11-5-5" /></svg></span>
-                </div>
-            </article>
-            <article class="stat-card">
-                <div class="stat-card-row">
-                    <div><div class="stat-label">Admin</div><div class="stat-value">{{ number_format($totalAdmin) }}</div></div>
-                    <span class="stat-icon icon-violet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v6c0 5 3.4 7.4 8 8 4.6-.6 8-3 8-8V7Z" /></svg></span>
-                </div>
-            </article>
-            <article class="stat-card">
-                <div class="stat-card-row">
-                    <div><div class="stat-label">Kepala Desa</div><div class="stat-value">{{ number_format($totalKepalaDesa) }}</div></div>
-                    <span class="stat-icon icon-amber"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /></svg></span>
-                </div>
-            </article>
-            <article class="stat-card">
-                <div class="stat-card-row">
-                    <div><div class="stat-label">Kepala Dusun</div><div class="stat-value">{{ number_format($totalKepalaDusun) }}</div></div>
-                    <span class="stat-icon icon-emerald"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z" /><path d="M9 3v15M15 6v15" /></svg></span>
-                </div>
-            </article>
-        </section>
-
         <section class="panel">
             <form method="GET" action="{{ route('admin.users.index') }}" class="filter-bar user-filter">
                 <div class="filter-field grow">
@@ -137,19 +104,27 @@
                                     <td><span class="badge {{ $user->is_active ? 'badge-success' : 'badge-muted' }}">{{ $user->status_label }}</span></td>
                                     <td>{{ $user->created_at?->format('d/m/Y') ?? '-' }}</td>
                                     <td>
-                                        <div class="action-group">
-                                            <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-light">Edit</a>
-                                            <a href="{{ route('admin.users.reset-password', $user) }}" class="btn btn-sm btn-light">Reset Password</a>
+                                        <div class="action-group icon-actions">
+                                            <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-light action-icon-btn" title="Edit user" aria-label="Edit user">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                                            </a>
+                                            <a href="{{ route('admin.users.reset-password', $user) }}" class="btn btn-sm btn-light action-icon-btn" title="Reset password" aria-label="Reset password">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3" /><path d="M5 11h14v10H5Z" /><path d="M12 15v2" /></svg>
+                                            </a>
                                             @unless ($isSelf)
                                                 <form method="POST" action="{{ route('admin.users.toggle-status', $user) }}" class="js-confirm" data-title="Ubah Status User?" data-text="Status aktif user akan diperbarui." data-icon="warning" data-confirm-button="Ya, Ubah">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <button type="submit" class="btn btn-sm btn-secondary">{{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}</button>
+                                                    <button type="submit" class="btn btn-sm btn-secondary action-icon-btn" title="{{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}" aria-label="{{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}">
+                                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10" /><path d="M18.4 6.6a9 9 0 1 1-12.8 0" /></svg>
+                                                    </button>
                                                 </form>
                                                 <form method="POST" action="{{ route('admin.users.destroy', $user) }}" class="js-confirm" data-title="Hapus User?" data-text="User yang memiliki histori data tidak dapat dihapus. Sebaiknya nonaktifkan user." data-icon="warning" data-confirm-button="Ya, Hapus">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                                    <button type="submit" class="btn btn-sm btn-danger action-icon-btn" title="Hapus user" aria-label="Hapus user">
+                                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v5M14 11v5" /></svg>
+                                                    </button>
                                                 </form>
                                             @endunless
                                         </div>
@@ -178,18 +153,26 @@
                                 @if ($isSelf)<div><dt>Catatan</dt><dd>Akun Anda</dd></div>@endif
                             </dl>
                             <div class="mobile-actions">
-                                <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-light">Edit</a>
-                                <a href="{{ route('admin.users.reset-password', $user) }}" class="btn btn-sm btn-light">Reset</a>
+                                <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-light action-icon-btn" title="Edit user" aria-label="Edit user">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                                </a>
+                                <a href="{{ route('admin.users.reset-password', $user) }}" class="btn btn-sm btn-light action-icon-btn" title="Reset password" aria-label="Reset password">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3" /><path d="M5 11h14v10H5Z" /><path d="M12 15v2" /></svg>
+                                </a>
                                 @unless ($isSelf)
                                     <form method="POST" action="{{ route('admin.users.toggle-status', $user) }}" class="js-confirm" data-title="Ubah Status User?" data-text="Status aktif user akan diperbarui." data-icon="warning" data-confirm-button="Ya, Ubah">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="btn btn-sm btn-secondary">{{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}</button>
+                                        <button type="submit" class="btn btn-sm btn-secondary action-icon-btn" title="{{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}" aria-label="{{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10" /><path d="M18.4 6.6a9 9 0 1 1-12.8 0" /></svg>
+                                        </button>
                                     </form>
                                     <form method="POST" action="{{ route('admin.users.destroy', $user) }}" class="js-confirm" data-title="Hapus User?" data-text="User yang memiliki histori data tidak dapat dihapus. Sebaiknya nonaktifkan user." data-icon="warning" data-confirm-button="Ya, Hapus">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                        <button type="submit" class="btn btn-sm btn-danger action-icon-btn" title="Hapus user" aria-label="Hapus user">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v5M14 11v5" /></svg>
+                                        </button>
                                     </form>
                                 @endunless
                             </div>

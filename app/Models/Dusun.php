@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Dusun extends Model
@@ -59,6 +60,12 @@ class Dusun extends Model
     public function usulanPembangunans(): HasMany
     {
         return $this->hasMany(UsulanPembangunan::class);
+    }
+
+    public function usulanPembangunanTerkait(): BelongsToMany
+    {
+        return $this->belongsToMany(UsulanPembangunan::class, 'dusun_usulan_pembangunan')
+            ->withTimestamps();
     }
 
     public function penilaianAlternatifs(): HasMany

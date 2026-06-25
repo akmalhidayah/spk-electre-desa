@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Dusun;
 use App\Models\Kriteria;
 use App\Models\PenilaianAlternatif;
+use App\Models\TahunPerencanaan;
+use App\Services\RecalculationFlagService;
+use App\Services\RekapUsulanService;
+use App\Services\TahunAktifService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,10 +19,10 @@ use Throwable;
 
 class PenilaianAlternatifController extends Controller
 {
-    public function index(Request $request): View|RedirectResponse
+    public function index(Request $request, TahunAktifService $tahunAktifService, RekapUsulanService $rekapUsulanService): View|RedirectResponse
     {
         try {
-            $tahun = $request->filled('tahun') ? $request->integer('tahun') : (int) date('Y');
+            $tahun = $tahunAktifService->resolveYear($request->filled('tahun') ? $request->integer('tahun') : null);
 
             if ($tahun < 2020 || $tahun > 2100) {
                 return redirect()
@@ -61,11 +65,9 @@ class PenilaianAlternatifController extends Controller
                 'totalSeharusnya' => $totalSeharusnya,
                 'totalTerisi' => $totalTerisi,
                 'persentaseKelengkapan' => $persentaseKelengkapan,
-                'tahunList' => PenilaianAlternatif::query()
-                    ->select('tahun')
-                    ->distinct()
-                    ->orderByDesc('tahun')
-                    ->pluck('tahun'),
+                'rekapUsulan' => $rekapUsulanService->perDusun($tahun, $dusuns),
+                'periode' => TahunPerencanaan::where('tahun', $tahun)->first(),
+                'tahunList' => TahunPerencanaan::orderByDesc('tahun')->pluck('tahun'),
             ]);
         } catch (Throwable $e) {
             Log::error('[PENILAIAN_INDEX_FAILED] Gagal memuat penilaian alternatif', $this->logContext($e, $request));
@@ -76,7 +78,7 @@ class PenilaianAlternatifController extends Controller
         }
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, RecalculationFlagService $recalculationFlagService): RedirectResponse
     {
         $validated = $request->validate([
             'tahun' => ['required', 'integer', 'min:2020', 'max:2100'],
@@ -149,6 +151,8 @@ class PenilaianAlternatifController extends Controller
                     }
                 }
             });
+
+            $recalculationFlagService->mark($tahun, 'Penilaian alternatif diperbarui.');
 
             Log::info('[PENILAIAN_SAVED] Penilaian alternatif berhasil disimpan', [
                 'user_id' => auth()->id(),
