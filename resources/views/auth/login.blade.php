@@ -100,14 +100,6 @@
                 Don't have account?
                 <a href="{{ route('register') }}">Register</a>
             </p>
-
-            <div class="demo-box">
-                <strong>Akun Demo</strong>
-                <span>Admin: admin@example.com</span>
-                <span>Kepala Desa: kepaladesa@example.com</span>
-                <span>Kepala Dusun: katute@example.com</span>
-                <span>Password: password</span>
-            </div>
         </section>
     </main>
 

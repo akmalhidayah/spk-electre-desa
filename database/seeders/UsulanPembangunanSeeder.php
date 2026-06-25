@@ -46,7 +46,6 @@ class UsulanPembangunanSeeder extends Seeder
                     'status' => UsulanPembangunan::STATUS_DITERIMA,
                     'status_prioritas' => UsulanPembangunan::PRIORITAS_NON_PRIORITAS,
                     'is_data_pendukung_penilaian' => $tipeUsulan !== UsulanPembangunan::TIPE_UMUM_DESA,
-                    'catatan_admin' => 'Data awal RKP/RPJM Desa Barambang tahun 2026.',
                 ],
             );
 

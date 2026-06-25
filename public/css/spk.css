@@ -6407,3 +6407,23 @@ body.modal-open {
         grid-template-columns: 1fr;
     }
 }
+
+@media (max-width: 760px) {
+    .auth-page.auth-page-polished {
+        align-items: center;
+        min-height: 100vh;
+        overflow-y: auto;
+        padding: 16px 12px;
+    }
+
+    .auth-page.auth-page-polished .auth-hero,
+    .auth-card.auth-card-polished .auth-header {
+        display: none;
+    }
+
+    .auth-card.auth-card-polished {
+        margin: 0 auto;
+        max-width: 420px;
+        width: 100%;
+    }
+}

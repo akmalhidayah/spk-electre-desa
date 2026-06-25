@@ -20,7 +20,6 @@ class DatabaseSeeder extends Seeder
             KriteriaSeeder::class,
             UserSeeder::class,
             UsulanPembangunanSeeder::class,
-            PenilaianAlternatifSeeder::class,
             WelcomeDesaSeeder::class,
         ]);
     }
