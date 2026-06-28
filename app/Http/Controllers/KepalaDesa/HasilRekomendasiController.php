@@ -7,8 +7,8 @@ use App\Models\Dusun;
 use App\Models\ElectreCalculation;
 use App\Models\Kriteria;
 use App\Models\TahunPerencanaan;
-use App\Models\UsulanPembangunan;
 use App\Models\User;
+use App\Models\UsulanPembangunan;
 use App\Services\PejabatDesaService;
 use App\Services\TahunAktifService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -104,6 +104,29 @@ class HasilRekomendasiController extends Controller
         }
     }
 
+    public function calculationPdf(Request $request, ElectreCalculation $electreCalculation, PejabatDesaService $pejabatDesaService)
+    {
+        try {
+            $this->ensureFinished($electreCalculation);
+
+            $data = $this->viewData($electreCalculation);
+            $data['pdfTitle'] = 'Laporan Keputusan Prioritas Pembangunan';
+            $data['kriterias'] = Kriteria::aktif()->ordered()->get();
+            $data['acceptedUsulans'] = $this->acceptedUsulansForYear((int) $electreCalculation->tahun);
+            $data['kepalaDesaName'] = $pejabatDesaService->kepalaDesaName();
+
+            return Pdf::loadView('pdf.hasil-rekomendasi', $data)
+                ->setPaper('a4', 'portrait')
+                ->stream('laporan-hasil-rekomendasi-'.$electreCalculation->tahun.'-v'.$electreCalculation->versi.'.pdf');
+        } catch (HttpException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('[KEPALA_DESA_HASIL_PERHITUNGAN_PDF_FAILED] Gagal membuat PDF hasil rekomendasi versi tertentu kepala desa', $this->logContext($e, $request, $electreCalculation));
+
+            return back()->with('error', 'Terjadi kesalahan saat membuat PDF hasil rekomendasi versi perhitungan. Kode Error: KEPALA_DESA_HASIL_PERHITUNGAN_PDF_FAILED');
+        }
+    }
+
     public function dusunPdf(Request $request, ElectreCalculation $electreCalculation, Dusun $dusun, PejabatDesaService $pejabatDesaService)
     {
         try {
@@ -149,7 +172,7 @@ class HasilRekomendasiController extends Controller
     {
         return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
             ->tahun($tahun)
-            ->diterima()
+            ->diterimaAtauPrioritas()
             ->orderBy('dusun_id')
             ->orderBy('nama_kegiatan')
             ->get();
@@ -159,7 +182,7 @@ class HasilRekomendasiController extends Controller
     {
         return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
             ->tahun((int) $calculation->tahun)
-            ->diterima()
+            ->diterimaAtauPrioritas()
             ->where(function ($query) use ($dusun): void {
                 $query->where('dusun_id', $dusun->id)
                     ->orWhereHas('dusunsTerkait', fn ($query) => $query->where('dusuns.id', $dusun->id));

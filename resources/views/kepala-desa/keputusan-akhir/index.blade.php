@@ -70,7 +70,7 @@
                                 <td>{{ $keputusan->calculation?->kode_perhitungan ?? '-' }}</td>
                                 <td>
                                     <a href="{{ route('kepala-desa.keputusan-akhir.show', $keputusan) }}" class="btn btn-light btn-sm">Lihat</a>
-                                    <a href="{{ route('kepala-desa.keputusan-akhir.show', ['keputusanAkhir' => $keputusan, 'pdf' => 1]) }}" class="btn btn-secondary btn-sm" target="_blank">PDF</a>
+                                    <a href="{{ route('kepala-desa.keputusan-akhir.pdf', $keputusan) }}" class="btn btn-secondary btn-sm" target="_blank">PDF</a>
                                 </td>
                             </tr>
                         @empty
@@ -98,7 +98,7 @@
                         <p>{{ $keputusan->nomor_keputusan ?: 'Nomor keputusan belum diisi' }}</p>
                         <p>Tahun {{ $keputusan->tahun ?: ($keputusan->calculation?->tahun ?? '-') }} · {{ $keputusan->calculation?->kode_perhitungan ?? '-' }}</p>
                         <a href="{{ route('kepala-desa.keputusan-akhir.show', $keputusan) }}" class="btn btn-light">Lihat Keputusan</a>
-                        <a href="{{ route('kepala-desa.keputusan-akhir.show', ['keputusanAkhir' => $keputusan, 'pdf' => 1]) }}" class="btn btn-secondary" target="_blank">Cetak PDF</a>
+                        <a href="{{ route('kepala-desa.keputusan-akhir.pdf', $keputusan) }}" class="btn btn-secondary" target="_blank">Cetak PDF</a>
                     </article>
                 @empty
                     <div class="empty-state">

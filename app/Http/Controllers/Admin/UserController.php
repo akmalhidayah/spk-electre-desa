@@ -7,6 +7,7 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Dusun;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -261,7 +262,7 @@ class UserController extends Controller
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, Dusun>
+     * @return Collection<int, Dusun>
      */
     private function activeDusuns()
     {

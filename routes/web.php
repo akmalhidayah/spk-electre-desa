@@ -111,10 +111,12 @@ Route::prefix('admin')
         Route::delete('/proses-electre/{electreCalculation}', [ElectreCalculationController::class, 'destroy'])->name('electre.destroy');
 
         Route::get('/hasil-rekomendasi', [AdminHasilRekomendasiController::class, 'index'])->name('hasil-rekomendasi.index');
-        Route::get('/hasil-rekomendasi/{electreCalculation}', [AdminHasilRekomendasiController::class, 'show'])->name('hasil-rekomendasi.show');
         Route::get('/hasil-rekomendasi/{tahun}/pdf', [AdminHasilRekomendasiController::class, 'pdf'])->whereNumber('tahun')->name('hasil-rekomendasi.pdf');
+        Route::get('/hasil-rekomendasi/perhitungan/{electreCalculation}/pdf', [AdminHasilRekomendasiController::class, 'calculationPdf'])->name('hasil-rekomendasi.perhitungan-pdf');
         Route::get('/hasil-rekomendasi/{electreCalculation}/keputusan/pdf', [AdminHasilRekomendasiController::class, 'keputusanPdf'])->name('hasil-rekomendasi.keputusan-pdf');
         Route::get('/hasil-rekomendasi/{electreCalculation}/dusun/{dusun}/pdf', [AdminHasilRekomendasiController::class, 'dusunPdf'])->name('hasil-rekomendasi.dusun-pdf');
+        Route::get('/hasil-rekomendasi/{electreCalculation}', [AdminHasilRekomendasiController::class, 'show'])->name('hasil-rekomendasi.show');
+        Route::get('/keputusan-akhir/{keputusanAkhir}/pdf', [AdminHasilRekomendasiController::class, 'keputusanAkhirPdf'])->name('keputusan-akhir.pdf');
     });
 
 Route::prefix('kepala-dusun')
@@ -136,11 +138,13 @@ Route::prefix('kepala-desa')
     ->group(function () {
         Route::get('/dashboard', KepalaDesaDashboardController::class)->name('dashboard');
         Route::get('/hasil-rekomendasi', [KepalaDesaHasilRekomendasiController::class, 'index'])->name('hasil-rekomendasi.index');
-        Route::get('/hasil-rekomendasi/{electreCalculation}', [KepalaDesaHasilRekomendasiController::class, 'show'])->name('hasil-rekomendasi.show');
         Route::get('/hasil-rekomendasi/{tahun}/pdf', [KepalaDesaHasilRekomendasiController::class, 'pdf'])->whereNumber('tahun')->name('hasil-rekomendasi.pdf');
+        Route::get('/hasil-rekomendasi/perhitungan/{electreCalculation}/pdf', [KepalaDesaHasilRekomendasiController::class, 'calculationPdf'])->name('hasil-rekomendasi.perhitungan-pdf');
         Route::get('/hasil-rekomendasi/{electreCalculation}/dusun/{dusun}/pdf', [KepalaDesaHasilRekomendasiController::class, 'dusunPdf'])->name('hasil-rekomendasi.dusun-pdf');
+        Route::get('/hasil-rekomendasi/{electreCalculation}', [KepalaDesaHasilRekomendasiController::class, 'show'])->name('hasil-rekomendasi.show');
         Route::get('/keputusan-akhir', [KepalaDesaKeputusanAkhirController::class, 'index'])->name('keputusan-akhir.index');
         Route::get('/keputusan-akhir/{electreCalculation}/create', [KepalaDesaKeputusanAkhirController::class, 'create'])->name('keputusan-akhir.create');
         Route::post('/keputusan-akhir', [KepalaDesaKeputusanAkhirController::class, 'store'])->name('keputusan-akhir.store');
+        Route::get('/keputusan-akhir/{keputusanAkhir}/pdf', [KepalaDesaKeputusanAkhirController::class, 'pdf'])->name('keputusan-akhir.pdf');
         Route::get('/keputusan-akhir/{keputusanAkhir}', [KepalaDesaKeputusanAkhirController::class, 'show'])->name('keputusan-akhir.show');
     });

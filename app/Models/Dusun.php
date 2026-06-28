@@ -6,8 +6,8 @@ use Database\Factories\DusunFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Dusun extends Model
@@ -16,6 +16,7 @@ class Dusun extends Model
     use HasFactory, SoftDeletes;
 
     public const STATUS_AKTIF = 'aktif';
+
     public const STATUS_NONAKTIF = 'nonaktif';
 
     public const STATUSES = [

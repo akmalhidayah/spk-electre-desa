@@ -70,8 +70,21 @@ class KriteriaC4DanPdfKeputusanTest extends TestCase
                 'pdf' => 1,
             ]));
 
+        $response->assertRedirect(route('kepala-desa.keputusan-akhir.pdf', $keputusan));
+
+        $response = $this
+            ->actingAs($kepalaDesa)
+            ->get(route('kepala-desa.keputusan-akhir.pdf', $keputusan));
+
         $response
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
+
+        $keputusan->refresh();
+
+        $this->assertNotNull($keputusan->snapshot_data);
+        $this->assertNotNull($keputusan->snapshotted_at);
+        $this->assertNotNull($keputusan->pdf_path);
+        $this->assertNotNull($keputusan->pdf_hash);
     }
 }

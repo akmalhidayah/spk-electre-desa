@@ -14,6 +14,7 @@ class PenilaianAlternatif extends Model
     use HasFactory;
 
     public const NILAI_MIN = 1;
+
     public const NILAI_MAX = 5;
 
     protected $table = 'penilaian_alternatifs';

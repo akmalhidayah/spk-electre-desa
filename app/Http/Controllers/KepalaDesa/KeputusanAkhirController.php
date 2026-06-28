@@ -7,15 +7,16 @@ use App\Http\Requests\StoreKeputusanAkhirRequest;
 use App\Models\ElectreCalculation;
 use App\Models\ElectreResult;
 use App\Models\KeputusanAkhir;
-use App\Models\Kriteria;
-use App\Models\UsulanPembangunan;
-use App\Services\PejabatDesaService;
+use App\Services\KeputusanAkhirSnapshotService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
+use RuntimeException;
 use Throwable;
 
 class KeputusanAkhirController extends Controller
@@ -93,61 +94,76 @@ class KeputusanAkhirController extends Controller
         ]);
     }
 
-    public function store(StoreKeputusanAkhirRequest $request): RedirectResponse
+    public function store(StoreKeputusanAkhirRequest $request, KeputusanAkhirSnapshotService $snapshotService): RedirectResponse
     {
         try {
             $data = $request->validated();
-            $calculation = ElectreCalculation::with('keputusanAkhir')->findOrFail($data['electre_calculation_id']);
 
-            if ($calculation->status !== ElectreCalculation::STATUS_SELESAI) {
-                return back()
-                    ->withInput()
-                    ->with('error', 'Perhitungan ELECTRE belum selesai. Kode Error: KEPUTUSAN_AKHIR_INVALID_CALCULATION');
+            $keputusan = DB::transaction(function () use ($data, $request, $snapshotService): KeputusanAkhir {
+                $calculation = ElectreCalculation::whereKey($data['electre_calculation_id'])
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($calculation->status !== ElectreCalculation::STATUS_SELESAI) {
+                    throw new RuntimeException('Perhitungan ELECTRE belum selesai. Kode Error: KEPUTUSAN_AKHIR_INVALID_CALCULATION');
+                }
+
+                $existing = KeputusanAkhir::where('electre_calculation_id', $calculation->id)
+                    ->whereIn('status', [KeputusanAkhir::STATUS_DRAFT, KeputusanAkhir::STATUS_DITETAPKAN])
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($existing) {
+                    throw new RuntimeException('Keputusan akhir untuk perhitungan ini sudah dibuat. Kode Error: KEPUTUSAN_AKHIR_DUPLICATE');
+                }
+
+                $result = ElectreResult::where('electre_calculation_id', $calculation->id)
+                    ->where('dusun_id', $data['dusun_id'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $result) {
+                    throw new RuntimeException('Dusun yang dipilih tidak terdapat pada hasil rekomendasi ini. Kode Error: KEPUTUSAN_AKHIR_INVALID_DUSUN');
+                }
+
+                $payload = [
+                    'electre_calculation_id' => $calculation->id,
+                    'electre_result_id' => $result->id,
+                    'dusun_id' => $result->dusun_id,
+                    'ditetapkan_oleh' => $request->user()->id,
+                    'nomor_keputusan' => $data['nomor_keputusan'] ?? null,
+                    'tanggal_keputusan' => $data['tanggal_keputusan'],
+                    'tahun' => $calculation->tahun,
+                    'status' => $data['status'],
+                    'dasar_pertimbangan' => $data['dasar_pertimbangan'] ?? null,
+                    'catatan_keputusan' => $data['catatan_keputusan'] ?? null,
+                    'tanda_tangan' => $data['tanda_tangan'] ?? null,
+                ];
+
+                if (Schema::hasColumn('keputusan_akhirs', 'decided_by')) {
+                    $payload['decided_by'] = $request->user()->id;
+                }
+
+                if (Schema::hasColumn('keputusan_akhirs', 'catatan')) {
+                    $payload['catatan'] = $data['catatan_keputusan'] ?? null;
+                }
+
+                if (Schema::hasColumn('keputusan_akhirs', 'decided_at')) {
+                    $payload['decided_at'] = $data['status'] === KeputusanAkhir::STATUS_DITETAPKAN ? now() : null;
+                }
+
+                $keputusan = KeputusanAkhir::create($payload);
+
+                if ($keputusan->status === KeputusanAkhir::STATUS_DITETAPKAN) {
+                    $keputusan = $snapshotService->saveSnapshot($keputusan);
+                }
+
+                return $keputusan;
+            });
+
+            if ($keputusan->status === KeputusanAkhir::STATUS_DITETAPKAN) {
+                $keputusan = $snapshotService->storePdfFromSnapshot($keputusan);
             }
-
-            if ($calculation->keputusanAkhir) {
-                return redirect()
-                    ->route('kepala-desa.keputusan-akhir.show', $calculation->keputusanAkhir)
-                    ->with('error', 'Keputusan akhir untuk perhitungan ini sudah dibuat. Kode Error: KEPUTUSAN_AKHIR_DUPLICATE');
-            }
-
-            $result = ElectreResult::where('electre_calculation_id', $calculation->id)
-                ->where('dusun_id', $data['dusun_id'])
-                ->first();
-
-            if (! $result) {
-                return back()
-                    ->withInput()
-                    ->with('error', 'Dusun yang dipilih tidak terdapat pada hasil rekomendasi ini. Kode Error: KEPUTUSAN_AKHIR_INVALID_DUSUN');
-            }
-
-            $payload = [
-                'electre_calculation_id' => $calculation->id,
-                'electre_result_id' => $result->id,
-                'dusun_id' => $result->dusun_id,
-                'ditetapkan_oleh' => $request->user()->id,
-                'nomor_keputusan' => $data['nomor_keputusan'] ?? null,
-                'tanggal_keputusan' => $data['tanggal_keputusan'],
-                'tahun' => $calculation->tahun,
-                'status' => $data['status'],
-                'dasar_pertimbangan' => $data['dasar_pertimbangan'] ?? null,
-                'catatan_keputusan' => $data['catatan_keputusan'] ?? null,
-                'tanda_tangan' => $data['tanda_tangan'] ?? null,
-            ];
-
-            if (Schema::hasColumn('keputusan_akhirs', 'decided_by')) {
-                $payload['decided_by'] = $request->user()->id;
-            }
-
-            if (Schema::hasColumn('keputusan_akhirs', 'catatan')) {
-                $payload['catatan'] = $data['catatan_keputusan'] ?? null;
-            }
-
-            if (Schema::hasColumn('keputusan_akhirs', 'decided_at')) {
-                $payload['decided_at'] = $data['status'] === KeputusanAkhir::STATUS_DITETAPKAN ? now() : null;
-            }
-
-            $keputusan = KeputusanAkhir::create($payload);
 
             Log::info('[KEPUTUSAN_AKHIR_CREATED] Keputusan akhir berhasil disimpan', [
                 'user_id' => $request->user()->id,
@@ -160,6 +176,20 @@ class KeputusanAkhirController extends Controller
             return redirect()
                 ->route('kepala-desa.keputusan-akhir.show', $keputusan)
                 ->with('success', 'Keputusan akhir berhasil disimpan.');
+        } catch (QueryException $e) {
+            Log::warning('[KEPUTUSAN_AKHIR_DUPLICATE_QUERY] Unique constraint mencegah keputusan akhir ganda', [
+                'user_id' => $request->user()?->id,
+                'calculation_id' => $request->input('electre_calculation_id'),
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Keputusan akhir untuk perhitungan ini sudah dibuat.');
+        } catch (RuntimeException $e) {
+            return back()
+                ->withInput()
+                ->with('error', $e->getMessage());
         } catch (Throwable $e) {
             Log::error('[KEPUTUSAN_AKHIR_STORE_FAILED] Gagal menyimpan keputusan akhir', [
                 'user_id' => $request->user()?->id,
@@ -176,22 +206,14 @@ class KeputusanAkhirController extends Controller
         }
     }
 
-    public function show(Request $request, KeputusanAkhir $keputusanAkhir, PejabatDesaService $pejabatDesaService)
+    public function show(Request $request, KeputusanAkhir $keputusanAkhir)
     {
         try {
-            $data = $this->viewData($keputusanAkhir);
-
             if ($request->boolean('pdf')) {
-                $tahun = (int) ($keputusanAkhir->tahun ?? $keputusanAkhir->calculation?->tahun ?? now()->year);
-
-                $data['kriterias'] = Kriteria::aktif()->ordered()->get();
-                $data['kepalaDesaName'] = $pejabatDesaService->kepalaDesaName();
-                $data['acceptedUsulans'] = $this->acceptedUsulansForYear($tahun);
-
-                return Pdf::loadView('pdf.keputusan-akhir', $data)
-                    ->setPaper('a4', 'portrait')
-                    ->stream('laporan-penetapan-hasil-'.$keputusanAkhir->id.'.pdf');
+                return redirect()->route('kepala-desa.keputusan-akhir.pdf', $keputusanAkhir);
             }
+
+            $data = $this->viewData($keputusanAkhir);
 
             return view('kepala-desa.keputusan-akhir.show', $data);
         } catch (Throwable $e) {
@@ -210,6 +232,25 @@ class KeputusanAkhirController extends Controller
         }
     }
 
+    public function pdf(KeputusanAkhir $keputusanAkhir, KeputusanAkhirSnapshotService $snapshotService)
+    {
+        if ($keputusanAkhir->status === KeputusanAkhir::STATUS_DITETAPKAN) {
+            $keputusanAkhir = $snapshotService->storePdfFromSnapshot($keputusanAkhir);
+            $path = $snapshotService->pdfStoragePath($keputusanAkhir);
+
+            if ($path) {
+                return response()->file($path, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="keputusan-akhir-'.$keputusanAkhir->id.'.pdf"',
+                ]);
+            }
+        }
+
+        return Pdf::loadView('pdf.keputusan-akhir', $snapshotService->pdfViewData($keputusanAkhir))
+            ->setPaper('a4', 'portrait')
+            ->stream('draft-keputusan-akhir-'.$keputusanAkhir->id.'.pdf');
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -222,15 +263,5 @@ class KeputusanAkhirController extends Controller
             'calculation' => $keputusanAkhir->calculation,
             'results' => $keputusanAkhir->calculation?->results?->sortBy('ranking')->values() ?? collect(),
         ];
-    }
-
-    private function acceptedUsulansForYear(int $tahun)
-    {
-        return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
-            ->tahun($tahun)
-            ->diterima()
-            ->orderBy('dusun_id')
-            ->orderBy('nama_kegiatan')
-            ->get();
     }
 }

@@ -104,6 +104,10 @@ class ElectreCalculationController extends Controller
     public function destroy(Request $request, ElectreCalculation $electreCalculation): RedirectResponse
     {
         try {
+            if ($electreCalculation->keputusanAkhir()->exists()) {
+                return back()->with('error', 'Perhitungan ini sudah memiliki keputusan akhir dan tidak boleh dihapus.');
+            }
+
             $electreCalculation->delete();
 
             Log::info('[ELECTRE_DELETED] Histori perhitungan ELECTRE berhasil dihapus', [

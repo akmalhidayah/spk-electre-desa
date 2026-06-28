@@ -106,14 +106,17 @@ class UsulanPembangunanController extends Controller
                 'penerima_manfaat_pr',
                 'penerima_manfaat_a_rtm',
                 'kategori_kegiatan',
+                'sdgs_ke',
+                'sumber_usulan',
+                'jumlah_usulan',
+                'estimasi_anggaran',
                 'deskripsi',
             ]);
             $data['dusun_id'] = $user->dusun_id;
             $data['user_id'] = $user->id;
             $data['tipe_usulan'] = UsulanPembangunan::TIPE_DUSUN;
-            $data['jumlah_usulan'] = 1;
-            $data['estimasi_anggaran'] = null;
-            $data['sumber_usulan'] = 'Usulan Kepala Dusun';
+            $data['jumlah_usulan'] = $data['jumlah_usulan'] ?? 1;
+            $data['sumber_usulan'] = $data['sumber_usulan'] ?? 'Usulan Kepala Dusun';
             $data['status'] = UsulanPembangunan::STATUS_DIAJUKAN;
             $data['status_prioritas'] = UsulanPembangunan::PRIORITAS_BELUM_DINILAI;
             $data['is_data_pendukung_penilaian'] = false;
@@ -174,14 +177,17 @@ class UsulanPembangunanController extends Controller
                 'penerima_manfaat_pr',
                 'penerima_manfaat_a_rtm',
                 'kategori_kegiatan',
+                'sdgs_ke',
+                'sumber_usulan',
+                'jumlah_usulan',
+                'estimasi_anggaran',
                 'deskripsi',
             ]));
             $usulanPembangunan->forceFill([
                 'tipe_usulan' => UsulanPembangunan::TIPE_DUSUN,
                 'dusun_id' => $request->user()->dusun_id,
-                'jumlah_usulan' => 1,
-                'estimasi_anggaran' => null,
-                'sumber_usulan' => 'Usulan Kepala Dusun',
+                'jumlah_usulan' => $request->validated('jumlah_usulan') ?? 1,
+                'sumber_usulan' => $request->validated('sumber_usulan') ?? 'Usulan Kepala Dusun',
                 'is_data_pendukung_penilaian' => false,
             ])->save();
             $usulanPembangunan->dusunsTerkait()->sync([$request->user()->dusun_id]);

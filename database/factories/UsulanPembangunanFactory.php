@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\Dusun;
-use App\Models\UsulanPembangunan;
 use App\Models\User;
+use App\Models\UsulanPembangunan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

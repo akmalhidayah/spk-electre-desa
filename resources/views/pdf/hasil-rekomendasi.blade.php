@@ -19,6 +19,7 @@
         .document-title { margin: 18px 0 16px; text-align: center; }
         .document-title h1 { color: #111827; font-size: 15px; letter-spacing: .04em; line-height: 1.45; text-transform: uppercase; }
         .document-title h2 { color: #0f766e; font-size: 12px; margin-top: 5px; }
+        .document-label { background: #f8fafc; border: 1px solid #dbe3ec; color: #475569; font-size: 9px; margin: -6px 0 12px; padding: 6px 8px; text-align: center; }
         .section { margin-top: 14px; }
         .section h3 { background: #f1f5f9; border-left: 4px solid #0f766e; color: #0f172a; font-size: 11px; letter-spacing: .04em; padding: 7px 10px; text-transform: uppercase; }
         table { border-collapse: collapse; margin-top: 8px; width: 100%; }
@@ -89,6 +90,8 @@
         <h1>Laporan Hasil Rekomendasi Prioritas Pembangunan Antar Dusun</h1>
         <h2>Bahan Pertimbangan Penentuan Prioritas Pembangunan Desa</h2>
     </div>
+
+    <p class="document-label">Dokumen dinamis berdasarkan hasil perhitungan terbaru tahun {{ $calculation->tahun ?? '-' }}.</p>
 
     <div class="section">
         <h3>Identitas Penilaian</h3>

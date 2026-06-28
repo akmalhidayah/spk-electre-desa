@@ -10,6 +10,7 @@ use App\Models\Kriteria;
 use App\Models\PenilaianAlternatif;
 use App\Models\TahunPerencanaan;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -32,7 +33,10 @@ class ElectreService
                 $thresholds = $this->calculateThresholds($concordanceMatrix, $discordanceMatrix, $dusuns->count());
                 $dominantMatrices = $this->buildDominantMatrices($concordanceMatrix, $discordanceMatrix, $thresholds, $dusuns);
                 $aggregateDominance = $this->buildAggregateDominanceMatrix($dominantMatrices['concordance'], $dominantMatrices['discordance'], $dusuns);
-                $ranking = $this->buildRanking($aggregateDominance, $weightedMatrix, $dusuns);
+                $ranking = $this->buildRanking($aggregateDominance, $weightedMatrix, $dusuns, $kriterias);
+
+                TahunPerencanaan::where('tahun', $tahun)->lockForUpdate()->first();
+                ElectreCalculation::tahun($tahun)->lockForUpdate()->get(['id']);
                 $versi = ((int) ElectreCalculation::tahun($tahun)->max('versi')) + 1;
 
                 ElectreCalculation::tahun($tahun)->update(['is_latest' => false]);
@@ -40,7 +44,7 @@ class ElectreService
                 $calculation = ElectreCalculation::create([
                     'kode_perhitungan' => $this->generateCalculationCode($tahun),
                     'tahun' => $tahun,
-                    'judul' => "Perhitungan ELECTRE Tahun {$tahun}",
+                    'judul' => "Perhitungan Pembangunan Usulan Tahun {$tahun}",
                     'deskripsi' => 'Perhitungan prioritas pembangunan antar dusun menggunakan metode ELECTRE.',
                     'status' => ElectreCalculation::STATUS_SELESAI,
                     'versi' => $versi,
@@ -49,7 +53,7 @@ class ElectreService
                     'total_kriteria' => $kriterias->count(),
                     'calculated_by' => $userId,
                     'calculated_at' => now(),
-                    'notes' => 'Semua kriteria diperlakukan sebagai benefit sesuai skala prioritas 1 sampai 5.',
+                    'notes' => 'Perhitungan mendukung kriteria benefit dan cost sesuai pengaturan dasar penilaian.',
                 ]);
 
                 foreach ($ranking as $item) {
@@ -71,6 +75,7 @@ class ElectreService
                     ],
                     'pembobotan' => [
                         'weights' => $this->readableWeights($kriterias),
+                        'types' => $this->readableCriteriaTypes($kriterias),
                         'matrix' => $this->readableCriteriaMatrix($weightedMatrix, $dusuns, $kriterias),
                     ],
                     'concordance_sets' => $sets['concordance'],
@@ -97,6 +102,12 @@ class ElectreService
             });
         } catch (RuntimeException $e) {
             throw $e;
+        } catch (QueryException $e) {
+            if (str_contains($e->getMessage(), 'electre_calculation_tahun_versi_unique')) {
+                throw new RuntimeException('Versi perhitungan untuk tahun ini bentrok karena ada proses lain. Silakan jalankan ulang perhitungan. Kode Error: ELECTRE_VERSION_CONFLICT', 0, $e);
+            }
+
+            throw new RuntimeException('Terjadi kesalahan saat menghitung ELECTRE. Kode Error: ELECTRE_CALCULATION_FAILED', 0, $e);
         } catch (\Throwable $e) {
             throw new RuntimeException('Terjadi kesalahan saat menghitung ELECTRE. Kode Error: ELECTRE_CALCULATION_FAILED', 0, $e);
         }
@@ -220,11 +231,17 @@ class ElectreService
                     $discordance[$dusunK->kode_alternatif][$dusunL->kode_alternatif] = [];
                     $concordanceIds[$dusunK->id][$dusunL->id] = [];
                     $discordanceIds[$dusunK->id][$dusunL->id] = [];
+
                     continue;
                 }
 
                 foreach ($kriterias as $kriteria) {
-                    if ($weightedMatrix[$dusunK->id][$kriteria->id] >= $weightedMatrix[$dusunL->id][$kriteria->id]) {
+                    $isCost = ($kriteria->tipe ?: Kriteria::TIPE_BENEFIT) === Kriteria::TIPE_COST;
+                    $betterOrEqual = $isCost
+                        ? $weightedMatrix[$dusunK->id][$kriteria->id] <= $weightedMatrix[$dusunL->id][$kriteria->id]
+                        : $weightedMatrix[$dusunK->id][$kriteria->id] >= $weightedMatrix[$dusunL->id][$kriteria->id];
+
+                    if ($betterOrEqual) {
                         $concordance[$dusunK->kode_alternatif][$dusunL->kode_alternatif][] = $kriteria->kode;
                         $concordanceIds[$dusunK->id][$dusunL->id][] = $kriteria->id;
                     } else {
@@ -254,6 +271,7 @@ class ElectreService
             foreach ($dusuns as $dusunL) {
                 if ($dusunK->id === $dusunL->id) {
                     $matrix[$dusunK->id][$dusunL->id] = 0.0;
+
                     continue;
                 }
 
@@ -276,6 +294,7 @@ class ElectreService
             foreach ($dusuns as $dusunL) {
                 if ($dusunK->id === $dusunL->id) {
                     $matrix[$dusunK->id][$dusunL->id] = 0.0;
+
                     continue;
                 }
 
@@ -332,6 +351,7 @@ class ElectreService
                 if ($dusunK->id === $dusunL->id) {
                     $dominantConcordance[$dusunK->id][$dusunL->id] = 0;
                     $dominantDiscordance[$dusunK->id][$dusunL->id] = 0;
+
                     continue;
                 }
 
@@ -361,7 +381,7 @@ class ElectreService
         return $matrix;
     }
 
-    private function buildRanking(array $aggregateDominance, array $weightedMatrix, Collection $dusuns): array
+    private function buildRanking(array $aggregateDominance, array $weightedMatrix, Collection $dusuns, Collection $kriterias): array
     {
         $items = [];
 
@@ -372,12 +392,13 @@ class ElectreService
                 'nama_dusun' => $dusun->nama_dusun,
                 'skor_dominasi' => array_sum($aggregateDominance[$dusun->id]),
                 'total_terbobot' => array_sum($weightedMatrix[$dusun->id]),
+                'tie_score' => $this->totalPreferenceScore($weightedMatrix[$dusun->id], $kriterias),
             ];
         }
 
         usort($items, function (array $left, array $right): int {
             return $right['skor_dominasi'] <=> $left['skor_dominasi']
-                ?: $right['total_terbobot'] <=> $left['total_terbobot']
+                ?: $right['tie_score'] <=> $left['tie_score']
                 ?: strcmp($left['nama_dusun'], $right['nama_dusun']);
         });
 
@@ -385,6 +406,7 @@ class ElectreService
             $ranking = $index + 1;
             $item['ranking'] = $ranking;
             $item['total_terbobot'] = $this->roundValue($item['total_terbobot']);
+            unset($item['tie_score']);
             $item['status_prioritas'] = $this->statusPrioritas($ranking);
             $item['keterangan'] = "Ranking {$ranking} dengan skor dominasi {$item['skor_dominasi']}.";
         }
@@ -452,6 +474,31 @@ class ElectreService
         }
 
         return $weights;
+    }
+
+    private function readableCriteriaTypes(Collection $kriterias): array
+    {
+        $types = [];
+
+        foreach ($kriterias as $kriteria) {
+            $types[$kriteria->kode] = $kriteria->tipe ?: Kriteria::TIPE_BENEFIT;
+        }
+
+        return $types;
+    }
+
+    private function totalPreferenceScore(array $weightedRow, Collection $kriterias): float
+    {
+        $score = 0.0;
+
+        foreach ($kriterias as $kriteria) {
+            $value = (float) ($weightedRow[$kriteria->id] ?? 0);
+            $score += ($kriteria->tipe ?: Kriteria::TIPE_BENEFIT) === Kriteria::TIPE_COST
+                ? -$value
+                : $value;
+        }
+
+        return $score;
     }
 
     private function readablePairMatrix(array $matrix, Collection $dusuns, bool $round = true): array

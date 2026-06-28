@@ -16,7 +16,9 @@ class ElectreCalculation extends Model
     use HasFactory;
 
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_SELESAI = 'selesai';
+
     public const STATUS_DIBATALKAN = 'dibatalkan';
 
     public const STATUSES = [
@@ -86,7 +88,7 @@ class ElectreCalculation extends Model
 
     public function keputusanAkhir(): HasOne
     {
-        return $this->hasOne(\App\Models\KeputusanAkhir::class, 'electre_calculation_id')
+        return $this->hasOne(KeputusanAkhir::class, 'electre_calculation_id')
             ->whereIn('status', ['draft', 'ditetapkan']);
     }
 }

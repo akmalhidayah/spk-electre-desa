@@ -6,6 +6,7 @@ use App\Models\Dusun;
 use App\Models\User;
 use App\Models\UsulanPembangunan;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 
 class UsulanPembangunanSeeder extends Seeder
 {
@@ -135,7 +136,7 @@ class UsulanPembangunanSeeder extends Seeder
     }
 
     /**
-     * @param \Illuminate\Support\Collection<string, Dusun> $dusuns
+     * @param  Collection<string, Dusun>  $dusuns
      * @return array<int, int>
      */
     private function detectDusunIds(string $lokasi, $dusuns): array

@@ -11,7 +11,9 @@ class KeputusanAkhir extends Model
     use HasFactory;
 
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_DITETAPKAN = 'ditetapkan';
+
     public const STATUS_DIBATALKAN = 'dibatalkan';
 
     protected $table = 'keputusan_akhirs';
@@ -27,6 +29,10 @@ class KeputusanAkhir extends Model
         'dasar_pertimbangan',
         'catatan_keputusan',
         'tanda_tangan',
+        'snapshot_data',
+        'pdf_path',
+        'pdf_hash',
+        'snapshotted_at',
         'catatan',
         'ditetapkan_oleh',
         'decided_by',
@@ -38,6 +44,8 @@ class KeputusanAkhir extends Model
         return [
             'tanggal_keputusan' => 'date',
             'decided_at' => 'datetime',
+            'snapshot_data' => 'array',
+            'snapshotted_at' => 'datetime',
         ];
     }
 

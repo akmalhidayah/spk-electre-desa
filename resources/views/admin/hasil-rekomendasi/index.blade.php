@@ -88,7 +88,7 @@
                                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" /><path d="M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M7 14h10v7H7Z" /></svg>
                                             </a>
                                             @if ($keputusan)
-                                                <a href="{{ route('admin.hasil-rekomendasi.keputusan-pdf', $calculation) }}" class="btn btn-sm btn-secondary action-icon-btn" target="_blank" title="Cetak PDF keputusan akhir" aria-label="Cetak PDF keputusan akhir">
+                                                <a href="{{ route('admin.keputusan-akhir.pdf', $keputusan) }}" class="btn btn-sm btn-secondary action-icon-btn" target="_blank" title="Cetak PDF keputusan akhir" aria-label="Cetak PDF keputusan akhir">
                                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M14 3v6h6" /><path d="M8 14h8M8 17h5" /></svg>
                                                 </a>
                                             @endif
@@ -129,7 +129,7 @@
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" /><path d="M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M7 14h10v7H7Z" /></svg>
                                 </a>
                                 @if ($keputusan)
-                                    <a href="{{ route('admin.hasil-rekomendasi.keputusan-pdf', $calculation) }}" class="btn btn-sm btn-secondary action-icon-btn" target="_blank" title="Cetak PDF keputusan akhir" aria-label="Cetak PDF keputusan akhir">
+                                    <a href="{{ route('admin.keputusan-akhir.pdf', $keputusan) }}" class="btn btn-sm btn-secondary action-icon-btn" target="_blank" title="Cetak PDF keputusan akhir" aria-label="Cetak PDF keputusan akhir">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M14 3v6h6" /><path d="M8 14h8M8 17h5" /></svg>
                                     </a>
                                 @endif

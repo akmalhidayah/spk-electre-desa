@@ -71,7 +71,7 @@ class UsulanPembangunanController extends Controller
                 'stats' => $this->stats($tahun),
                 'acceptedUsulansForPdf' => UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
                     ->tahun($tahun)
-                    ->diterima()
+                    ->diterimaAtauPrioritas()
                     ->orderBy('dusun_id')
                     ->orderBy('nama_kegiatan')
                     ->get(),
@@ -118,7 +118,7 @@ class UsulanPembangunanController extends Controller
             $data['user_id'] = $request->user()->id;
             $data['status'] = $data['status'] ?? UsulanPembangunan::STATUS_DIAJUKAN;
             $data['status_prioritas'] = $data['status_prioritas'] ?? UsulanPembangunan::PRIORITAS_NON_PRIORITAS;
-            $data['is_data_pendukung_penilaian'] = $data['status'] === UsulanPembangunan::STATUS_DITERIMA
+            $data['is_data_pendukung_penilaian'] = in_array($data['status'], [UsulanPembangunan::STATUS_DITERIMA, UsulanPembangunan::STATUS_MASUK_PRIORITAS], true)
                 && $data['tipe_usulan'] !== UsulanPembangunan::TIPE_UMUM_DESA;
 
             if ($data['tipe_usulan'] === UsulanPembangunan::TIPE_UMUM_DESA) {
@@ -171,7 +171,7 @@ class UsulanPembangunanController extends Controller
 
             $data['status'] = $data['status'] ?? $usulanPembangunan->status;
             $data['status_prioritas'] = $data['status_prioritas'] ?? $usulanPembangunan->status_prioritas;
-            $data['is_data_pendukung_penilaian'] = $data['status'] === UsulanPembangunan::STATUS_DITERIMA
+            $data['is_data_pendukung_penilaian'] = in_array($data['status'], [UsulanPembangunan::STATUS_DITERIMA, UsulanPembangunan::STATUS_MASUK_PRIORITAS], true)
                 && $data['tipe_usulan'] !== UsulanPembangunan::TIPE_UMUM_DESA;
 
             if ($data['tipe_usulan'] === UsulanPembangunan::TIPE_UMUM_DESA) {
@@ -213,7 +213,7 @@ class UsulanPembangunanController extends Controller
 
         try {
             $wasSupportingData = (bool) $usulanPembangunan->is_data_pendukung_penilaian;
-            $data['is_data_pendukung_penilaian'] = $data['status'] === UsulanPembangunan::STATUS_DITERIMA
+            $data['is_data_pendukung_penilaian'] = in_array($data['status'], [UsulanPembangunan::STATUS_DITERIMA, UsulanPembangunan::STATUS_MASUK_PRIORITAS], true)
                 && $usulanPembangunan->tipe_usulan !== UsulanPembangunan::TIPE_UMUM_DESA;
 
             $usulanPembangunan->update($data);
@@ -258,7 +258,7 @@ class UsulanPembangunanController extends Controller
             $usulans = UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
                 ->whereIn('id', $selectedIds)
                 ->tahun($tahun)
-                ->diterima()
+                ->diterimaAtauPrioritas()
                 ->orderBy('dusun_id')
                 ->orderBy('nama_kegiatan')
                 ->get();
@@ -352,7 +352,7 @@ class UsulanPembangunanController extends Controller
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<int, int>
      */
     private function normalizeDusunTerkaitIds(array $data): array

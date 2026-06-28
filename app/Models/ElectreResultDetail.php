@@ -14,10 +14,15 @@ class ElectreResultDetail extends Model
     use HasFactory;
 
     public const TAHAP_MATRIKS_KEPUTUSAN = 'matriks_keputusan';
+
     public const TAHAP_NORMALISASI = 'normalisasi';
+
     public const TAHAP_PEMBOBOTAN = 'pembobotan';
+
     public const TAHAP_CONCORDANCE = 'concordance';
+
     public const TAHAP_DISCORDANCE = 'discordance';
+
     public const TAHAP_AGGREGATE_DOMINANCE = 'aggregate_dominance';
 
     public const TAHAPS = [

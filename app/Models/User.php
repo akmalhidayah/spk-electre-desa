@@ -17,7 +17,9 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     public const ROLE_ADMIN = 'admin';
+
     public const ROLE_KEPALA_DUSUN = 'kepala_dusun';
+
     public const ROLE_KEPALA_DESA = 'kepala_desa';
 
     public const ROLES = [

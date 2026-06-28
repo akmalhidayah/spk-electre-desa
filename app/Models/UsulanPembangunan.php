@@ -16,13 +16,19 @@ class UsulanPembangunan extends Model
     use HasFactory, SoftDeletes;
 
     public const STATUS_DIAJUKAN = 'diajukan';
+
     public const STATUS_DIPROSES = 'diproses';
+
     public const STATUS_DITERIMA = 'diterima';
+
     public const STATUS_DITOLAK = 'ditolak';
+
     public const STATUS_MASUK_PRIORITAS = 'masuk_prioritas';
 
     public const TIPE_DUSUN = 'dusun';
+
     public const TIPE_LINTAS_DUSUN = 'lintas_dusun';
+
     public const TIPE_UMUM_DESA = 'umum_desa';
 
     public const TIPE_USULANS = [
@@ -32,7 +38,9 @@ class UsulanPembangunan extends Model
     ];
 
     public const PRIORITAS_BELUM_DINILAI = 'belum_dinilai';
+
     public const PRIORITAS_NON_PRIORITAS = 'non_prioritas';
+
     public const PRIORITAS_PRIORITAS = 'prioritas';
 
     public const STATUS_PRIORITAS = [
@@ -112,6 +120,14 @@ class UsulanPembangunan extends Model
     public function scopeDiterima(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_DITERIMA);
+    }
+
+    public function scopeDiterimaAtauPrioritas(Builder $query): Builder
+    {
+        return $query->whereIn('status', [
+            self::STATUS_DITERIMA,
+            self::STATUS_MASUK_PRIORITAS,
+        ]);
     }
 
     public function scopeDitolak(Builder $query): Builder

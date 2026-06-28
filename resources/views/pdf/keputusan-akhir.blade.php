@@ -19,6 +19,7 @@
         .document-title { margin: 18px 0 16px; text-align: center; }
         .document-title h1 { font-size: 15px; letter-spacing: .04em; text-transform: uppercase; }
         .document-title h2 { font-size: 11px; margin-top: 5px; }
+        .document-label { background: #f8fafc; border: 1px solid #dbe3ec; color: #475569; font-size: 9px; margin: -6px 0 12px; padding: 6px 8px; text-align: center; }
         .section { margin-top: 14px; }
         .section h3 { background: #f1f5f9; border-left: 4px solid #0f766e; font-size: 11px; padding: 7px 10px; text-transform: uppercase; }
         table { border-collapse: collapse; margin-top: 8px; width: 100%; }
@@ -92,6 +93,8 @@
         <h1>Laporan Keputusan Prioritas Pembangunan Antar Dusun</h1>
         <h2>Nomor: {{ $keputusan->nomor_keputusan ?: '-' }}</h2>
     </div>
+
+    <p class="document-label">{{ $snapshotLabel ?? 'Dokumen final keputusan prioritas pembangunan.' }}</p>
 
     <div class="section">
         <h3>Identitas Penetapan</h3>

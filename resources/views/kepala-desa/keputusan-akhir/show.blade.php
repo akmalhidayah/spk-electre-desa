@@ -12,7 +12,7 @@
                 <p>{{ $calculation?->kode_perhitungan ?? '-' }}</p>
             </div>
             <div class="form-actions">
-                <a href="{{ route('kepala-desa.keputusan-akhir.show', ['keputusanAkhir' => $keputusan, 'pdf' => 1]) }}" class="btn btn-primary btn-auto" target="_blank">Cetak PDF Penetapan</a>
+                <a href="{{ route('kepala-desa.keputusan-akhir.pdf', $keputusan) }}" class="btn btn-primary btn-auto" target="_blank">Cetak PDF Penetapan</a>
                 @if ($calculation)
                     <a href="{{ route('kepala-desa.hasil-rekomendasi.show', $calculation) }}" class="btn btn-light">Kembali</a>
                 @endif

@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Dusun;
 use App\Models\ElectreCalculation;
+use App\Models\KeputusanAkhir;
 use App\Models\Kriteria;
 use App\Models\TahunPerencanaan;
-use App\Models\UsulanPembangunan;
 use App\Models\User;
+use App\Models\UsulanPembangunan;
+use App\Services\KeputusanAkhirSnapshotService;
 use App\Services\PejabatDesaService;
 use App\Services\TahunAktifService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -99,34 +101,50 @@ class HasilRekomendasiController extends Controller
         }
     }
 
-    public function keputusanPdf(Request $request, ElectreCalculation $electreCalculation, PejabatDesaService $pejabatDesaService)
+    public function calculationPdf(Request $request, ElectreCalculation $electreCalculation, PejabatDesaService $pejabatDesaService)
+    {
+        try {
+            if ($electreCalculation->status !== ElectreCalculation::STATUS_SELESAI) {
+                return back()->with('error', 'Hasil rekomendasi ini belum selesai.');
+            }
+
+            $data = $this->viewData($electreCalculation);
+            $data['pdfTitle'] = 'Laporan Hasil Rekomendasi Prioritas Pembangunan Antar Dusun';
+            $data['kriterias'] = Kriteria::aktif()->ordered()->get();
+            $data['acceptedUsulans'] = $this->acceptedUsulansForYear((int) $electreCalculation->tahun);
+            $data['kepalaDesaName'] = $pejabatDesaService->kepalaDesaName();
+
+            return Pdf::loadView('pdf.hasil-rekomendasi', $data)
+                ->setPaper('a4', 'portrait')
+                ->stream('laporan-hasil-rekomendasi-'.$electreCalculation->tahun.'-v'.$electreCalculation->versi.'.pdf');
+        } catch (Throwable $e) {
+            Log::error('[HASIL_REKOMENDASI_PERHITUNGAN_PDF_FAILED] Gagal membuat PDF hasil rekomendasi versi tertentu admin', $this->logContext($e, $request, $electreCalculation));
+
+            return back()->with('error', 'Terjadi kesalahan saat membuat PDF hasil rekomendasi versi perhitungan. Kode Error: HASIL_REKOMENDASI_PERHITUNGAN_PDF_FAILED');
+        }
+    }
+
+    public function keputusanPdf(Request $request, ElectreCalculation $electreCalculation, KeputusanAkhirSnapshotService $snapshotService)
     {
         try {
             $keputusanAkhir = $electreCalculation->keputusanAkhir()
-                ->with(['calculation.results.dusun', 'calculation.calculator', 'dusun', 'decider', 'penetap', 'result'])
                 ->first();
 
             if (! $keputusanAkhir) {
                 return back()->with('error', 'Keputusan akhir untuk hasil rekomendasi ini belum dibuat.');
             }
 
-            $tahun = (int) ($keputusanAkhir->tahun ?? $electreCalculation->tahun ?? now()->year);
-
-            return Pdf::loadView('pdf.keputusan-akhir', [
-                'keputusan' => $keputusanAkhir,
-                'calculation' => $keputusanAkhir->calculation,
-                'results' => $keputusanAkhir->calculation?->results?->sortBy('ranking')->values() ?? collect(),
-                'kriterias' => Kriteria::aktif()->ordered()->get(),
-                'kepalaDesaName' => $pejabatDesaService->kepalaDesaName(),
-                'acceptedUsulans' => $this->acceptedUsulansForYear($tahun),
-            ])
-                ->setPaper('a4', 'portrait')
-                ->stream('laporan-penetapan-hasil-'.$keputusanAkhir->id.'.pdf');
+            return $this->streamKeputusanPdf($keputusanAkhir, $snapshotService);
         } catch (Throwable $e) {
             Log::error('[HASIL_REKOMENDASI_KEPUTUSAN_PDF_FAILED] Gagal membuat PDF keputusan akhir admin', $this->logContext($e, $request, $electreCalculation));
 
             return back()->with('error', 'Terjadi kesalahan saat membuat PDF keputusan akhir. Silakan coba kembali. Kode Error: HASIL_REKOMENDASI_KEPUTUSAN_PDF_FAILED');
         }
+    }
+
+    public function keputusanAkhirPdf(KeputusanAkhir $keputusanAkhir, KeputusanAkhirSnapshotService $snapshotService)
+    {
+        return $this->streamKeputusanPdf($keputusanAkhir, $snapshotService);
     }
 
     public function dusunPdf(Request $request, ElectreCalculation $electreCalculation, Dusun $dusun, PejabatDesaService $pejabatDesaService)
@@ -191,7 +209,7 @@ class HasilRekomendasiController extends Controller
     {
         return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
             ->tahun($tahun)
-            ->diterima()
+            ->diterimaAtauPrioritas()
             ->orderBy('dusun_id')
             ->orderBy('nama_kegiatan')
             ->get();
@@ -201,7 +219,7 @@ class HasilRekomendasiController extends Controller
     {
         return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
             ->tahun((int) $calculation->tahun)
-            ->diterima()
+            ->diterimaAtauPrioritas()
             ->where(function ($query) use ($dusun): void {
                 $query->where('dusun_id', $dusun->id)
                     ->orWhereHas('dusunsTerkait', fn ($query) => $query->where('dusuns.id', $dusun->id));
@@ -216,6 +234,25 @@ class HasilRekomendasiController extends Controller
             ->role(User::ROLE_KEPALA_DUSUN)
             ->where('dusun_id', $dusun->id)
             ->first();
+    }
+
+    private function streamKeputusanPdf(KeputusanAkhir $keputusanAkhir, KeputusanAkhirSnapshotService $snapshotService)
+    {
+        if ($keputusanAkhir->status === KeputusanAkhir::STATUS_DITETAPKAN) {
+            $keputusanAkhir = $snapshotService->storePdfFromSnapshot($keputusanAkhir);
+            $path = $snapshotService->pdfStoragePath($keputusanAkhir);
+
+            if ($path) {
+                return response()->file($path, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="keputusan-akhir-'.$keputusanAkhir->id.'.pdf"',
+                ]);
+            }
+        }
+
+        return Pdf::loadView('pdf.keputusan-akhir', $snapshotService->pdfViewData($keputusanAkhir))
+            ->setPaper('a4', 'portrait')
+            ->stream('draft-keputusan-akhir-'.$keputusanAkhir->id.'.pdf');
     }
 
     /**

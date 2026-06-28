@@ -15,9 +15,11 @@ class Kriteria extends Model
     use HasFactory, SoftDeletes;
 
     public const TIPE_BENEFIT = 'benefit';
+
     public const TIPE_COST = 'cost';
 
     public const STATUS_AKTIF = 'aktif';
+
     public const STATUS_NONAKTIF = 'nonaktif';
 
     public const TIPES = [
