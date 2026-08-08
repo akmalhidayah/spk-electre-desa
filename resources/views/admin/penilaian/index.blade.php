@@ -85,7 +85,7 @@
         <section class="panel scale-panel compact-scale-panel">
             <div>
                 <h2 class="panel-title">Skala Nilai</h2>
-                <p class="panel-text">Gunakan skala 1 sampai 5 untuk setiap dusun dan kriteria.</p>
+                <p class="panel-text">Gunakan skala 1 sampai 5 untuk setiap program dan kriteria.</p>
             </div>
             <div class="scale-grid">
                 @foreach ($scaleLabels as $nilai => $label)
@@ -112,7 +112,7 @@
                     <div class="matrix-toolbar">
                         <div>
                             <h2 class="panel-title">Matriks Keputusan Tahun {{ $tahun }}</h2>
-                            <p class="panel-text">Setiap baris adalah dusun aktif dan setiap kolom adalah kriteria aktif.</p>
+                            <p class="panel-text">Setiap baris adalah program pembangunan dan setiap kolom adalah kriteria aktif.</p>
                         </div>
                         <span class="badge {{ $isComplete ? 'badge-success' : 'badge-warning' }}">
                             {{ $isComplete ? 'Lengkap' : 'Belum Lengkap' }}

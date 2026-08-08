@@ -67,5 +67,4 @@ class Dusun extends Model
         return $this->belongsToMany(UsulanPembangunan::class, 'dusun_usulan_pembangunan')
             ->withTimestamps();
     }
-
 }
