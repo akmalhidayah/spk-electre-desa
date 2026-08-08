@@ -6,7 +6,7 @@
 
 @section('content')
     @php
-        $isComplete = $totalSeharusnya > 0 && $totalTerisi === $totalSeharusnya;
+        $isComplete = $totalProgram > 0 && $totalProgramLengkap === $totalProgram;
         $completionWidth = min($persentaseKelengkapan, 100);
         $scaleLabels = [
             1 => 'Sangat rendah',
@@ -69,9 +69,7 @@
         </section>
 
         @if ($errors->any())
-            <div class="alert alert-danger">
-                Pastikan seluruh nilai alternatif telah diisi dengan skala 1 sampai 5.
-            </div>
+            <div class="alert alert-danger">Terdapat nilai yang tidak valid. Gunakan skala 1 sampai 5 untuk nilai yang diisi.</div>
         @endif
 
         @if ($dusuns->isEmpty())
@@ -117,6 +115,7 @@
                         <span class="badge {{ $isComplete ? 'badge-success' : 'badge-warning' }}">
                             {{ $isComplete ? 'Lengkap' : 'Belum Lengkap' }}
                         </span>
+                        <p class="panel-text">{{ $totalProgramLengkap }} dari {{ $totalProgram }} program telah dinilai lengkap.</p>
                     </div>
 
                     <div class="table-wrap desktop-table">
@@ -152,7 +151,6 @@
                                                     name="{{ $fieldName }}"
                                                     class="form-control score-select assessment-desktop-input @error($oldPath) is-invalid @enderror"
                                                     data-assessment-key="{{ $dusun->id }}-{{ $kriteria->id }}"
-                                                    required
                                                     aria-label="Nilai {{ $dusun->nama_kegiatan }} untuk {{ $kriteria->nama_kriteria }}"
                                                 >
                                                     <option value="">Pilih</option>
@@ -195,7 +193,6 @@
                                                 name="{{ $fieldName }}"
                                                 class="form-control assessment-mobile-input @error($oldPath) is-invalid @enderror"
                                                 data-assessment-key="{{ $dusun->id }}-{{ $kriteria->id }}"
-                                                required
                                             >
                                                 <option value="">Pilih nilai</option>
                                                 @for ($nilai = 1; $nilai <= 5; $nilai++)
@@ -214,7 +211,7 @@
 
                 <section class="panel submit-panel">
                     <div>
-                        <h2 class="panel-title">Simpan Matriks Penilaian</h2>
+                        <h2 class="panel-title">Simpan Penilaian</h2>
                         <p class="panel-text">Data yang sudah ada pada tahun {{ $tahun }} akan diperbarui tanpa membuat duplikasi.</p>
                     </div>
                     <button type="submit" class="btn btn-primary btn-auto">

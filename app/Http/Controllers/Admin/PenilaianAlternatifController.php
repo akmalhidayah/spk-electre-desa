@@ -50,6 +50,10 @@ class PenilaianAlternatifController extends Controller
 
             $totalSeharusnya = $dusuns->count() * $kriterias->count();
             $totalTerisi = $penilaians->count();
+            $totalProgramLengkap = $penilaians
+                ->groupBy('usulan_pembangunan_id')
+                ->filter(fn ($items) => $items->pluck('kriteria_id')->unique()->count() === $kriterias->count())
+                ->count();
             $persentaseKelengkapan = $totalSeharusnya > 0
                 ? round(($totalTerisi / $totalSeharusnya) * 100, 2)
                 : 0;
@@ -62,6 +66,8 @@ class PenilaianAlternatifController extends Controller
                 'notes' => $notes,
                 'totalSeharusnya' => $totalSeharusnya,
                 'totalTerisi' => $totalTerisi,
+                'totalProgramLengkap' => $totalProgramLengkap,
+                'totalProgram' => $dusuns->count(),
                 'persentaseKelengkapan' => $persentaseKelengkapan,
                 'rekapUsulan' => $rekapUsulanService->perDusun($tahun),
                 'periode' => $periode,
@@ -80,15 +86,13 @@ class PenilaianAlternatifController extends Controller
     {
         $validated = $request->validate([
             'tahun' => ['required', 'integer', 'min:2020', 'max:2100'],
-            'nilai' => ['required', 'array'],
-            'nilai.*' => ['required', 'array'],
-            'nilai.*.*' => ['required', 'integer', 'min:1', 'max:5'],
+            'nilai' => ['nullable', 'array'],
+            'nilai.*' => ['nullable', 'array'],
+            'nilai.*.*' => ['nullable', 'integer', 'min:1', 'max:5'],
             'keterangan' => ['nullable', 'array'],
             'keterangan.*' => ['nullable', 'array'],
             'keterangan.*.*' => ['nullable', 'string'],
         ], [
-            'nilai.required' => 'Pastikan seluruh nilai alternatif telah diisi dengan skala 1 sampai 5.',
-            'nilai.*.*.required' => 'Pastikan seluruh nilai alternatif telah diisi dengan skala 1 sampai 5.',
             'nilai.*.*.integer' => 'Nilai alternatif harus berupa angka 1 sampai 5.',
             'nilai.*.*.min' => 'Nilai alternatif minimal 1.',
             'nilai.*.*.max' => 'Nilai alternatif maksimal 5.',
@@ -112,29 +116,18 @@ class PenilaianAlternatifController extends Controller
                     ->with('error', 'Belum ada kriteria aktif. Silakan aktifkan data kriteria terlebih dahulu. Kode Error: PENILAIAN_NO_ACTIVE_KRITERIA');
             }
 
-            $nilaiInput = $validated['nilai'];
+            $nilaiInput = $validated['nilai'] ?? [];
             $keteranganInput = $validated['keterangan'] ?? [];
-
-            foreach ($dusuns as $dusun) {
-                foreach ($kriterias as $kriteria) {
-                    if (! isset($nilaiInput[$dusun->id][$kriteria->id])) {
-                        Log::warning('[PENILAIAN_INCOMPLETE] Penilaian alternatif belum lengkap', [
-                            'user_id' => auth()->id(),
-                            'tahun' => $tahun,
-                            'usulan_pembangunan_id' => $dusun->id,
-                            'kriteria_id' => $kriteria->id,
-                        ]);
-
-                        return back()
-                            ->withInput()
-                            ->with('error', 'Penilaian belum lengkap. Pastikan seluruh dusun dan kriteria memiliki nilai 1 sampai 5. Kode Error: PENILAIAN_INCOMPLETE');
-                    }
-                }
-            }
 
             DB::transaction(function () use ($periode, $dusuns, $kriterias, $nilaiInput, $keteranganInput): void {
                 foreach ($dusuns as $dusun) {
                     foreach ($kriterias as $kriteria) {
+                        $nilai = data_get($nilaiInput, "{$dusun->id}.{$kriteria->id}");
+
+                        if ($nilai === null || $nilai === '') {
+                            continue;
+                        }
+
                         PenilaianAlternatif::updateOrCreate(
                             [
                                 'tahun_perencanaan_id' => $periode->id,
@@ -142,7 +135,7 @@ class PenilaianAlternatifController extends Controller
                                 'kriteria_id' => $kriteria->id,
                             ],
                             [
-                                'nilai' => (int) $nilaiInput[$dusun->id][$kriteria->id],
+                                'nilai' => (int) $nilai,
                                 'keterangan' => $keteranganInput[$dusun->id][$kriteria->id] ?? null,
                                 'created_by' => auth()->id(),
                             ],
@@ -153,6 +146,14 @@ class PenilaianAlternatifController extends Controller
 
             $recalculationFlagService->mark($tahun, 'Penilaian alternatif diperbarui.');
 
+            $totalProgramLengkap = PenilaianAlternatif::periode($periode->id)
+                ->whereIn('usulan_pembangunan_id', $dusuns->pluck('id'))
+                ->whereIn('kriteria_id', $kriterias->pluck('id'))
+                ->get()
+                ->groupBy('usulan_pembangunan_id')
+                ->filter(fn ($items) => $items->pluck('kriteria_id')->unique()->count() === $kriterias->count())
+                ->count();
+
             Log::info('[PENILAIAN_SAVED] Penilaian alternatif berhasil disimpan', [
                 'user_id' => auth()->id(),
                 'tahun' => $tahun,
@@ -162,7 +163,7 @@ class PenilaianAlternatifController extends Controller
 
             return redirect()
                 ->route('admin.penilaian.index', ['tahun' => $tahun])
-                ->with('success', "Penilaian alternatif tahun {$tahun} berhasil disimpan.");
+                ->with('success', "Penilaian berhasil disimpan. {$totalProgramLengkap} dari {$dusuns->count()} program telah dinilai lengkap.");
         } catch (Throwable $e) {
             Log::error('[PENILAIAN_STORE_FAILED] Gagal menyimpan penilaian alternatif', $this->logContext($e, $request));
 

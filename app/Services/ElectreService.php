@@ -16,15 +16,20 @@ use RuntimeException;
 
 class ElectreService
 {
-    public function calculate(int $tahun, ?int $userId = null): ElectreCalculation
+    public function calculate(int $tahun, ?int $userId = null, ?array $selectedProgramIds = null): ElectreCalculation
     {
         try {
-            return DB::transaction(function () use ($tahun, $userId): ElectreCalculation {
+            return DB::transaction(function () use ($tahun, $userId, $selectedProgramIds): ElectreCalculation {
                 $periode = TahunPerencanaan::where('tahun', $tahun)->lockForUpdate()->firstOrFail();
-                $dusuns = $this->getAcceptedPrograms($periode->id);
-                $codes = $dusuns->values()->mapWithKeys(fn (UsulanPembangunan $program, int $index) => [$program->id => 'A'.($index + 1)])->all();
+                $allPrograms = $this->getAcceptedPrograms($periode->id);
+                $codes = $allPrograms->values()->mapWithKeys(fn (UsulanPembangunan $program, int $index) => [$program->id => 'A'.($index + 1)])->all();
+                $isTesting = $selectedProgramIds !== null;
+                $selectedIds = collect($selectedProgramIds)->map(fn ($id) => (int) $id)->unique();
+                $dusuns = $isTesting
+                    ? $allPrograms->whereIn('id', $selectedIds)->values()
+                    : $allPrograms;
                 $kriterias = $this->getActiveKriterias();
-                $this->validateInputs($periode, $dusuns, $kriterias);
+                $this->validateInputs($periode, $dusuns, $kriterias, $isTesting, $allPrograms->count());
 
                 $decisionMatrix = $this->buildDecisionMatrix($tahun, $dusuns, $kriterias);
                 $normalization = $this->normalizeMatrix($decisionMatrix, $kriterias);
@@ -40,21 +45,27 @@ class ElectreService
                 ElectreCalculation::periode($periode->id)->lockForUpdate()->get(['id']);
                 $versi = ((int) ElectreCalculation::periode($periode->id)->max('versi')) + 1;
 
-                ElectreCalculation::periode($periode->id)->update(['is_latest' => false]);
+                if (! $isTesting) {
+                    ElectreCalculation::periode($periode->id)->update(['is_latest' => false]);
+                }
 
                 $calculation = ElectreCalculation::create([
                     'tahun_perencanaan_id' => $periode->id,
                     'kode_perhitungan' => $this->generateCalculationCode($tahun),
-                    'judul' => "Perhitungan Pembangunan Usulan Tahun {$tahun}",
-                    'deskripsi' => 'Perhitungan prioritas program pembangunan menggunakan metode ELECTRE.',
+                    'judul' => $isTesting ? "Pengujian Perhitungan ELECTRE Tahun {$tahun}" : "Perhitungan Pembangunan Usulan Tahun {$tahun}",
+                    'deskripsi' => $isTesting
+                        ? "Pengujian ELECTRE menggunakan {$dusuns->count()} program terpilih."
+                        : 'Perhitungan prioritas program pembangunan menggunakan metode ELECTRE.',
                     'status' => ElectreCalculation::STATUS_SELESAI,
                     'versi' => $versi,
-                    'is_latest' => true,
+                    'is_latest' => ! $isTesting,
                     'total_alternatif' => $dusuns->count(),
                     'total_kriteria' => $kriterias->count(),
                     'calculated_by' => $userId,
                     'calculated_at' => now(),
-                    'notes' => 'Perhitungan mendukung kriteria benefit dan cost sesuai pengaturan dasar penilaian.',
+                    'notes' => $isTesting
+                        ? 'JENIS_PERHITUNGAN=PENGUJIAN; hasil hanya mewakili alternatif terpilih.'
+                        : 'JENIS_PERHITUNGAN=REGULER; perhitungan mendukung kriteria benefit dan cost.',
                 ]);
 
                 foreach ($ranking as $item) {
@@ -100,11 +111,13 @@ class ElectreService
                     'ranking_summary' => $ranking,
                 ]);
 
-                $periode->update([
-                    'perlu_hitung_ulang' => false,
-                    'alasan_hitung_ulang' => null,
-                    'last_electre_calculation_id' => $calculation->id,
-                ]);
+                if (! $isTesting) {
+                    $periode->update([
+                        'perlu_hitung_ulang' => false,
+                        'alasan_hitung_ulang' => null,
+                        'last_electre_calculation_id' => $calculation->id,
+                    ]);
+                }
 
                 return $calculation->load(['results.program.dusun', 'results.program.dusunsTerkait', 'details', 'calculator', 'tahunPerencanaan']);
             });
@@ -135,10 +148,12 @@ class ElectreService
         return Kriteria::aktif()->ordered()->get();
     }
 
-    private function validateInputs(TahunPerencanaan $periode, Collection $dusuns, Collection $kriterias): void
+    private function validateInputs(TahunPerencanaan $periode, Collection $dusuns, Collection $kriterias, bool $isTesting, int $totalPrograms): void
     {
         if ($dusuns->count() < 2) {
-            throw new RuntimeException('Minimal harus terdapat dua program diterima. Kode Error: ELECTRE_NO_ACCEPTED_PROGRAM');
+            throw new RuntimeException($isTesting
+                ? 'Pilih minimal dua program untuk pengujian. Kode Error: ELECTRE_MINIMUM_TEST_PROGRAMS'
+                : 'Minimal harus terdapat dua program diterima. Kode Error: ELECTRE_NO_ACCEPTED_PROGRAM');
         }
 
         if ($kriterias->isEmpty()) {
@@ -159,7 +174,19 @@ class ElectreService
             ->count();
 
         if ($totalTerisi !== $totalSeharusnya) {
-            throw new RuntimeException('Penilaian alternatif belum lengkap. Kode Error: ELECTRE_INCOMPLETE_ASSESSMENT');
+            $completePrograms = PenilaianAlternatif::periode($periode->id)
+                ->whereIn('usulan_pembangunan_id', $dusuns->pluck('id'))
+                ->whereIn('kriteria_id', $kriterias->pluck('id'))
+                ->get()
+                ->groupBy('usulan_pembangunan_id')
+                ->filter(fn ($items) => $items->pluck('kriteria_id')->unique()->count() === $kriterias->count())
+                ->count();
+
+            if ($isTesting) {
+                throw new RuntimeException("Hanya program yang telah dinilai lengkap yang dapat diuji. {$completePrograms} dari {$dusuns->count()} program terpilih lengkap. Kode Error: ELECTRE_INCOMPLETE_TEST_ASSESSMENT");
+            }
+
+            throw new RuntimeException("Penilaian program Tahun {$periode->tahun} belum lengkap. {$completePrograms} dari {$totalPrograms} program lengkap. Kode Error: ELECTRE_INCOMPLETE_ASSESSMENT");
         }
     }
 

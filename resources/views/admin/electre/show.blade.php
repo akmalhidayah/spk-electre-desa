@@ -6,6 +6,7 @@
 
 @section('content')
     @php
+        $isTesting = str_contains((string) $calculation->notes, 'JENIS_PERHITUNGAN=PENGUJIAN');
         $matriksKeputusan = $details->get('matriks_keputusan')?->data ?? [];
         $normalisasi = $details->get('normalisasi')?->data ?? [];
         $pembobotan = $details->get('pembobotan')?->data ?? [];
@@ -16,11 +17,18 @@
     <div class="stack">
         <section class="page-header-card">
             <div>
-                <h2>Hasil Perhitungan ELECTRE</h2>
-                <p>Detail hasil rekomendasi prioritas pembangunan.</p>
+                <h2>{{ $isTesting ? 'Pengujian Perhitungan ELECTRE' : 'Hasil Perhitungan ELECTRE' }}</h2>
+                <p>{{ $isTesting ? 'Hasil ini hanya menggunakan alternatif terpilih dan bukan ranking seluruh program.' : 'Detail hasil rekomendasi prioritas pembangunan.' }}</p>
             </div>
             <a href="{{ route('admin.electre.index', ['tahun' => $calculation->tahun]) }}" class="btn btn-light">Kembali</a>
         </section>
+
+        @if ($isTesting)
+            <section class="alert alert-warning electre-status-alert">
+                <strong>Mode Pengujian Alternatif Terpilih</strong>
+                <p>Tahun Perencanaan: {{ $calculation->tahun }} · Alternatif yang diuji: {{ $calculation->total_alternatif }} program.</p>
+            </section>
+        @endif
 
         <section class="panel">
             <div class="matrix-toolbar">

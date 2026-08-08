@@ -31,6 +31,19 @@ class ElectreCalculationController extends Controller
             }
 
             $summary = $this->buildReadinessSummary($tahun);
+            $periode = TahunPerencanaan::where('tahun', $tahun)->first();
+            $kriteriaIds = Kriteria::aktif()->pluck('id');
+            $programs = $periode
+                ? UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
+                    ->withCount(['penilaianAlternatifs as total_nilai_aktif' => fn ($query) => $query
+                        ->where('tahun_perencanaan_id', $periode->id)
+                        ->whereIn('kriteria_id', $kriteriaIds)
+                        ->whereBetween('nilai', [PenilaianAlternatif::NILAI_MIN, PenilaianAlternatif::NILAI_MAX])])
+                    ->periode($periode->id)
+                    ->diterima()
+                    ->orderBy('id')
+                    ->get()
+                : collect();
             $histories = ElectreCalculation::with('calculator')
                 ->tahun($tahun)
                 ->latest('calculated_at')
@@ -42,8 +55,10 @@ class ElectreCalculationController extends Controller
                 'tahun' => $tahun,
                 'summary' => $summary,
                 'histories' => $histories,
-                'periode' => TahunPerencanaan::where('tahun', $tahun)->first(),
+                'periode' => $periode,
                 'tahunList' => TahunPerencanaan::orderByDesc('tahun')->pluck('tahun'),
+                'programs' => $programs,
+                'totalKriteriaAktif' => $kriteriaIds->count(),
             ]);
         } catch (Throwable $e) {
             Log::error('[ELECTRE_INDEX_FAILED] Gagal memuat halaman proses ELECTRE', $this->logContext($e, $request));
@@ -58,14 +73,22 @@ class ElectreCalculationController extends Controller
     {
         $validated = $request->validate([
             'tahun' => ['required', 'integer', 'min:2020', 'max:2100'],
+            'mode' => ['nullable', 'in:reguler,pengujian'],
+            'program_ids' => ['required_if:mode,pengujian', 'nullable', 'array', 'min:2'],
+            'program_ids.*' => ['integer', 'distinct', 'exists:usulan_pembangunans,id'],
         ]);
 
         try {
-            $calculation = $electreService->calculate((int) $validated['tahun'], $request->user()->id);
+            $isTesting = ($validated['mode'] ?? 'reguler') === 'pengujian';
+            $calculation = $electreService->calculate(
+                (int) $validated['tahun'],
+                $request->user()->id,
+                $isTesting ? ($validated['program_ids'] ?? []) : null,
+            );
 
             return redirect()
                 ->route('admin.electre.show', $calculation)
-                ->with('success', 'Perhitungan ELECTRE berhasil diproses.');
+                ->with('success', $isTesting ? 'Pengujian alternatif terpilih berhasil diproses.' : 'Perhitungan ELECTRE berhasil diproses.');
         } catch (RuntimeException $e) {
             return back()
                 ->withInput()
@@ -144,6 +167,14 @@ class ElectreCalculationController extends Controller
             ->whereIn('kriteria_id', $kriteriaIds)
             ->whereBetween('nilai', [PenilaianAlternatif::NILAI_MIN, PenilaianAlternatif::NILAI_MAX])
             ->count() : 0;
+        $totalProgramLengkap = $periode ? PenilaianAlternatif::periode($periode->id)
+            ->whereIn('usulan_pembangunan_id', $programIds)
+            ->whereIn('kriteria_id', $kriteriaIds)
+            ->whereBetween('nilai', [PenilaianAlternatif::NILAI_MIN, PenilaianAlternatif::NILAI_MAX])
+            ->get()
+            ->groupBy('usulan_pembangunan_id')
+            ->filter(fn ($items) => $items->pluck('kriteria_id')->unique()->count() === $totalKriteriaAktif)
+            ->count() : 0;
         $persentaseKelengkapan = $totalPenilaianSeharusnya > 0
             ? round(($totalPenilaianTerisi / $totalPenilaianSeharusnya) * 100, 2)
             : 0;
@@ -163,12 +194,13 @@ class ElectreCalculationController extends Controller
         }
 
         if ($totalPenilaianTerisi !== $totalPenilaianSeharusnya) {
-            $reasons[] = 'Lengkapi penilaian alternatif terlebih dahulu sebelum memproses ELECTRE.';
+            $reasons[] = "Penilaian program Tahun {$tahun} belum lengkap. {$totalProgramLengkap} dari {$totalDusunAktif} program lengkap.";
         }
 
         return [
             'total_dusun_aktif' => $totalDusunAktif,
             'total_program_dinilai' => $totalDusunAktif,
+            'total_program_lengkap' => $totalProgramLengkap,
             'total_kriteria_aktif' => $totalKriteriaAktif,
             'total_bobot_aktif' => $totalBobotAktif,
             'total_penilaian_terisi' => $totalPenilaianTerisi,
