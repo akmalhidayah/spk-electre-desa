@@ -40,6 +40,7 @@ class Kriteria extends Model
         'bobot',
         'tipe',
         'deskripsi',
+        'skala_penilaian',
         'urutan',
         'status',
     ];
@@ -54,6 +55,7 @@ class Kriteria extends Model
         return [
             'bobot' => 'decimal:2',
             'urutan' => 'integer',
+            'skala_penilaian' => 'array',
         ];
     }
 

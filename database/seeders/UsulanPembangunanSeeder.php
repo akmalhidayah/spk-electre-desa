@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Dusun;
+use App\Models\TahunPerencanaan;
 use App\Models\User;
 use App\Models\UsulanPembangunan;
 use Illuminate\Database\Seeder;
@@ -13,9 +14,50 @@ class UsulanPembangunanSeeder extends Seeder
     public function run(): void
     {
         $admin = User::where('email', 'admin@example.com')->first();
+        $periodes = TahunPerencanaan::whereIn('tahun', [2022, 2023, 2026])
+            ->get()
+            ->keyBy('tahun');
         $dusuns = Dusun::all()->keyBy('nama_dusun');
 
-        foreach ($this->items() as $item) {
+        $this->seedItems(
+            $this->items2022(),
+            $periodes[2022],
+            $admin,
+            $dusuns,
+            'RKP Desa Barambang',
+            'Daftar Usulan Non Prioritas Rencana Kerja Pemerintah Desa Tahun Anggaran 2022',
+        );
+        $this->seedItems(
+            $this->items2023(),
+            $periodes[2023],
+            $admin,
+            $dusuns,
+            'RKP Desa Barambang',
+            'Daftar Usulan Rencana Kerja Pemerintah Desa Tahun Anggaran 2023',
+        );
+        $this->seedItems(
+            $this->items2026(),
+            $periodes[2026],
+            $admin,
+            $dusuns,
+            'RKP/RPJM Desa Barambang',
+            'RKP/RPJM Desa Barambang',
+        );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     * @param  Collection<string, Dusun>  $dusuns
+     */
+    private function seedItems(
+        array $items,
+        TahunPerencanaan $periode,
+        ?User $admin,
+        Collection $dusuns,
+        string $sumberUsulan,
+        string $sumberDokumen,
+    ): void {
+        foreach ($items as $item) {
             $relatedDusunIds = $this->detectDusunIds($item['lokasi'], $dusuns);
             $tipeUsulan = match (true) {
                 count($relatedDusunIds) > 1 => UsulanPembangunan::TIPE_LINTAS_DUSUN,
@@ -25,28 +67,28 @@ class UsulanPembangunanSeeder extends Seeder
 
             $usulan = UsulanPembangunan::updateOrCreate(
                 [
-                    'tahun' => 2026,
+                    'tahun_perencanaan_id' => $periode->id,
                     'nama_kegiatan' => $item['nama'],
                     'lokasi_kegiatan' => $item['lokasi'],
+                    'prakiraan_volume' => $item['volume'],
+                    'satuan' => $item['satuan'],
                 ],
                 [
                     'dusun_id' => $tipeUsulan === UsulanPembangunan::TIPE_UMUM_DESA ? null : $relatedDusunIds[0],
                     'user_id' => $admin?->id,
                     'tipe_usulan' => $tipeUsulan,
-                    'prakiraan_volume' => $item['volume'],
-                    'satuan' => $item['satuan'],
                     'penerima_manfaat_lk' => $item['lk'],
                     'penerima_manfaat_pr' => $item['pr'],
                     'penerima_manfaat_a_rtm' => $item['artm'],
                     'sdgs_ke' => null,
-                    'sumber_usulan' => 'RKP/RPJM Desa Barambang',
+                    'sumber_usulan' => $sumberUsulan,
                     'kategori_kegiatan' => $item['kategori'],
                     'jumlah_usulan' => 1,
                     'estimasi_anggaran' => null,
                     'deskripsi' => "Usulan {$item['nama']} pada {$item['lokasi']}.",
-                    'status' => UsulanPembangunan::STATUS_DITERIMA,
-                    'status_prioritas' => UsulanPembangunan::PRIORITAS_NON_PRIORITAS,
-                    'is_data_pendukung_penilaian' => $tipeUsulan !== UsulanPembangunan::TIPE_UMUM_DESA,
+                    'sumber_dokumen' => $sumberDokumen,
+                    'status_usulan' => UsulanPembangunan::STATUS_DITERIMA,
+                    'status_pelaksanaan' => 'belum_dilaksanakan',
                 ],
             );
 
@@ -57,7 +99,129 @@ class UsulanPembangunanSeeder extends Seeder
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function items(): array
+    private function items2022(): array
+    {
+        return [
+            $this->r('Pembebasan Tanah Pekuburan Umum', 'Desa Barambang', 0.5, 'Hektare', null, null, null, null),
+            $this->r('Pembangunan Pasar', 'Desa Barambang', 1, 'Unit', null, null, null, null),
+            $this->r('Pelatihan Pembuatan Pupuk Kompos', 'Dusun Balang', 5, 'Klp', null, null, null, null),
+            $this->r('Pelatihan Budidaya Tanaman Bawang Putih', 'Dusun Balang', 2, 'Klp', null, null, null, null),
+            $this->r('Pelatihan Budidaya Tanaman Apel', 'Dusun Balang', 5, 'Klp', null, null, null, null),
+            $this->r('Pelatihan Budidaya Stroberi', 'Dusun Balang', 5, 'Klp', null, null, null, null),
+            $this->r('Pelatihan Kerajinan Tangan', 'Dusun Balang', 1, 'Klp', null, null, null, null),
+            $this->r('Pagar TK/Taman Bermain', 'Dusun Balang', 15, 'Meter', null, null, null, null),
+            $this->r('Pagar Posyandu', 'Dusun Balang', 15, 'Meter', null, null, null, null),
+            $this->r('Pengadaan Strom Babi', 'Dusun Balang', 5, 'Paket', null, null, null, null),
+            $this->r('Talud Masjid', 'Dusun Balang', 15, 'Meter', null, null, null, null),
+            $this->r('Alat Kasidah Majelis Taklim', 'Dusun Balang', 1, 'Paket', null, null, null, null),
+            $this->r('Saluran Irigasi Jalan Batu Barae', 'Dusun Balang', 2000, 'Meter', null, null, null, null),
+            $this->r('Saluran Irigasi Jalan Batu Barae', 'Dusun Balang', 250, 'Meter', null, null, null, null),
+            $this->r('Pengaspalan Jalan Batu Barae', 'Dusun Balang', 2000, 'Meter', null, null, null, null),
+            $this->r('Jembatan Gantung Jalan Sungai Apareng', 'Dusun Batu Massompo', 12, 'Meter', null, null, null, null),
+            $this->r('Jembatan', 'Dusun Batu Massompo', 12, 'Meter', null, null, null, null),
+            $this->r('Saluran Irigasi', 'Dusun Batu Massompo', 250, 'Meter', null, null, null, null),
+            $this->r('Talud', 'Dusun Batu Massompo', 40, 'Meter (tinggi 4 m)', null, null, null, null),
+            $this->r('Saluran Irigasi Apareng Hulu', 'RT.002/RW.001 Dusun Bonto Manai', 500, 'Meter', null, null, null, null),
+            $this->r('Saluran Irigasi Lembang Caggoe', 'RT.004/RW.002 Dusun Bonto Manai', 1000, 'Meter', null, null, null, null),
+            $this->r('Penambahan Tiang Listrik/Jaringan PLN', 'RT.001/RW.001 Dusun Bonto Manai', 30, 'Rumah', null, null, null, null),
+            $this->r('Perbaikan Irigasi Belakang SD 242', 'Dusun Bonto Manai', 200, 'Meter', null, null, null, null),
+            $this->r('Talud Depan Masjid Haqqul Yakin', 'RT.003/RW.002 Dusun Bonto Manai', 25, 'Meter', null, null, null, null),
+            $this->r('Pembangunan Drainase', 'Dusun Bonto Manai', 100, 'Meter', null, null, null, null),
+            $this->r('Talud Samping Masjid Darul Aftar', 'RT.002/RW.001 Dusun Katute', 40, 'Meter', null, null, null, null),
+            $this->r('Talud PAUD', 'RT.003/RW.002 Dusun Katute', 50, 'Meter', null, null, null, null),
+            $this->r('Pagar PAUD', 'Dusun Katute', null, null, null, null, null, null),
+            $this->r('Renovasi Sekolah TK', 'Dusun Katute', 1, 'Unit', null, null, null, null),
+            $this->r('Tribun Lapangan', 'Dusun Katute', 1, 'Unit', null, null, null, null),
+            $this->r('Pembangunan Bendungan Irigasi Air Terjun', 'Dusun Balang/Dusun Katute', 1, 'Unit', null, null, null, null),
+            $this->r('Rehabilitasi Hulu Air Bersih', 'Dusun Katute', 1000, 'Meter', null, null, null, null),
+            $this->r('Rehabilitasi Pustu Barambang', 'Dusun Katute', 1, 'Unit', null, null, null, null),
+            $this->r('Pengadaan Bibit Kopi', 'Desa Barambang', 1, 'Desa', null, null, null, null),
+            $this->r('Pembuatan Empang/Budidaya Ikan Air Tawar', 'Desa Barambang', 1, 'Desa', null, null, null, null),
+            $this->r('Pembinaan TP PKK', 'Desa Barambang', 1, 'Desa', null, null, null, null),
+            $this->r('Pembinaan Lembaga Adat', 'Desa Barambang', 1, 'Klp', null, null, null, null),
+            $this->r('Pengadaan Prasarana Rumah Adat', 'Desa Barambang', 1, 'Ls', null, null, null, null),
+            $this->r('Pengadaan Alat Musik Sanggar Seni', 'Desa Barambang', 1, 'Set', null, null, null, null),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function items2023(): array
+    {
+        return [
+            $this->r('Pengerasan Jalan Wisata Batu Barae', 'RT.002/RW.001 Dusun Balang', 1800, 'Meter', null, null, null, null),
+            $this->r('Rabat Beton Jalan Sungai Bintino', 'RT.004/RW.002 Dusun Balang', 350, 'Meter', null, null, null, null),
+            $this->r('Talud Jalan Sungai Apareng', 'RT.001/RW.001 Dusun Balang', 20, 'Meter (tinggi 3 m)', null, null, null, null),
+            $this->r('Pelatihan Pembuatan Pupuk Kompos', 'Dusun Balang', 5, 'Klp', null, null, null, null),
+            $this->r('Pelatihan Budidaya Tanaman Bawang Putih', 'Dusun Balang', 2, 'Klp', null, null, null, null),
+            $this->r('Pelatihan Budidaya Tanaman Apel', 'Dusun Balang', 5, 'Klp', null, null, null, null),
+            $this->r('Pelatihan Budidaya Stroberi', 'Dusun Balang', 5, 'Klp', null, null, null, null),
+            $this->r('Pelatihan Kerajinan Tangan', 'Dusun Balang', 1, 'Klp', null, null, null, null),
+            $this->r('Pagar TK/Taman Bermain', 'Dusun Balang', 15, 'Meter', null, null, null, null),
+            $this->r('Pagar Posyandu', 'Dusun Balang', 15, 'Meter', null, null, null, null),
+            $this->r('Penampungan WC Posyandu', 'Dusun Balang', 1, 'Unit', null, null, null, null),
+            $this->r('Pengadaan Strom Babi', 'Dusun Balang', 5, 'Paket', null, null, null, null),
+            $this->r('Talud Masjid', 'Dusun Balang', 15, 'Meter', null, null, null, null),
+            $this->r('Perlengkapan Posyandu', 'Dusun Balang', 1, 'Buah', null, null, null, null),
+            $this->r('Plafon Posyandu', 'Dusun Balang', 1, 'Unit', null, null, null, null),
+            $this->r('Fasilitas Olahraga', 'Dusun Balang', 1, 'Set', null, null, null, null),
+            $this->r('Alat Kasidah Majelis Taklim', 'Dusun Balang', 1, 'Paket', null, null, null, null),
+            $this->r('Pakaian Majelis Taklim', 'Dusun Balang', 1, 'Paket', null, null, null, null),
+            $this->r('Pembentukan Guru Mengaji', 'Dusun Balang', 1, 'Klp', null, null, null, null),
+            $this->r('Rabat Beton', 'Dusun Batu Massompo', 300, 'Meter', null, null, null, null),
+            $this->r('Jembatan', 'Dusun Batu Massompo', 12, 'Meter', null, null, null, null),
+            $this->r('Duwikker', 'Dusun Batu Massompo', 3, 'Buah', null, null, null, null),
+            $this->r('Pengerasan Jalan', 'Dusun Batu Massompo', 100, 'Meter', null, null, null, null),
+            $this->r('Saluran Irigasi', 'Dusun Batu Massompo', 250, 'Meter', null, null, null, null),
+            $this->r('Talud', 'Dusun Batu Massompo', 40, 'Meter (tinggi 4 m)', null, null, null, null),
+            $this->r('Pagar Wisata', 'Dusun Batu Massompo', 90, 'Meter', null, null, null, null),
+            $this->r('Gazebo', 'Dusun Batu Massompo', 8, 'Buah', null, null, null, null),
+            $this->r('Sepeda Gantung', 'Dusun Batu Massompo', 1, 'Set', null, null, null, null),
+            $this->r('Pengerasan Jalan ke Masjid', 'Dusun Batu Massompo', 400, 'Meter', null, null, null, null),
+            $this->r('Saluran Irigasi Apareng Hulu', 'RT.002/RW.001 Dusun Bonto Manai', 500, 'Meter', null, null, null, null),
+            $this->r('Saluran Irigasi Lembang Caggoe', 'RT.004/RW.002 Dusun Bonto Manai', 1000, 'Meter', null, null, null, null),
+            $this->r('Gorong-Gorong', 'RT.004/RW.002 Dusun Bonto Manai', 2, 'Unit', null, null, null, null),
+            $this->r('Duwikker', 'RT.004/RW.002 Dusun Bonto Manai', 2, 'Unit', null, null, null, null),
+            $this->r('Rabat Beton', 'RT.003/RW.002 Dusun Bonto Manai', 500, 'Meter', null, null, null, null),
+            $this->r('Rabat Beton', 'Dusun Bonto Manai', 200, 'Meter', null, null, null, null),
+            $this->r('Perlengkapan Posyandu', 'Dusun Bonto Manai', 2, 'Unit', null, null, null, null),
+            $this->r('Peningkatan Bangunan PAUD', 'Dusun Bonto Manai', 1, 'Unit', null, null, null, null),
+            $this->r('Penambahan Tiang Listrik/Jaringan PLN', 'RT.001/RW.001 Dusun Bonto Manai', 30, 'Rumah', null, null, null, null),
+            $this->r('Perbaikan Irigasi Belakang SD 242', 'Dusun Bonto Manai', 200, 'Meter', null, null, null, null),
+            $this->r('Pembangunan Lanjutan Jembatan Liu Sirie', 'RT.001 Dusun Bonto Manai', null, null, null, null, null, null),
+            $this->r('Talud Depan Masjid Haqqul Yakin', 'RT.003/RW.002 Dusun Bonto Manai', 25, 'Meter', null, null, null, null),
+            $this->r('Pembangunan Drainase', 'Dusun Bonto Manai', 100, 'Meter', null, null, null, null),
+            $this->r('Rabat Beton', 'RT.001/RW.001 Dusun Katute', 100, 'Meter', null, null, null, null),
+            $this->r('Pelebaran Jalan Padang Malabo', 'RT.001/RW.001 Dusun Katute', 800, 'Meter', null, null, null, null),
+            $this->r('Duwikker', 'RT.001/RW.001 Dusun Katute', 2, 'Unit', null, null, null, null),
+            $this->r('Rabat Beton', 'RT.002/RW.001 Dusun Katute', 200, 'Meter', null, null, null, null),
+            $this->r('Talud Samping Masjid Darul Aftar', 'RT.002/RW.001 Dusun Katute', 40, 'Meter', null, null, null, null),
+            $this->r('Talud PAUD', 'RT.003/RW.002 Dusun Katute', 50, 'Meter', null, null, null, null),
+            $this->r('Pagar PAUD', 'Dusun Katute', null, null, null, null, null, null),
+            $this->r('Rabat Beton Jalan Mattekko', 'Dusun Katute', 2000, 'Meter', null, null, null, null),
+            $this->r('Duwikker', 'Dusun Katute', 2, 'Unit', null, null, null, null),
+            $this->r('Renovasi Sekolah TK', 'Dusun Katute', 1, 'Unit', null, null, null, null),
+            $this->r('Stapel PAUD', 'Dusun Katute', 1, 'Unit', null, null, null, null),
+            $this->r('Rabat Beton', 'Dusun Katute/Dusun Balang', 40, 'Meter', null, null, null, null),
+            $this->r('Tribun Lapangan', 'Dusun Katute', 1, 'Unit', null, null, null, null),
+            $this->r('Tambahan Insentif Guru PAUD', 'Desa Barambang', null, null, null, null, null, null),
+            $this->r('Pembangunan Irigasi Air Terjun', 'Dusun Balang/Dusun Katute', 1800, 'Meter', null, null, null, null),
+            $this->r('Rehabilitasi Hulu Air Bersih', 'Dusun Katute', 1000, 'Meter', null, null, null, null),
+            $this->r('Rehabilitasi Pustu Barambang', 'Dusun Katute', 1, 'Unit', null, null, null, null),
+            $this->r('Pengadaan Internet', 'Kantor Desa Barambang', 1, 'Paket', null, null, null, null),
+            $this->r('Pembangunan Pintu Gerbang Kantor Desa', 'Kantor Desa Barambang', 1, 'Paket', null, null, null, null),
+            $this->r('Pengadaan Bibit Kopi', 'Desa Barambang', 1, 'Desa', null, null, null, null),
+            $this->r('Pembuatan Empang/Budidaya Ikan Air Tawar', 'Desa Barambang', 1, 'Desa', null, null, null, null),
+            $this->r('Pembinaan TP PKK', 'Desa Barambang', 1, 'Desa', null, null, null, null),
+            $this->r('Pembinaan Lembaga Adat', 'Desa Barambang', 1, 'Klp', null, null, null, null),
+            $this->r('Pengadaan Prasarana Rumah Adat', 'Desa Barambang', 1, 'Ls', null, null, null, null),
+            $this->r('Pengadaan Alat Musik Sanggar Seni', 'Desa Barambang', 1, 'Set', null, null, null, null),
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function items2026(): array
     {
         return [
             $this->r('Pengadaan Pakaian Seragam Koordinator dan Kader Posyandu', 'Desa Barambang', 23, 'Orang', 0, 23, 0, 'Kesehatan'),
@@ -130,7 +294,7 @@ class UsulanPembangunanSeeder extends Seeder
     /**
      * @return array<string, mixed>
      */
-    private function r(string $nama, string $lokasi, float $volume, string $satuan, int $lk, int $pr, int $artm, string $kategori): array
+    private function r(string $nama, string $lokasi, ?float $volume, ?string $satuan, ?int $lk, ?int $pr, ?int $artm, ?string $kategori): array
     {
         return compact('nama', 'lokasi', 'volume', 'satuan', 'lk', 'pr', 'artm', 'kategori');
     }

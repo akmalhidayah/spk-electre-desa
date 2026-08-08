@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('kriterias', function (Blueprint $table) {
@@ -18,18 +15,15 @@ return new class extends Migration
             $table->decimal('bobot', 5, 2);
             $table->string('tipe')->default('benefit')->index();
             $table->text('deskripsi')->nullable();
+            $table->json('skala_penilaian')->nullable();
             $table->unsignedInteger('urutan')->default(0)->index();
             $table->string('status')->default('aktif')->index();
             $table->timestamps();
             $table->softDeletes();
-
             $table->index(['status', 'urutan']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('kriterias');

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class UsulanPembangunan extends Model
@@ -60,9 +61,9 @@ class UsulanPembangunan extends Model
     protected $table = 'usulan_pembangunans';
 
     protected $fillable = [
+        'tahun_perencanaan_id',
         'dusun_id',
         'user_id',
-        'tahun',
         'nama_kegiatan',
         'tipe_usulan',
         'lokasi_kegiatan',
@@ -73,53 +74,65 @@ class UsulanPembangunan extends Model
         'penerima_manfaat_a_rtm',
         'sdgs_ke',
         'sumber_usulan',
+        'sumber_dokumen',
+        'nomor_dokumen',
         'kategori_kegiatan',
         'jumlah_usulan',
         'estimasi_anggaran',
+        'anggaran_realisasi',
         'deskripsi',
-        'status',
-        'status_prioritas',
-        'is_data_pendukung_penilaian',
+        'kondisi_awal',
+        'status_usulan',
+        'status_pelaksanaan',
+        'tahun_realisasi',
         'catatan_admin',
+        'verified_by',
+        'verified_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'tahun' => 'integer',
+            'tahun_realisasi' => 'integer',
             'jumlah_usulan' => 'integer',
             'prakiraan_volume' => 'decimal:2',
             'penerima_manfaat_lk' => 'integer',
             'penerima_manfaat_pr' => 'integer',
             'penerima_manfaat_a_rtm' => 'integer',
             'estimasi_anggaran' => 'decimal:2',
-            'is_data_pendukung_penilaian' => 'boolean',
+            'anggaran_realisasi' => 'decimal:2',
+            'verified_at' => 'datetime',
         ];
     }
 
     public function scopeTahun(Builder $query, int $tahun): Builder
     {
-        return $query->where('tahun', $tahun);
+        return $query->whereHas('periode', fn (Builder $periode) => $periode->where('tahun', $tahun));
+    }
+
+    public function scopePeriode(Builder $query, int $periodeId): Builder
+    {
+        return $query->where('tahun_perencanaan_id', $periodeId);
     }
 
     public function scopeStatus(Builder $query, string $status): Builder
     {
-        return $query->where('status', $status);
+        return $query->where('status_usulan', $status);
     }
 
     public function scopeDiajukan(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_DIAJUKAN);
+        return $query->where('status_usulan', self::STATUS_DIAJUKAN);
     }
 
     public function scopeDiproses(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_DIPROSES);
+        return $query->where('status_usulan', self::STATUS_DIPROSES);
     }
 
     public function scopeDiterima(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_DITERIMA);
+        return $query->where('status_usulan', self::STATUS_DITERIMA);
     }
 
     public function scopeDiterimaAtauPrioritas(Builder $query): Builder
@@ -132,7 +145,7 @@ class UsulanPembangunan extends Model
 
     public function scopeDitolak(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_DITOLAK);
+        return $query->where('status_usulan', self::STATUS_DITOLAK);
     }
 
     public function scopeMasukPrioritas(Builder $query): Builder
@@ -191,6 +204,16 @@ class UsulanPembangunan extends Model
         return $this->belongsTo(Dusun::class);
     }
 
+    public function periode(): BelongsTo
+    {
+        return $this->belongsTo(TahunPerencanaan::class, 'tahun_perencanaan_id');
+    }
+
+    public function verifikator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verified_by');
+    }
+
     public function pengaju(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -200,5 +223,20 @@ class UsulanPembangunan extends Model
     {
         return $this->belongsToMany(Dusun::class, 'dusun_usulan_pembangunan')
             ->withTimestamps();
+    }
+
+    public function penilaianAlternatifs(): HasMany
+    {
+        return $this->hasMany(PenilaianAlternatif::class);
+    }
+
+    public function electreResults(): HasMany
+    {
+        return $this->hasMany(ElectreResult::class);
+    }
+
+    public function keputusanAkhirs(): HasMany
+    {
+        return $this->hasMany(KeputusanAkhir::class);
     }
 }

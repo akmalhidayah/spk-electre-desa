@@ -18,11 +18,7 @@ return new class extends Migration
             $table->boolean('perlu_hitung_ulang')->default(false)->index();
             $table->text('alasan_hitung_ulang')->nullable();
             $table->timestamp('last_data_changed_at')->nullable();
-            $table->foreignId('last_electre_calculation_id')
-                ->nullable()
-                ->constrained('electre_calculations')
-                ->cascadeOnUpdate()
-                ->nullOnDelete();
+            $table->unsignedBigInteger('last_electre_calculation_id')->nullable();
             $table->timestamps();
         });
     }

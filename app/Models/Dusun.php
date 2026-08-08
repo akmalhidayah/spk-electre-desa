@@ -27,9 +27,8 @@ class Dusun extends Model
     protected $table = 'dusuns';
 
     protected $fillable = [
-        'kode_alternatif',
         'nama_dusun',
-        'luas_tanah',
+        'luas_wilayah',
         'jumlah_penduduk',
         'keterangan',
         'status',
@@ -38,7 +37,7 @@ class Dusun extends Model
     protected function casts(): array
     {
         return [
-            'luas_tanah' => 'decimal:2',
+            'luas_wilayah' => 'decimal:2',
             'jumlah_penduduk' => 'integer',
         ];
     }
@@ -69,13 +68,4 @@ class Dusun extends Model
             ->withTimestamps();
     }
 
-    public function penilaianAlternatifs(): HasMany
-    {
-        return $this->hasMany(PenilaianAlternatif::class);
-    }
-
-    public function electreResults(): HasMany
-    {
-        return $this->hasMany(ElectreResult::class);
-    }
 }

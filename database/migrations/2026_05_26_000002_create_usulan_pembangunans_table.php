@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('usulan_pembangunans', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('tahun_perencanaan_id')->constrained('tahun_perencanaans')->cascadeOnUpdate()->restrictOnDelete();
             $table->foreignId('dusun_id')
                 ->nullable()
                 ->constrained('dusuns')
@@ -23,7 +24,6 @@ return new class extends Migration
                 ->constrained('users')
                 ->cascadeOnUpdate()
                 ->nullOnDelete();
-            $table->unsignedSmallInteger('tahun');
             $table->string('nama_kegiatan');
             $table->string('tipe_usulan')->default('dusun')->index();
             $table->string('lokasi_kegiatan')->nullable();
@@ -34,21 +34,26 @@ return new class extends Migration
             $table->unsignedInteger('penerima_manfaat_a_rtm')->nullable();
             $table->string('sdgs_ke')->nullable();
             $table->string('sumber_usulan')->nullable();
+            $table->string('sumber_dokumen')->nullable();
+            $table->string('nomor_dokumen')->nullable();
             $table->string('kategori_kegiatan', 100)->nullable()->index();
             $table->unsignedInteger('jumlah_usulan')->nullable();
             $table->decimal('estimasi_anggaran', 15, 2)->nullable();
+            $table->decimal('anggaran_realisasi', 15, 2)->nullable();
             $table->text('deskripsi')->nullable();
-            $table->string('status')->default('diajukan')->index();
-            $table->string('status_prioritas')->default('non_prioritas')->index();
-            $table->boolean('is_data_pendukung_penilaian')->default(false)->index();
+            $table->text('kondisi_awal')->nullable();
+            $table->string('status_usulan')->default('diajukan')->index();
+            $table->string('status_pelaksanaan')->default('belum_dilaksanakan')->index();
+            $table->unsignedSmallInteger('tahun_realisasi')->nullable();
             $table->text('catatan_admin')->nullable();
+            $table->foreignId('verified_by')->nullable()->constrained('users')->cascadeOnUpdate()->nullOnDelete();
+            $table->timestamp('verified_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index(['tahun', 'dusun_id']);
-            $table->index(['tahun', 'status']);
-            $table->index(['tahun', 'tipe_usulan']);
-            $table->index(['tahun', 'is_data_pendukung_penilaian'], 'usulan_tahun_pendukung_index');
+            $table->index(['tahun_perencanaan_id', 'dusun_id']);
+            $table->index(['tahun_perencanaan_id', 'status_usulan']);
+            $table->index(['tahun_perencanaan_id', 'tipe_usulan']);
         });
     }
 

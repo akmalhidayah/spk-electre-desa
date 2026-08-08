@@ -9,16 +9,18 @@ class TahunPerencanaanSeeder extends Seeder
 {
     public function run(): void
     {
-        TahunPerencanaan::updateOrCreate(
-            ['tahun' => 2026],
-            [
-                'nama_periode' => 'RKP Desa Barambang Tahun 2026',
-                'deskripsi' => 'Periode perencanaan usulan RKP/RPJM Desa Barambang tahun 2026.',
-                'is_active' => true,
-                'is_locked' => false,
-                'perlu_hitung_ulang' => false,
-                'alasan_hitung_ulang' => null,
-            ],
-        );
+        foreach ([2022, 2023, 2024, 2025, 2026] as $tahun) {
+            TahunPerencanaan::updateOrCreate(
+                ['tahun' => $tahun],
+                [
+                    'nama_periode' => "RKP Desa Barambang Tahun {$tahun}",
+                    'deskripsi' => "Periode perencanaan Desa Barambang tahun {$tahun}.",
+                    'is_active' => $tahun === 2026,
+                    'is_locked' => false,
+                    'perlu_hitung_ulang' => false,
+                    'alasan_hitung_ulang' => null,
+                ],
+            );
+        }
     }
 }

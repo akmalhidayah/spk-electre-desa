@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::create('dusuns', function (Blueprint $table) {
             $table->id();
-            $table->string('kode_alternatif')->nullable()->unique();
             $table->string('nama_dusun');
-            $table->decimal('luas_tanah', 12, 2)->nullable();
+            $table->decimal('luas_wilayah', 12, 2)->nullable();
             $table->unsignedInteger('jumlah_penduduk')->nullable();
             $table->text('keterangan')->nullable();
             $table->string('status')->default('aktif')->index();
