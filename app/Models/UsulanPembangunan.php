@@ -24,8 +24,6 @@ class UsulanPembangunan extends Model
 
     public const STATUS_DITOLAK = 'ditolak';
 
-    public const STATUS_MASUK_PRIORITAS = 'masuk_prioritas';
-
     public const TIPE_DUSUN = 'dusun';
 
     public const TIPE_LINTAS_DUSUN = 'lintas_dusun';
@@ -38,24 +36,11 @@ class UsulanPembangunan extends Model
         self::TIPE_UMUM_DESA,
     ];
 
-    public const PRIORITAS_BELUM_DINILAI = 'belum_dinilai';
-
-    public const PRIORITAS_NON_PRIORITAS = 'non_prioritas';
-
-    public const PRIORITAS_PRIORITAS = 'prioritas';
-
-    public const STATUS_PRIORITAS = [
-        self::PRIORITAS_BELUM_DINILAI,
-        self::PRIORITAS_NON_PRIORITAS,
-        self::PRIORITAS_PRIORITAS,
-    ];
-
     public const STATUSES = [
         self::STATUS_DIAJUKAN,
         self::STATUS_DIPROSES,
         self::STATUS_DITERIMA,
         self::STATUS_DITOLAK,
-        self::STATUS_MASUK_PRIORITAS,
     ];
 
     protected $table = 'usulan_pembangunans';
@@ -107,7 +92,7 @@ class UsulanPembangunan extends Model
 
     public function scopeTahun(Builder $query, int $tahun): Builder
     {
-        return $query->whereHas('periode', fn (Builder $periode) => $periode->where('tahun', $tahun));
+        return $query->whereHas('tahunPerencanaan', fn (Builder $periode) => $periode->where('tahun', $tahun));
     }
 
     public function scopePeriode(Builder $query, int $periodeId): Builder
@@ -135,32 +120,14 @@ class UsulanPembangunan extends Model
         return $query->where('status_usulan', self::STATUS_DITERIMA);
     }
 
-    public function scopeDiterimaAtauPrioritas(Builder $query): Builder
-    {
-        return $query->whereIn('status', [
-            self::STATUS_DITERIMA,
-            self::STATUS_MASUK_PRIORITAS,
-        ]);
-    }
-
     public function scopeDitolak(Builder $query): Builder
     {
         return $query->where('status_usulan', self::STATUS_DITOLAK);
     }
 
-    public function scopeMasukPrioritas(Builder $query): Builder
-    {
-        return $query->where('status', self::STATUS_MASUK_PRIORITAS);
-    }
-
     public function scopeTipe(Builder $query, string $tipe): Builder
     {
         return $query->where('tipe_usulan', $tipe);
-    }
-
-    public function scopeDataPendukung(Builder $query): Builder
-    {
-        return $query->where('is_data_pendukung_penilaian', true);
     }
 
     public function getStatusLabelAttribute(): string
@@ -170,8 +137,7 @@ class UsulanPembangunan extends Model
             self::STATUS_DIPROSES => 'Diproses',
             self::STATUS_DITERIMA => 'Diterima',
             self::STATUS_DITOLAK => 'Ditolak',
-            self::STATUS_MASUK_PRIORITAS => 'Masuk Prioritas',
-        ][$this->status] ?? ucfirst((string) $this->status);
+        ][$this->status_usulan] ?? ucfirst((string) $this->status_usulan);
     }
 
     public function getStatusBadgeClassAttribute(): string
@@ -181,8 +147,7 @@ class UsulanPembangunan extends Model
             self::STATUS_DIPROSES => 'badge-info',
             self::STATUS_DITERIMA => 'badge-success',
             self::STATUS_DITOLAK => 'badge-danger',
-            self::STATUS_MASUK_PRIORITAS => 'badge-priority',
-        ][$this->status] ?? 'badge-muted';
+        ][$this->status_usulan] ?? 'badge-muted';
     }
 
     public function getTipeUsulanLabelAttribute(): string
@@ -199,12 +164,30 @@ class UsulanPembangunan extends Model
         return (int) $this->penerima_manfaat_lk + (int) $this->penerima_manfaat_pr;
     }
 
+    public function getLokasiLabelAttribute(): string
+    {
+        if ($this->tipe_usulan === self::TIPE_UMUM_DESA) {
+            return 'Desa Barambang';
+        }
+
+        if ($this->tipe_usulan === self::TIPE_LINTAS_DUSUN) {
+            return $this->dusunsTerkait->pluck('nama_dusun')->join(', ') ?: ($this->lokasi_kegiatan ?: '-');
+        }
+
+        return $this->lokasi_kegiatan ?: ($this->dusun?->nama_dusun ?: '-');
+    }
+
+    public function getTahunAttribute(): ?int
+    {
+        return $this->tahunPerencanaan?->tahun;
+    }
+
     public function dusun(): BelongsTo
     {
         return $this->belongsTo(Dusun::class);
     }
 
-    public function periode(): BelongsTo
+    public function tahunPerencanaan(): BelongsTo
     {
         return $this->belongsTo(TahunPerencanaan::class, 'tahun_perencanaan_id');
     }

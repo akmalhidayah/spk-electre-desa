@@ -123,7 +123,7 @@
                         <table class="data-table assessment-table">
                             <thead>
                                 <tr>
-                                    <th>Dusun</th>
+                                    <th>Program dan Lokasi</th>
                                     @foreach ($kriterias as $kriteria)
                                         <th>
                                             <strong>{{ $kriteria->kode }}</strong>
@@ -137,8 +137,9 @@
                                 @foreach ($dusuns as $dusun)
                                     <tr>
                                         <td>
-                                            <span class="code-pill">{{ $dusun->kode_alternatif ?? '-' }}</span>
-                                            <strong>{{ $dusun->nama_dusun }}</strong>
+                                            <span class="code-pill">A{{ $loop->iteration }}</span>
+                                            <strong>{{ $dusun->nama_kegiatan }}</strong>
+                                            <small>{{ $dusun->lokasi_label }}</small>
                                         </td>
                                         @foreach ($kriterias as $kriteria)
                                             @php
@@ -152,7 +153,7 @@
                                                     class="form-control score-select assessment-desktop-input @error($oldPath) is-invalid @enderror"
                                                     data-assessment-key="{{ $dusun->id }}-{{ $kriteria->id }}"
                                                     required
-                                                    aria-label="Nilai {{ $dusun->nama_dusun }} untuk {{ $kriteria->nama_kriteria }}"
+                                                    aria-label="Nilai {{ $dusun->nama_kegiatan }} untuk {{ $kriteria->nama_kriteria }}"
                                                 >
                                                     <option value="">Pilih</option>
                                                     @for ($nilai = 1; $nilai <= 5; $nilai++)
@@ -174,8 +175,8 @@
                             <article class="mobile-card">
                                 <div class="mobile-card-head">
                                     <div>
-                                        <span class="code-pill">{{ $dusun->kode_alternatif ?? '-' }}</span>
-                                        <h3>{{ $dusun->nama_dusun }}</h3>
+                                        <span class="code-pill">A{{ $loop->iteration }}</span>
+                                        <h3>{{ $dusun->nama_kegiatan }}</h3>
                                     </div>
                                 </div>
                                 <div class="assessment-card-grid">

@@ -6,22 +6,6 @@
 
     <div class="form-grid">
         <div class="form-group">
-            <label for="kode_alternatif" class="form-label">Kode Alternatif</label>
-            <input
-                id="kode_alternatif"
-                type="text"
-                name="kode_alternatif"
-                value="{{ old('kode_alternatif', $dusun->kode_alternatif) }}"
-                class="form-control @error('kode_alternatif') is-invalid @enderror"
-                maxlength="20"
-                placeholder="Contoh: A1"
-            >
-            @error('kode_alternatif')
-                <div class="field-error">{{ $message }}</div>
-            @enderror
-        </div>
-
-        <div class="form-group">
             <label for="nama_dusun" class="form-label">Nama Dusun <span class="required">*</span></label>
             <input
                 id="nama_dusun"
@@ -39,18 +23,18 @@
         </div>
 
         <div class="form-group">
-            <label for="luas_tanah" class="form-label">Luas Tanah</label>
+            <label for="luas_wilayah" class="form-label">Luas Wilayah</label>
             <input
-                id="luas_tanah"
+                id="luas_wilayah"
                 type="number"
                 step="0.01"
                 min="0"
-                name="luas_tanah"
-                value="{{ old('luas_tanah', $dusun->luas_tanah) }}"
-                class="form-control @error('luas_tanah') is-invalid @enderror"
+                name="luas_wilayah"
+                value="{{ old('luas_wilayah', $dusun->luas_wilayah) }}"
+                class="form-control @error('luas_wilayah') is-invalid @enderror"
                 placeholder="Contoh: 125.50"
             >
-            @error('luas_tanah')
+            @error('luas_wilayah')
                 <div class="field-error">{{ $message }}</div>
             @enderror
         </div>

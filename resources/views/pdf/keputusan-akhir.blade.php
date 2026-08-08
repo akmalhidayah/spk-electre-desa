@@ -126,8 +126,8 @@
             Berdasarkan hasil penilaian prioritas pembangunan tahun {{ $tahunDokumen }}, data usulan pembangunan yang telah diterima, serta pertimbangan Pemerintah Desa Barambang dalam musyawarah, maka ditetapkan dusun prioritas pembangunan sebagai berikut.
         </p>
         <div class="decision">
-            <strong>{{ $keputusan->dusun?->nama_dusun ?? '-' }}</strong>
-            ({{ $keputusan->dusun?->kode_alternatif ?? '-' }}) ditetapkan sebagai prioritas pembangunan Desa Barambang Tahun {{ $tahunDokumen }}.
+            <strong>{{ $keputusan->program?->nama_kegiatan ?? '-' }}</strong>
+            Program <strong>{{ $keputusan->program?->nama_kegiatan ?? '-' }}</strong> ditetapkan sebagai prioritas pembangunan Desa Barambang Tahun {{ $tahunDokumen }}.
         </div>
         @if ($keputusan->dasar_pertimbangan)
             <p class="note"><strong>Pertimbangan Tambahan</strong><br>{{ $keputusan->dasar_pertimbangan }}</p>
@@ -145,10 +145,10 @@
             </thead>
             <tbody>
                 @forelse ($results as $result)
-                    <tr class="{{ $result->dusun_id === $keputusan->dusun_id ? 'selected' : '' }}">
+                    <tr class="{{ $result->usulan_pembangunan_id === $keputusan->usulan_pembangunan_id ? 'selected' : '' }}">
                         <td>{{ $result->ranking }}</td>
-                        <td>{{ $result->dusun?->kode_alternatif ?? '-' }}</td>
-                        <td>{{ $result->dusun?->nama_dusun ?? '-' }}</td>
+                        <td>{{ $result->kode_alternatif ?? '-' }}</td>
+                        <td>{{ $result->nama_program ?? $result->nama_program_snapshot ?? '-' }}</td>
                         <td>{{ $result->skor_dominasi }}</td>
                         <td>{{ $result->status_prioritas ?? '-' }}</td>
                     </tr>

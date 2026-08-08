@@ -30,8 +30,8 @@ class ElectreCalculation extends Model
     protected $table = 'electre_calculations';
 
     protected $fillable = [
+        'tahun_perencanaan_id',
         'kode_perhitungan',
-        'tahun',
         'judul',
         'deskripsi',
         'status',
@@ -47,7 +47,6 @@ class ElectreCalculation extends Model
     protected function casts(): array
     {
         return [
-            'tahun' => 'integer',
             'versi' => 'integer',
             'is_latest' => 'boolean',
             'total_alternatif' => 'integer',
@@ -56,9 +55,19 @@ class ElectreCalculation extends Model
         ];
     }
 
+    public function getTahunAttribute(): ?int
+    {
+        return $this->tahunPerencanaan?->tahun;
+    }
+
     public function scopeTahun(Builder $query, int $tahun): Builder
     {
-        return $query->where('tahun', $tahun);
+        return $query->whereHas('tahunPerencanaan', fn (Builder $periode) => $periode->where('tahun', $tahun));
+    }
+
+    public function scopePeriode(Builder $query, int $periodeId): Builder
+    {
+        return $query->where('tahun_perencanaan_id', $periodeId);
     }
 
     public function scopeSelesai(Builder $query): Builder
@@ -74,6 +83,11 @@ class ElectreCalculation extends Model
     public function calculator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'calculated_by');
+    }
+
+    public function tahunPerencanaan(): BelongsTo
+    {
+        return $this->belongsTo(TahunPerencanaan::class, 'tahun_perencanaan_id');
     }
 
     public function results(): HasMany

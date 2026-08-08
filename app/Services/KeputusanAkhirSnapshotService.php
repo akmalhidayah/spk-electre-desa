@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\ElectreResult;
 use App\Models\KeputusanAkhir;
-use App\Models\Kriteria;
 use App\Models\UsulanPembangunan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -22,20 +21,22 @@ class KeputusanAkhirSnapshotService
     public function buildSnapshot(KeputusanAkhir $keputusan): array
     {
         $keputusan->loadMissing([
-            'calculation.results.dusun',
+            'calculation.results.program.dusun',
+            'calculation.results.program.dusunsTerkait',
+            'calculation.tahunPerencanaan',
             'calculation.details',
             'calculation.calculator',
-            'dusun',
-            'result.dusun',
+            'program.dusun',
+            'program.dusunsTerkait',
+            'result.program.dusun',
             'penetap',
-            'decider',
         ]);
 
         $calculation = $keputusan->calculation;
         $rankingSummary = collect($calculation?->details?->firstWhere('tahap', 'ranking_summary')?->data ?? [])
-            ->keyBy('dusun_id');
+            ->keyBy('usulan_pembangunan_id');
         $results = $calculation?->results?->sortBy('ranking')->values() ?? collect();
-        $selectedResult = $keputusan->result ?? $results->firstWhere('dusun_id', $keputusan->dusun_id);
+        $selectedResult = $keputusan->result ?? $results->firstWhere('usulan_pembangunan_id', $keputusan->usulan_pembangunan_id);
         $snapshottedAt = now();
 
         return [
@@ -43,18 +44,17 @@ class KeputusanAkhirSnapshotService
                 'id' => $keputusan->id,
                 'nomor_keputusan' => $keputusan->nomor_keputusan,
                 'tanggal_keputusan' => $keputusan->tanggal_keputusan?->toDateString(),
-                'tahun' => $keputusan->tahun ?? $calculation?->tahun,
+                'tahun' => $keputusan->tahunPerencanaan?->tahun ?? $calculation?->tahunPerencanaan?->tahun,
                 'status' => $keputusan->status,
                 'dasar_pertimbangan' => $keputusan->dasar_pertimbangan,
                 'catatan_keputusan' => $keputusan->catatan_keputusan,
                 'tanda_tangan' => $keputusan->tanda_tangan,
                 'ditetapkan_oleh' => $keputusan->ditetapkan_oleh,
-                'decided_by' => $keputusan->decided_by,
                 'decided_at' => $keputusan->decided_at?->toDateTimeString(),
                 'snapshotted_at' => $snapshottedAt->toDateTimeString(),
             ],
             'kepala_desa' => [
-                'nama' => $this->pejabatDesaService->kepalaDesaName() ?? $keputusan->penetap?->name ?? $keputusan->decider?->name,
+                'nama' => $this->pejabatDesaService->kepalaDesaName() ?? $keputusan->penetap?->name,
             ],
             'penetap' => [
                 'id' => $keputusan->penetap?->id,
@@ -65,7 +65,7 @@ class KeputusanAkhirSnapshotService
                 'id' => $calculation?->id,
                 'kode_perhitungan' => $calculation?->kode_perhitungan,
                 'judul' => $calculation?->judul,
-                'tahun' => $calculation?->tahun,
+                'tahun' => $calculation?->tahunPerencanaan?->tahun,
                 'versi' => $calculation?->versi,
                 'status' => $calculation?->status,
                 'calculated_at' => $calculation?->calculated_at?->toDateTimeString(),
@@ -76,22 +76,8 @@ class KeputusanAkhirSnapshotService
                 ->map(fn (ElectreResult $result): array => $this->resultSnapshot($result, $rankingSummary))
                 ->values()
                 ->all(),
-            'kriterias' => Kriteria::aktif()
-                ->ordered()
-                ->get()
-                ->map(fn (Kriteria $kriteria): array => [
-                    'id' => $kriteria->id,
-                    'kode_kriteria' => $kriteria->kode,
-                    'kode' => $kriteria->kode,
-                    'nama_kriteria' => $kriteria->nama_kriteria,
-                    'bobot' => $kriteria->bobot,
-                    'tipe' => $kriteria->tipe ?: Kriteria::TIPE_BENEFIT,
-                    'satuan' => $kriteria->satuan ?? null,
-                    'urutan' => $kriteria->urutan,
-                ])
-                ->values()
-                ->all(),
-            'accepted_usulans' => $this->acceptedUsulans((int) ($keputusan->tahun ?? $calculation?->tahun ?? now()->year))
+            'kriterias' => collect($calculation?->details?->firstWhere('tahap', 'metadata_kriteria')?->data ?? [])->all(),
+            'accepted_usulans' => $this->acceptedUsulans((int) ($keputusan->tahunPerencanaan?->tahun ?? $calculation?->tahunPerencanaan?->tahun ?? now()->year))
                 ->map(fn (UsulanPembangunan $usulan): array => [
                     'id' => $usulan->id,
                     'dusun_id' => $usulan->dusun_id,
@@ -110,8 +96,7 @@ class KeputusanAkhirSnapshotService
                     'penerima_manfaat_a_rtm' => $usulan->penerima_manfaat_a_rtm,
                     'kategori_kegiatan' => $usulan->kategori_kegiatan,
                     'sdgs_ke' => $usulan->sdgs_ke,
-                    'status' => $usulan->status,
-                    'status_prioritas' => $usulan->status_prioritas,
+                    'status_usulan' => $usulan->status_usulan,
                     'deskripsi' => $usulan->deskripsi,
                 ])
                 ->values()
@@ -171,7 +156,7 @@ class KeputusanAkhirSnapshotService
         $pdfBinary = Pdf::loadView('pdf.keputusan-akhir', $data)
             ->setPaper('a4', 'portrait')
             ->output();
-        $tahun = (int) data_get($keputusan->snapshot_data, 'keputusan.tahun', $keputusan->tahun ?? now()->year);
+        $tahun = (int) data_get($keputusan->snapshot_data, 'keputusan.tahun', $keputusan->tahunPerencanaan?->tahun ?? now()->year);
         $path = "keputusan-akhir/{$tahun}/keputusan-akhir-{$keputusan->id}.pdf";
 
         Storage::disk('public')->put($path, $pdfBinary);
@@ -200,7 +185,7 @@ class KeputusanAkhirSnapshotService
     {
         return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
             ->tahun($tahun)
-            ->diterimaAtauPrioritas()
+            ->diterima()
             ->orderBy('dusun_id')
             ->orderBy('nama_kegiatan')
             ->get();
@@ -212,16 +197,18 @@ class KeputusanAkhirSnapshotService
      */
     private function resultSnapshot(?ElectreResult $result, Collection $rankingSummary): array
     {
-        $summary = $result ? $rankingSummary->get($result->dusun_id, []) : [];
+        $summary = $result ? $rankingSummary->get($result->usulan_pembangunan_id, []) : [];
 
         return [
             'id' => $result?->id,
-            'dusun_id' => $result?->dusun_id,
-            'kode_alternatif' => $result?->dusun?->kode_alternatif,
-            'nama_dusun' => $result?->dusun?->nama_dusun,
+            'usulan_pembangunan_id' => $result?->usulan_pembangunan_id,
+            'kode_alternatif' => $result?->kode_alternatif,
+            'nama_program' => $result?->nama_program_snapshot,
+            'lokasi' => $result?->lokasi_snapshot,
+            'nama_dusun' => $result?->nama_dusun_snapshot,
             'ranking' => $result?->ranking,
             'skor_dominasi' => $result?->skor_dominasi,
-            'total_terbobot' => data_get($summary, 'total_terbobot'),
+            'total_preferensi' => $result?->total_preferensi ?? data_get($summary, 'total_preferensi'),
             'status_prioritas' => $result?->status_prioritas,
             'keterangan' => $result?->keterangan,
         ];
@@ -238,14 +225,13 @@ class KeputusanAkhirSnapshotService
         $keputusan->tanggal_keputusan = $this->dateOrNull($keputusan->tanggal_keputusan);
         $keputusan->decided_at = $this->datetimeOrNull($keputusan->decided_at);
         $keputusan->snapshotted_at = $this->datetimeOrNull($keputusan->snapshotted_at);
-        $keputusan->dusun_id = $selected['dusun_id'] ?? null;
-        $keputusan->dusun = new Fluent([
-            'id' => $selected['dusun_id'] ?? null,
-            'kode_alternatif' => $selected['kode_alternatif'] ?? null,
-            'nama_dusun' => $selected['nama_dusun'] ?? null,
+        $keputusan->usulan_pembangunan_id = $selected['usulan_pembangunan_id'] ?? null;
+        $keputusan->program = new Fluent([
+            'id' => $selected['usulan_pembangunan_id'] ?? null,
+            'nama_kegiatan' => $selected['nama_program'] ?? null,
+            'lokasi_label' => $selected['lokasi'] ?? null,
         ]);
         $keputusan->penetap = new Fluent($snapshot['penetap'] ?? []);
-        $keputusan->decider = new Fluent($snapshot['penetap'] ?? []);
 
         $calculation = new Fluent($snapshot['calculation'] ?? []);
         $calculation->calculated_at = $this->datetimeOrNull($calculation->calculated_at);
@@ -270,10 +256,10 @@ class KeputusanAkhirSnapshotService
     private function resultObject(array $result): Fluent
     {
         $object = new Fluent($result);
-        $object->dusun = new Fluent([
-            'id' => $result['dusun_id'] ?? null,
-            'kode_alternatif' => $result['kode_alternatif'] ?? null,
-            'nama_dusun' => $result['nama_dusun'] ?? null,
+        $object->program = new Fluent([
+            'id' => $result['usulan_pembangunan_id'] ?? null,
+            'nama_kegiatan' => $result['nama_program'] ?? null,
+            'lokasi_label' => $result['lokasi'] ?? null,
         ]);
 
         return $object;

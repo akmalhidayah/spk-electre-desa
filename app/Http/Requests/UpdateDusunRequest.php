@@ -22,12 +22,6 @@ class UpdateDusunRequest extends FormRequest
         $dusunId = $dusun instanceof Dusun ? $dusun->id : $dusun;
 
         return [
-            'kode_alternatif' => [
-                'nullable',
-                'string',
-                'max:20',
-                Rule::unique('dusuns', 'kode_alternatif')->ignore($dusunId),
-            ],
             'nama_dusun' => [
                 'required',
                 'string',
@@ -36,7 +30,7 @@ class UpdateDusunRequest extends FormRequest
                     ->whereNull('deleted_at')
                     ->ignore($dusunId),
             ],
-            'luas_tanah' => ['nullable', 'numeric', 'min:0'],
+            'luas_wilayah' => ['nullable', 'numeric', 'min:0'],
             'jumlah_penduduk' => ['nullable', 'integer', 'min:0'],
             'keterangan' => ['nullable', 'string'],
             'status' => ['required', Rule::in(Dusun::STATUSES)],

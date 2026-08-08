@@ -31,11 +31,11 @@ class DashboardController extends Controller
             'dusun' => $dusun,
             'tahun' => $tahun,
             'totalUsulan' => (clone $query)->count(),
-            'totalDiajukan' => (clone $query)->where('status', UsulanPembangunan::STATUS_DIAJUKAN)->count(),
-            'totalDiproses' => (clone $query)->where('status', UsulanPembangunan::STATUS_DIPROSES)->count(),
-            'totalDiterima' => (clone $query)->where('status', UsulanPembangunan::STATUS_DITERIMA)->count(),
-            'totalDitolak' => (clone $query)->where('status', UsulanPembangunan::STATUS_DITOLAK)->count(),
-            'totalMasukPrioritas' => (clone $query)->where('status', UsulanPembangunan::STATUS_MASUK_PRIORITAS)->count(),
+            'totalDiajukan' => (clone $query)->diajukan()->count(),
+            'totalDiproses' => (clone $query)->diproses()->count(),
+            'totalDiterima' => (clone $query)->diterima()->count(),
+            'totalDitolak' => (clone $query)->ditolak()->count(),
+            'totalMasukPrioritas' => 0,
             'latestUsulans' => (clone $query)->latest()->take(5)->get(),
         ]);
     }

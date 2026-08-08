@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TahunPerencanaan extends Model
 {
+    use HasFactory;
+
     protected $table = 'tahun_perencanaans';
 
     protected $fillable = [

@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Dusun;
 use App\Models\ElectreCalculation;
 use App\Models\ElectreResult;
+use App\Models\UsulanPembangunan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,9 +21,14 @@ class ElectreResultFactory extends Factory
     {
         return [
             'electre_calculation_id' => ElectreCalculation::factory(),
-            'dusun_id' => Dusun::factory(),
+            'usulan_pembangunan_id' => UsulanPembangunan::factory(),
+            'kode_alternatif' => fake()->unique()->bothify('A##'),
+            'nama_program_snapshot' => fake()->sentence(4),
+            'lokasi_snapshot' => fake()->address(),
+            'nama_dusun_snapshot' => fake()->optional()->city(),
             'ranking' => fake()->numberBetween(1, 10),
             'skor_dominasi' => fake()->numberBetween(0, 10),
+            'total_preferensi' => fake()->randomFloat(8, 0, 1),
             'status_prioritas' => fake()->randomElement([
                 'Prioritas Utama',
                 'Prioritas Kedua',

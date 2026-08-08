@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Dusun;
 use App\Models\ElectreCalculation;
 use App\Models\Kriteria;
 use App\Models\PenilaianAlternatif;
 use App\Models\TahunPerencanaan;
+use App\Models\UsulanPembangunan;
 use App\Services\ElectreService;
 use App\Services\TahunAktifService;
 use Illuminate\Http\RedirectResponse;
@@ -83,7 +83,8 @@ class ElectreCalculationController extends Controller
     {
         try {
             $electreCalculation->load([
-                'results.dusun',
+                'results.program.dusun',
+                'results.program.dusunsTerkait',
                 'details',
                 'calculator',
             ]);
@@ -113,7 +114,7 @@ class ElectreCalculationController extends Controller
             Log::info('[ELECTRE_DELETED] Histori perhitungan ELECTRE berhasil dihapus', [
                 'user_id' => $request->user()->id,
                 'calculation_id' => $electreCalculation->id,
-                'tahun' => $electreCalculation->tahun,
+                'tahun' => $electreCalculation->tahunPerencanaan?->tahun,
             ]);
 
             return redirect()
@@ -131,17 +132,18 @@ class ElectreCalculationController extends Controller
      */
     private function buildReadinessSummary(int $tahun): array
     {
-        $dusunIds = Dusun::aktif()->pluck('id');
+        $periode = TahunPerencanaan::where('tahun', $tahun)->first();
+        $programIds = $periode ? UsulanPembangunan::periode($periode->id)->diterima()->pluck('id') : collect();
         $kriteriaIds = Kriteria::aktif()->pluck('id');
-        $totalDusunAktif = $dusunIds->count();
+        $totalDusunAktif = $programIds->count();
         $totalKriteriaAktif = $kriteriaIds->count();
         $totalBobotAktif = (float) Kriteria::aktif()->sum('bobot');
         $totalPenilaianSeharusnya = $totalDusunAktif * $totalKriteriaAktif;
-        $totalPenilaianTerisi = PenilaianAlternatif::tahun($tahun)
-            ->whereIn('dusun_id', $dusunIds)
+        $totalPenilaianTerisi = $periode ? PenilaianAlternatif::periode($periode->id)
+            ->whereIn('usulan_pembangunan_id', $programIds)
             ->whereIn('kriteria_id', $kriteriaIds)
             ->whereBetween('nilai', [PenilaianAlternatif::NILAI_MIN, PenilaianAlternatif::NILAI_MAX])
-            ->count();
+            ->count() : 0;
         $persentaseKelengkapan = $totalPenilaianSeharusnya > 0
             ? round(($totalPenilaianTerisi / $totalPenilaianSeharusnya) * 100, 2)
             : 0;
@@ -149,7 +151,7 @@ class ElectreCalculationController extends Controller
         $reasons = [];
 
         if ($totalDusunAktif < 2) {
-            $reasons[] = 'Minimal harus terdapat dua dusun aktif.';
+            $reasons[] = 'Minimal harus terdapat dua program diterima.';
         }
 
         if ($totalKriteriaAktif < 1) {
@@ -166,6 +168,7 @@ class ElectreCalculationController extends Controller
 
         return [
             'total_dusun_aktif' => $totalDusunAktif,
+            'total_program_dinilai' => $totalDusunAktif,
             'total_kriteria_aktif' => $totalKriteriaAktif,
             'total_bobot_aktif' => $totalBobotAktif,
             'total_penilaian_terisi' => $totalPenilaianTerisi,
@@ -183,7 +186,7 @@ class ElectreCalculationController extends Controller
     {
         return [
             'user_id' => $request->user()?->id,
-            'tahun' => $request->input('tahun') ?? $calculation?->tahun,
+            'tahun' => $request->input('tahun') ?? $calculation?->tahunPerencanaan?->tahun,
             'calculation_id' => $calculation?->id,
             'message' => $e->getMessage(),
             'file' => $e->getFile(),

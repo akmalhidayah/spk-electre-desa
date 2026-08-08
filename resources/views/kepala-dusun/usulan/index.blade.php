@@ -84,7 +84,7 @@
                                     </td>
                                     <td><span class="badge {{ $usulan->status_badge_class }}">{{ $usulan->status_label }}</span></td>
                                     <td>
-                                        @if ($usulan->status === \App\Models\UsulanPembangunan::STATUS_DIAJUKAN)
+                                        @if ($usulan->status_usulan === \App\Models\UsulanPembangunan::STATUS_DIAJUKAN)
                                             <div class="action-group">
                                                 <a href="{{ route('kepala-dusun.usulan.edit', $usulan) }}" class="btn btn-sm btn-light">Edit</a>
                                                 <form method="POST" action="{{ route('kepala-dusun.usulan.destroy', $usulan) }}" class="js-confirm" data-title="Hapus Usulan?" data-text="Data usulan akan dihapus. Lanjutkan?" data-icon="warning" data-confirm-button="Ya, Hapus">
@@ -123,7 +123,7 @@
                                 <p><strong>Catatan:</strong> {{ $usulan->catatan_admin }}</p>
                             @endif
                             <div class="mobile-actions">
-                                @if ($usulan->status === \App\Models\UsulanPembangunan::STATUS_DIAJUKAN)
+                                @if ($usulan->status_usulan === \App\Models\UsulanPembangunan::STATUS_DIAJUKAN)
                                     <a href="{{ route('kepala-dusun.usulan.edit', $usulan) }}" class="btn btn-sm btn-light">Edit</a>
                                     <form method="POST" action="{{ route('kepala-dusun.usulan.destroy', $usulan) }}" class="js-confirm" data-title="Hapus Usulan?" data-text="Data usulan akan dihapus. Lanjutkan?" data-icon="warning" data-confirm-button="Ya, Hapus">
                                         @csrf

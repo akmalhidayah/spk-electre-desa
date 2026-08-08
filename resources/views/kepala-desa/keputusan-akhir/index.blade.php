@@ -60,7 +60,7 @@
                                 <td>{{ $keputusans->firstItem() + $loop->index }}</td>
                                 <td>{{ $keputusan->nomor_keputusan ?: '-' }}</td>
                                 <td>{{ $keputusan->tahun ?: ($keputusan->calculation?->tahun ?? '-') }}</td>
-                                <td><strong>{{ $keputusan->dusun?->nama_dusun ?? '-' }}</strong></td>
+                                <td><strong>{{ $keputusan->program?->nama_kegiatan ?? '-' }}</strong></td>
                                 <td>
                                     <span class="badge {{ $keputusan->status === 'ditetapkan' ? 'badge-success' : 'badge-warning' }}">
                                         {{ ucfirst($keputusan->status) }}
@@ -94,7 +94,7 @@
                             <span class="badge {{ $keputusan->status === 'ditetapkan' ? 'badge-success' : 'badge-warning' }}">{{ ucfirst($keputusan->status) }}</span>
                             <span>{{ $keputusan->tanggal_keputusan?->format('d/m/Y') ?? '-' }}</span>
                         </div>
-                        <h3>{{ $keputusan->dusun?->nama_dusun ?? '-' }}</h3>
+                        <h3>{{ $keputusan->program?->nama_kegiatan ?? '-' }}</h3>
                         <p>{{ $keputusan->nomor_keputusan ?: 'Nomor keputusan belum diisi' }}</p>
                         <p>Tahun {{ $keputusan->tahun ?: ($keputusan->calculation?->tahun ?? '-') }} · {{ $keputusan->calculation?->kode_perhitungan ?? '-' }}</p>
                         <a href="{{ route('kepala-desa.keputusan-akhir.show', $keputusan) }}" class="btn btn-light">Lihat Keputusan</a>

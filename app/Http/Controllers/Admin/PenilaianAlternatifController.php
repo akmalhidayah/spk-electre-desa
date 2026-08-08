@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Dusun;
 use App\Models\Kriteria;
 use App\Models\PenilaianAlternatif;
 use App\Models\TahunPerencanaan;
+use App\Models\UsulanPembangunan;
 use App\Services\RecalculationFlagService;
 use App\Services\RekapUsulanService;
 use App\Services\TahunAktifService;
@@ -30,15 +30,13 @@ class PenilaianAlternatifController extends Controller
                     ->with('error', 'Tahun penilaian tidak valid. Kode Error: PENILAIAN_INVALID_YEAR');
             }
 
-            $dusuns = Dusun::aktif()
-                ->orderBy('kode_alternatif')
-                ->orderBy('nama_dusun')
-                ->get();
+            $periode = TahunPerencanaan::where('tahun', $tahun)->firstOrFail();
+            $dusuns = UsulanPembangunan::with(['dusun', 'dusunsTerkait'])->periode($periode->id)->diterima()->orderBy('id')->get();
 
             $kriterias = Kriteria::aktif()->ordered()->get();
 
-            $penilaians = PenilaianAlternatif::tahun($tahun)
-                ->whereIn('dusun_id', $dusuns->pluck('id'))
+            $penilaians = PenilaianAlternatif::periode($periode->id)
+                ->whereIn('usulan_pembangunan_id', $dusuns->pluck('id'))
                 ->whereIn('kriteria_id', $kriterias->pluck('id'))
                 ->get();
 
@@ -46,8 +44,8 @@ class PenilaianAlternatifController extends Controller
             $notes = [];
 
             foreach ($penilaians as $penilaian) {
-                $values[$penilaian->dusun_id][$penilaian->kriteria_id] = $penilaian->nilai;
-                $notes[$penilaian->dusun_id][$penilaian->kriteria_id] = $penilaian->keterangan;
+                $values[$penilaian->usulan_pembangunan_id][$penilaian->kriteria_id] = $penilaian->nilai;
+                $notes[$penilaian->usulan_pembangunan_id][$penilaian->kriteria_id] = $penilaian->keterangan;
             }
 
             $totalSeharusnya = $dusuns->count() * $kriterias->count();
@@ -65,8 +63,8 @@ class PenilaianAlternatifController extends Controller
                 'totalSeharusnya' => $totalSeharusnya,
                 'totalTerisi' => $totalTerisi,
                 'persentaseKelengkapan' => $persentaseKelengkapan,
-                'rekapUsulan' => $rekapUsulanService->perDusun($tahun, $dusuns),
-                'periode' => TahunPerencanaan::where('tahun', $tahun)->first(),
+                'rekapUsulan' => $rekapUsulanService->perDusun($tahun),
+                'periode' => $periode,
                 'tahunList' => TahunPerencanaan::orderByDesc('tahun')->pluck('tahun'),
             ]);
         } catch (Throwable $e) {
@@ -98,7 +96,8 @@ class PenilaianAlternatifController extends Controller
 
         try {
             $tahun = (int) $validated['tahun'];
-            $dusuns = Dusun::aktif()->orderBy('kode_alternatif')->orderBy('nama_dusun')->get();
+            $periode = TahunPerencanaan::where('tahun', $tahun)->firstOrFail();
+            $dusuns = UsulanPembangunan::with(['dusun', 'dusunsTerkait'])->periode($periode->id)->diterima()->orderBy('id')->get();
             $kriterias = Kriteria::aktif()->ordered()->get();
 
             if ($dusuns->isEmpty()) {
@@ -122,7 +121,7 @@ class PenilaianAlternatifController extends Controller
                         Log::warning('[PENILAIAN_INCOMPLETE] Penilaian alternatif belum lengkap', [
                             'user_id' => auth()->id(),
                             'tahun' => $tahun,
-                            'dusun_id' => $dusun->id,
+                            'usulan_pembangunan_id' => $dusun->id,
                             'kriteria_id' => $kriteria->id,
                         ]);
 
@@ -133,13 +132,13 @@ class PenilaianAlternatifController extends Controller
                 }
             }
 
-            DB::transaction(function () use ($tahun, $dusuns, $kriterias, $nilaiInput, $keteranganInput): void {
+            DB::transaction(function () use ($periode, $dusuns, $kriterias, $nilaiInput, $keteranganInput): void {
                 foreach ($dusuns as $dusun) {
                     foreach ($kriterias as $kriteria) {
                         PenilaianAlternatif::updateOrCreate(
                             [
-                                'tahun' => $tahun,
-                                'dusun_id' => $dusun->id,
+                                'tahun_perencanaan_id' => $periode->id,
+                                'usulan_pembangunan_id' => $dusun->id,
                                 'kriteria_id' => $kriteria->id,
                             ],
                             [
@@ -157,7 +156,7 @@ class PenilaianAlternatifController extends Controller
             Log::info('[PENILAIAN_SAVED] Penilaian alternatif berhasil disimpan', [
                 'user_id' => auth()->id(),
                 'tahun' => $tahun,
-                'total_dusun' => $dusuns->count(),
+                'total_program' => $dusuns->count(),
                 'total_kriteria' => $kriterias->count(),
             ]);
 

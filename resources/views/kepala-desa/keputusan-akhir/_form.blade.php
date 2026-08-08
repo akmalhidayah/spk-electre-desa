@@ -12,15 +12,15 @@
 
     <div class="form-grid">
         <div class="form-group form-group-full">
-            <label for="dusun_id" class="form-label">Dusun Prioritas <span class="required">*</span></label>
-            <select id="dusun_id" name="dusun_id" class="form-control @error('dusun_id') is-invalid @enderror" required>
+            <label for="electre_result_id" class="form-label">Program Prioritas <span class="required">*</span></label>
+            <select id="electre_result_id" name="electre_result_id" class="form-control @error('electre_result_id') is-invalid @enderror" required>
                 @foreach ($results as $result)
-                    <option value="{{ $result->dusun_id }}" @selected((string) old('dusun_id', $results->first()?->dusun_id) === (string) $result->dusun_id)>
-                        Ranking {{ $result->ranking }} - {{ $result->dusun?->nama_dusun ?? '-' }} - Skor dominasi {{ $result->skor_dominasi }}
+                    <option value="{{ $result->id }}" @selected((string) old('electre_result_id', $results->first()?->id) === (string) $result->id)>
+                        Ranking {{ $result->ranking }} - {{ $result->nama_program_snapshot }} - {{ $result->lokasi_snapshot ?? '-' }} - Skor dominasi {{ $result->skor_dominasi }}
                     </option>
                 @endforeach
             </select>
-            @error('dusun_id')<div class="field-error">{{ $message }}</div>@enderror
+            @error('electre_result_id')<div class="field-error">{{ $message }}</div>@enderror
         </div>
 
         <div class="form-group">

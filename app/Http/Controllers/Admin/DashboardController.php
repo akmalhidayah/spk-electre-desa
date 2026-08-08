@@ -21,13 +21,15 @@ class DashboardController extends Controller
     {
         $tahun = $tahunAktifService->resolveYear($request->filled('tahun') ? $request->integer('tahun') : null);
         $dusunAktifIds = Dusun::aktif()->pluck('id');
+        $periode = TahunPerencanaan::where('tahun', $tahun)->first();
         $kriteriaAktifIds = Kriteria::aktif()->pluck('id');
         $usulanQuery = UsulanPembangunan::tahun($tahun);
-        $totalPenilaianSeharusnya = $dusunAktifIds->count() * $kriteriaAktifIds->count();
-        $totalPenilaianTerisi = PenilaianAlternatif::tahun($tahun)
-            ->whereIn('dusun_id', $dusunAktifIds)
+        $programIds = (clone $usulanQuery)->diterima()->pluck('id');
+        $totalPenilaianSeharusnya = $programIds->count() * $kriteriaAktifIds->count();
+        $totalPenilaianTerisi = $periode ? PenilaianAlternatif::periode($periode->id)
+            ->whereIn('usulan_pembangunan_id', $programIds)
             ->whereIn('kriteria_id', $kriteriaAktifIds)
-            ->count();
+            ->count() : 0;
 
         return view('admin.dashboard', [
             'totalDusun' => Dusun::count(),
@@ -42,7 +44,7 @@ class DashboardController extends Controller
             'totalDiproses' => (clone $usulanQuery)->diproses()->count(),
             'totalDiterima' => (clone $usulanQuery)->diterima()->count(),
             'totalDitolak' => (clone $usulanQuery)->ditolak()->count(),
-            'totalMasukPrioritas' => (clone $usulanQuery)->masukPrioritas()->count(),
+            'totalMasukPrioritas' => 0,
             'totalPerhitungan' => ElectreCalculation::tahun($tahun)->count(),
             'totalUser' => User::count(),
             'totalUserAktif' => User::active()->count(),
@@ -52,7 +54,7 @@ class DashboardController extends Controller
             'latestCalculation' => ElectreCalculation::tahun($tahun)->selesai()->latestVersion()->latest('calculated_at')->latest()->first(),
             'latestUsulan' => UsulanPembangunan::with('dusun')->tahun($tahun)->latest()->take(5)->get(),
             'tahunPenilaian' => $tahun,
-            'periode' => TahunPerencanaan::where('tahun', $tahun)->first(),
+            'periode' => $periode,
             'rekapUsulan' => $rekapUsulanService->perDusun($tahun),
             'totalPenilaianSeharusnya' => $totalPenilaianSeharusnya,
             'totalPenilaianTerisi' => $totalPenilaianTerisi,

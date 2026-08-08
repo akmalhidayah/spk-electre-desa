@@ -21,8 +21,8 @@ class KeputusanAkhir extends Model
     protected $fillable = [
         'electre_calculation_id',
         'electre_result_id',
-        'dusun_id',
-        'tahun',
+        'usulan_pembangunan_id',
+        'tahun_perencanaan_id',
         'nomor_keputusan',
         'tanggal_keputusan',
         'status',
@@ -33,9 +33,7 @@ class KeputusanAkhir extends Model
         'pdf_path',
         'pdf_hash',
         'snapshotted_at',
-        'catatan',
         'ditetapkan_oleh',
-        'decided_by',
         'decided_at',
     ];
 
@@ -54,9 +52,14 @@ class KeputusanAkhir extends Model
         return $this->belongsTo(ElectreCalculation::class, 'electre_calculation_id');
     }
 
-    public function dusun(): BelongsTo
+    public function program(): BelongsTo
     {
-        return $this->belongsTo(Dusun::class);
+        return $this->belongsTo(UsulanPembangunan::class, 'usulan_pembangunan_id');
+    }
+
+    public function tahunPerencanaan(): BelongsTo
+    {
+        return $this->belongsTo(TahunPerencanaan::class, 'tahun_perencanaan_id');
     }
 
     public function result(): BelongsTo
@@ -67,10 +70,5 @@ class KeputusanAkhir extends Model
     public function penetap(): BelongsTo
     {
         return $this->belongsTo(User::class, 'ditetapkan_oleh');
-    }
-
-    public function decider(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'decided_by');
     }
 }

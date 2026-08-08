@@ -124,8 +124,8 @@
             <thead>
                 <tr>
                     <th>Urutan</th>
-                    <th>Kode Dusun</th>
-                    <th>Nama Dusun</th>
+                    <th>Kode</th>
+                    <th>Program dan Lokasi</th>
                     <th>Nilai Akhir</th>
                     <th>Keterangan Prioritas</th>
                     <th>Catatan</th>
@@ -135,8 +135,8 @@
                 @forelse ($results as $result)
                     <tr>
                         <td>{{ $result->ranking ?? '-' }}</td>
-                        <td>{{ $result->dusun?->kode_alternatif ?? '-' }}</td>
-                        <td>{{ $result->dusun?->nama_dusun ?? '-' }}</td>
+                        <td>{{ $result->kode_alternatif }}</td>
+                        <td>{{ $result->nama_program_snapshot ?? $result->nama_program ?? '-' }}<br>{{ $result->lokasi_snapshot ?? $result->lokasi ?? '-' }}</td>
                         <td>{{ $result->skor_dominasi ?? 0 }}</td>
                         <td>{{ $result->status_prioritas ?? '-' }}</td>
                         <td>
@@ -155,7 +155,7 @@
 
         @if ($topResult)
             <div class="priority">
-                Dusun yang menjadi prioritas utama pembangunan adalah <strong>{{ $topResult->dusun?->nama_dusun ?? '-' }}</strong>
+                Program yang menjadi prioritas utama pembangunan adalah <strong>{{ $topResult->nama_program_snapshot ?? $topResult->nama_program ?? '-' }}</strong>
                 dengan nilai akhir <strong>{{ $topResult->skor_dominasi }}</strong>.
             </div>
         @endif

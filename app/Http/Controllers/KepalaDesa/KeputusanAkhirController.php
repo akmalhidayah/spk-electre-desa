@@ -14,7 +14,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use RuntimeException;
 use Throwable;
@@ -24,12 +23,12 @@ class KeputusanAkhirController extends Controller
     public function index(Request $request): View|RedirectResponse
     {
         try {
-            $query = KeputusanAkhir::with(['calculation', 'dusun', 'penetap'])
+            $query = KeputusanAkhir::with(['calculation.tahunPerencanaan', 'program.dusun', 'penetap'])
                 ->whereIn('status', [KeputusanAkhir::STATUS_DRAFT, KeputusanAkhir::STATUS_DITETAPKAN])
                 ->latest();
 
             if ($request->filled('tahun')) {
-                $query->where('tahun', $request->integer('tahun'));
+                $query->whereHas('tahunPerencanaan', fn ($periode) => $periode->where('tahun', $request->integer('tahun')));
             }
 
             if ($request->filled('status')) {
@@ -46,8 +45,8 @@ class KeputusanAkhirController extends Controller
                                 ->where('kode_perhitungan', 'like', "%{$keyword}%")
                                 ->orWhere('judul', 'like', "%{$keyword}%");
                         })
-                        ->orWhereHas('dusun', function ($dusunQuery) use ($keyword): void {
-                            $dusunQuery->where('nama_dusun', 'like', "%{$keyword}%");
+                        ->orWhereHas('program', function ($programQuery) use ($keyword): void {
+                            $programQuery->where('nama_kegiatan', 'like', "%{$keyword}%");
                         });
                 });
             }
@@ -74,7 +73,7 @@ class KeputusanAkhirController extends Controller
 
     public function create(ElectreCalculation $electreCalculation): View|RedirectResponse
     {
-        $electreCalculation->load(['results.dusun', 'keputusanAkhir']);
+        $electreCalculation->load(['results.program.dusun', 'results.program.dusunsTerkait', 'keputusanAkhir', 'periode']);
 
         if ($electreCalculation->status !== ElectreCalculation::STATUS_SELESAI) {
             return redirect()
@@ -118,39 +117,29 @@ class KeputusanAkhirController extends Controller
                 }
 
                 $result = ElectreResult::where('electre_calculation_id', $calculation->id)
-                    ->where('dusun_id', $data['dusun_id'])
+                    ->whereKey($data['electre_result_id'])
                     ->lockForUpdate()
                     ->first();
 
                 if (! $result) {
-                    throw new RuntimeException('Dusun yang dipilih tidak terdapat pada hasil rekomendasi ini. Kode Error: KEPUTUSAN_AKHIR_INVALID_DUSUN');
+                    throw new RuntimeException('Program yang dipilih tidak terdapat pada hasil rekomendasi ini. Kode Error: KEPUTUSAN_AKHIR_INVALID_PROGRAM');
                 }
 
                 $payload = [
                     'electre_calculation_id' => $calculation->id,
                     'electre_result_id' => $result->id,
-                    'dusun_id' => $result->dusun_id,
+                    'usulan_pembangunan_id' => $result->usulan_pembangunan_id,
+                    'tahun_perencanaan_id' => $calculation->tahun_perencanaan_id,
                     'ditetapkan_oleh' => $request->user()->id,
                     'nomor_keputusan' => $data['nomor_keputusan'] ?? null,
                     'tanggal_keputusan' => $data['tanggal_keputusan'],
-                    'tahun' => $calculation->tahun,
                     'status' => $data['status'],
                     'dasar_pertimbangan' => $data['dasar_pertimbangan'] ?? null,
                     'catatan_keputusan' => $data['catatan_keputusan'] ?? null,
                     'tanda_tangan' => $data['tanda_tangan'] ?? null,
                 ];
 
-                if (Schema::hasColumn('keputusan_akhirs', 'decided_by')) {
-                    $payload['decided_by'] = $request->user()->id;
-                }
-
-                if (Schema::hasColumn('keputusan_akhirs', 'catatan')) {
-                    $payload['catatan'] = $data['catatan_keputusan'] ?? null;
-                }
-
-                if (Schema::hasColumn('keputusan_akhirs', 'decided_at')) {
-                    $payload['decided_at'] = $data['status'] === KeputusanAkhir::STATUS_DITETAPKAN ? now() : null;
-                }
+                $payload['decided_at'] = $data['status'] === KeputusanAkhir::STATUS_DITETAPKAN ? now() : null;
 
                 $keputusan = KeputusanAkhir::create($payload);
 
@@ -168,8 +157,8 @@ class KeputusanAkhirController extends Controller
             Log::info('[KEPUTUSAN_AKHIR_CREATED] Keputusan akhir berhasil disimpan', [
                 'user_id' => $request->user()->id,
                 'keputusan_id' => $keputusan->id,
-                'calculation_id' => $calculation->id,
-                'dusun_id' => $keputusan->dusun_id,
+                'calculation_id' => $keputusan->electre_calculation_id,
+                'usulan_pembangunan_id' => $keputusan->usulan_pembangunan_id,
                 'status' => $keputusan->status,
             ]);
 
@@ -194,7 +183,7 @@ class KeputusanAkhirController extends Controller
             Log::error('[KEPUTUSAN_AKHIR_STORE_FAILED] Gagal menyimpan keputusan akhir', [
                 'user_id' => $request->user()?->id,
                 'calculation_id' => $request->input('electre_calculation_id'),
-                'dusun_id' => $request->input('dusun_id'),
+                'electre_result_id' => $request->input('electre_result_id'),
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -256,7 +245,7 @@ class KeputusanAkhirController extends Controller
      */
     private function viewData(KeputusanAkhir $keputusanAkhir): array
     {
-        $keputusanAkhir->load(['calculation.results.dusun', 'calculation.calculator', 'dusun', 'decider', 'penetap', 'result']);
+        $keputusanAkhir->load(['calculation.results.program.dusun', 'calculation.results.program.dusunsTerkait', 'calculation.calculator', 'calculation.tahunPerencanaan', 'program.dusun', 'program.dusunsTerkait', 'penetap', 'result']);
 
         return [
             'keputusan' => $keputusanAkhir,

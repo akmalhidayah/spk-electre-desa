@@ -86,7 +86,7 @@ class HasilRekomendasiController extends Controller
             }
 
             $data = $this->viewData($electreCalculation);
-            $data['pdfTitle'] = 'Laporan Hasil Rekomendasi Prioritas Pembangunan Antar Dusun';
+            $data['pdfTitle'] = 'Laporan Hasil Rekomendasi Prioritas Program Pembangunan';
             $data['kriterias'] = Kriteria::aktif()->ordered()->get();
             $data['acceptedUsulans'] = $this->acceptedUsulansForYear($tahun);
             $data['kepalaDesaName'] = $pejabatDesaService->kepalaDesaName();
@@ -109,14 +109,14 @@ class HasilRekomendasiController extends Controller
             }
 
             $data = $this->viewData($electreCalculation);
-            $data['pdfTitle'] = 'Laporan Hasil Rekomendasi Prioritas Pembangunan Antar Dusun';
+            $data['pdfTitle'] = 'Laporan Hasil Rekomendasi Prioritas Program Pembangunan';
             $data['kriterias'] = Kriteria::aktif()->ordered()->get();
-            $data['acceptedUsulans'] = $this->acceptedUsulansForYear((int) $electreCalculation->tahun);
+            $data['acceptedUsulans'] = $this->acceptedUsulansForYear((int) $electreCalculation->tahunPerencanaan->tahun);
             $data['kepalaDesaName'] = $pejabatDesaService->kepalaDesaName();
 
             return Pdf::loadView('pdf.hasil-rekomendasi', $data)
                 ->setPaper('a4', 'portrait')
-                ->stream('laporan-hasil-rekomendasi-'.$electreCalculation->tahun.'-v'.$electreCalculation->versi.'.pdf');
+                ->stream('laporan-hasil-rekomendasi-'.$electreCalculation->tahunPerencanaan->tahun.'-v'.$electreCalculation->versi.'.pdf');
         } catch (Throwable $e) {
             Log::error('[HASIL_REKOMENDASI_PERHITUNGAN_PDF_FAILED] Gagal membuat PDF hasil rekomendasi versi tertentu admin', $this->logContext($e, $request, $electreCalculation));
 
@@ -161,7 +161,7 @@ class HasilRekomendasiController extends Controller
                 'usulans' => $usulans,
             ])
                 ->setPaper('a4', 'portrait')
-                ->stream('usulan-diterima-'.$electreCalculation->tahun.'-'.$dusun->id.'.pdf');
+                ->stream('usulan-diterima-'.$electreCalculation->tahunPerencanaan->tahun.'-'.$dusun->id.'.pdf');
         } catch (Throwable $e) {
             Log::error('[HASIL_REKOMENDASI_DUSUN_PDF_FAILED] Gagal membuat PDF usulan per dusun admin', $this->logContext($e, $request, $electreCalculation));
 
@@ -174,7 +174,7 @@ class HasilRekomendasiController extends Controller
      */
     private function viewData(ElectreCalculation $calculation): array
     {
-        $calculation->load(['results.dusun', 'details', 'calculator']);
+        $calculation->load(['results.program.dusun', 'results.program.dusunsTerkait', 'details', 'calculator', 'tahunPerencanaan']);
         $details = $calculation->details->keyBy('tahap');
 
         return [
@@ -209,7 +209,7 @@ class HasilRekomendasiController extends Controller
     {
         return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
             ->tahun($tahun)
-            ->diterimaAtauPrioritas()
+            ->diterima()
             ->orderBy('dusun_id')
             ->orderBy('nama_kegiatan')
             ->get();
@@ -218,8 +218,8 @@ class HasilRekomendasiController extends Controller
     private function acceptedUsulansForDusun(ElectreCalculation $calculation, Dusun $dusun)
     {
         return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
-            ->tahun((int) $calculation->tahun)
-            ->diterimaAtauPrioritas()
+            ->periode($calculation->tahun_perencanaan_id)
+            ->diterima()
             ->where(function ($query) use ($dusun): void {
                 $query->where('dusun_id', $dusun->id)
                     ->orWhereHas('dusunsTerkait', fn ($query) => $query->where('dusuns.id', $dusun->id));
@@ -263,7 +263,7 @@ class HasilRekomendasiController extends Controller
         return [
             'total' => ElectreCalculation::tahun($tahun)->count(),
             'selesai' => ElectreCalculation::tahun($tahun)->selesai()->count(),
-            'tahun_berjalan' => ElectreCalculation::where('tahun', $tahun)->count(),
+            'tahun_berjalan' => ElectreCalculation::tahun($tahun)->count(),
             'terbaru' => ElectreCalculation::tahun($tahun)->latestVersion()->latest('calculated_at')->latest()->first(),
         ];
     }

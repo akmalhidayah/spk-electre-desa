@@ -39,7 +39,7 @@
                 <option value="">Pilih dusun</option>
                 @foreach ($dusuns as $dusun)
                     <option value="{{ $dusun->id }}" @selected((string) old('dusun_id', $userData->dusun_id) === (string) $dusun->id)>
-                        {{ $dusun->kode_alternatif ? $dusun->kode_alternatif.' - ' : '' }}{{ $dusun->nama_dusun }}
+                        {{ $dusun->nama_dusun }}
                     </option>
                 @endforeach
             </select>

@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
-use App\Models\Dusun;
 use App\Models\Kriteria;
 use App\Models\PenilaianAlternatif;
+use App\Models\TahunPerencanaan;
 use App\Models\User;
+use App\Models\UsulanPembangunan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,14 +22,15 @@ class PenilaianAlternatifFactory extends Factory
     public function definition(): array
     {
         return [
-            'tahun' => now()->year,
-            'dusun_id' => Dusun::factory(),
+            'tahun_perencanaan_id' => TahunPerencanaan::factory(),
+            'usulan_pembangunan_id' => UsulanPembangunan::factory(),
             'kriteria_id' => Kriteria::factory(),
             'nilai' => fake()->numberBetween(
                 PenilaianAlternatif::NILAI_MIN,
                 PenilaianAlternatif::NILAI_MAX,
             ),
             'keterangan' => fake()->optional()->sentence(),
+            'sumber_data' => fake()->optional()->sentence(),
             'created_by' => User::factory(),
         ];
     }

@@ -20,30 +20,35 @@ class PenilaianAlternatif extends Model
     protected $table = 'penilaian_alternatifs';
 
     protected $fillable = [
-        'tahun',
-        'dusun_id',
+        'tahun_perencanaan_id',
+        'usulan_pembangunan_id',
         'kriteria_id',
         'nilai',
         'keterangan',
+        'sumber_data',
         'created_by',
     ];
 
     protected function casts(): array
     {
         return [
-            'tahun' => 'integer',
             'nilai' => 'integer',
         ];
     }
 
-    public function scopeTahun(Builder $query, int $tahun): Builder
+    public function scopePeriode(Builder $query, int $periodeId): Builder
     {
-        return $query->where('tahun', $tahun);
+        return $query->where('tahun_perencanaan_id', $periodeId);
     }
 
-    public function scopeByDusun(Builder $query, int $dusunId): Builder
+    public function scopeTahun(Builder $query, int $tahun): Builder
     {
-        return $query->where('dusun_id', $dusunId);
+        return $query->whereHas('tahunPerencanaan', fn (Builder $periode) => $periode->where('tahun', $tahun));
+    }
+
+    public function scopeProgram(Builder $query, int $programId): Builder
+    {
+        return $query->where('usulan_pembangunan_id', $programId);
     }
 
     public function scopeByKriteria(Builder $query, int $kriteriaId): Builder
@@ -51,9 +56,14 @@ class PenilaianAlternatif extends Model
         return $query->where('kriteria_id', $kriteriaId);
     }
 
-    public function dusun(): BelongsTo
+    public function tahunPerencanaan(): BelongsTo
     {
-        return $this->belongsTo(Dusun::class);
+        return $this->belongsTo(TahunPerencanaan::class);
+    }
+
+    public function usulanPembangunan(): BelongsTo
+    {
+        return $this->belongsTo(UsulanPembangunan::class);
     }
 
     public function kriteria(): BelongsTo

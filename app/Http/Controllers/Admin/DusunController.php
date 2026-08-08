@@ -22,14 +22,12 @@ class DusunController extends Controller
                     $keyword = $request->string('q')->toString();
 
                     $query->where(function ($query) use ($keyword): void {
-                        $query->where('kode_alternatif', 'like', "%{$keyword}%")
-                            ->orWhere('nama_dusun', 'like', "%{$keyword}%");
+                        $query->where('nama_dusun', 'like', "%{$keyword}%");
                     });
                 })
                 ->when($request->filled('status'), function ($query) use ($request): void {
                     $query->where('status', $request->string('status')->toString());
                 })
-                ->orderBy('kode_alternatif')
                 ->orderBy('nama_dusun')
                 ->paginate(10)
                 ->withQueryString();
@@ -70,7 +68,6 @@ class DusunController extends Controller
             Log::info('[DUSUN_CREATED] Data dusun berhasil dibuat', [
                 'user_id' => $request->user()?->id,
                 'dusun_id' => $dusun->id,
-                'kode_alternatif' => $dusun->kode_alternatif,
                 'nama_dusun' => $dusun->nama_dusun,
             ]);
 
@@ -106,7 +103,6 @@ class DusunController extends Controller
             Log::info('[DUSUN_UPDATED] Data dusun berhasil diperbarui', [
                 'user_id' => $request->user()?->id,
                 'dusun_id' => $dusun->id,
-                'kode_alternatif' => $dusun->kode_alternatif,
                 'nama_dusun' => $dusun->nama_dusun,
             ]);
 
@@ -168,7 +164,6 @@ class DusunController extends Controller
             Log::info('[DUSUN_DELETED] Data dusun berhasil dihapus soft delete', [
                 'user_id' => $request->user()?->id,
                 'dusun_id' => $dusun->id,
-                'kode_alternatif' => $dusun->kode_alternatif,
                 'nama_dusun' => $dusun->nama_dusun,
             ]);
 
@@ -191,7 +186,6 @@ class DusunController extends Controller
     {
         return $dusun->users()->exists()
             || $dusun->usulanPembangunans()->withTrashed()->exists()
-            || $dusun->penilaianAlternatifs()->exists()
-            || $dusun->electreResults()->exists();
+            || $dusun->usulanPembangunanTerkait()->exists();
     }
 }

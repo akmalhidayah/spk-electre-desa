@@ -21,7 +21,7 @@
 
         <section class="panel priority-highlight">
             <span class="badge badge-success">{{ ucfirst($keputusan->status) }}</span>
-            <h2>{{ $keputusan->dusun?->nama_dusun ?? 'Dusun belum dipilih' }}</h2>
+            <h2>{{ $keputusan->program?->nama_kegiatan ?? 'Program belum dipilih' }}</h2>
             <p>{{ $keputusan->dasar_pertimbangan ?? 'Dasar pertimbangan belum diisi.' }}</p>
             <dl class="meta-grid">
                 <div><dt>Nomor Keputusan</dt><dd>{{ $keputusan->nomor_keputusan ?? '-' }}</dd></div>

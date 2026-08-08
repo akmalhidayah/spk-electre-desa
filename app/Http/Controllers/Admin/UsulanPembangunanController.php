@@ -48,7 +48,7 @@ class UsulanPembangunanController extends Controller
                     });
                 })
                 ->when($request->filled('status'), function ($query) use ($request): void {
-                    $query->where('status', $request->string('status')->toString());
+                    $query->where('status_usulan', $request->string('status')->toString());
                 })
                 ->when($request->filled('tipe_usulan'), function ($query) use ($request): void {
                     $query->where('tipe_usulan', $request->string('tipe_usulan')->toString());
@@ -71,7 +71,7 @@ class UsulanPembangunanController extends Controller
                 'stats' => $this->stats($tahun),
                 'acceptedUsulansForPdf' => UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
                     ->tahun($tahun)
-                    ->diterimaAtauPrioritas()
+                    ->diterima()
                     ->orderBy('dusun_id')
                     ->orderBy('nama_kegiatan')
                     ->get(),
@@ -97,10 +97,9 @@ class UsulanPembangunanController extends Controller
     {
         return view('admin.usulan.create', [
             'usulan' => new UsulanPembangunan([
-                'tahun' => $tahunAktifService->getActiveYear(),
                 'tipe_usulan' => UsulanPembangunan::TIPE_DUSUN,
-                'status' => UsulanPembangunan::STATUS_DIAJUKAN,
-                'status_prioritas' => UsulanPembangunan::PRIORITAS_NON_PRIORITAS,
+                'status_usulan' => UsulanPembangunan::STATUS_DIAJUKAN,
+                'status_pelaksanaan' => 'belum_dilaksanakan',
             ]),
             'dusuns' => Dusun::aktif()->orderBy('nama_dusun')->get(),
             'statuses' => UsulanPembangunan::STATUSES,
@@ -116,10 +115,11 @@ class UsulanPembangunanController extends Controller
             unset($data['dusun_terkait_ids']);
 
             $data['user_id'] = $request->user()->id;
-            $data['status'] = $data['status'] ?? UsulanPembangunan::STATUS_DIAJUKAN;
-            $data['status_prioritas'] = $data['status_prioritas'] ?? UsulanPembangunan::PRIORITAS_NON_PRIORITAS;
-            $data['is_data_pendukung_penilaian'] = in_array($data['status'], [UsulanPembangunan::STATUS_DITERIMA, UsulanPembangunan::STATUS_MASUK_PRIORITAS], true)
-                && $data['tipe_usulan'] !== UsulanPembangunan::TIPE_UMUM_DESA;
+            $tahun = (int) $data['tahun'];
+            unset($data['tahun']);
+            $data['tahun_perencanaan_id'] = TahunPerencanaan::where('tahun', $tahun)->value('id');
+            $data['status_usulan'] = $data['status_usulan'] ?? UsulanPembangunan::STATUS_DIAJUKAN;
+            $data['status_pelaksanaan'] = $data['status_pelaksanaan'] ?? 'belum_dilaksanakan';
 
             if ($data['tipe_usulan'] === UsulanPembangunan::TIPE_UMUM_DESA) {
                 $data['dusun_id'] = null;
@@ -128,8 +128,8 @@ class UsulanPembangunanController extends Controller
             $usulan = UsulanPembangunan::create($data);
             $usulan->dusunsTerkait()->sync($dusunTerkaitIds);
 
-            if ($usulan->is_data_pendukung_penilaian) {
-                $recalculationFlagService->mark((int) $usulan->tahun, 'Ada usulan diterima atau diperbarui.');
+            if ($usulan->status_usulan === UsulanPembangunan::STATUS_DITERIMA) {
+                $recalculationFlagService->mark($tahun, 'Ada usulan diterima atau diperbarui.');
             }
 
             Log::info('[USULAN_CREATED] Data usulan berhasil dibuat', [
@@ -164,15 +164,15 @@ class UsulanPembangunanController extends Controller
     public function update(UpdateUsulanPembangunanRequest $request, UsulanPembangunan $usulanPembangunan, RecalculationFlagService $recalculationFlagService): RedirectResponse
     {
         try {
-            $wasSupportingData = (bool) $usulanPembangunan->is_data_pendukung_penilaian;
+            $wasSupportingData = $usulanPembangunan->status_usulan === UsulanPembangunan::STATUS_DITERIMA;
             $data = $request->validated();
             $dusunTerkaitIds = $this->normalizeDusunTerkaitIds($data);
             unset($data['dusun_terkait_ids']);
 
-            $data['status'] = $data['status'] ?? $usulanPembangunan->status;
-            $data['status_prioritas'] = $data['status_prioritas'] ?? $usulanPembangunan->status_prioritas;
-            $data['is_data_pendukung_penilaian'] = in_array($data['status'], [UsulanPembangunan::STATUS_DITERIMA, UsulanPembangunan::STATUS_MASUK_PRIORITAS], true)
-                && $data['tipe_usulan'] !== UsulanPembangunan::TIPE_UMUM_DESA;
+            $tahun = (int) $data['tahun'];
+            unset($data['tahun']);
+            $data['tahun_perencanaan_id'] = TahunPerencanaan::where('tahun', $tahun)->value('id');
+            $data['status_usulan'] = $data['status_usulan'] ?? $usulanPembangunan->status_usulan;
 
             if ($data['tipe_usulan'] === UsulanPembangunan::TIPE_UMUM_DESA) {
                 $data['dusun_id'] = null;
@@ -181,8 +181,8 @@ class UsulanPembangunanController extends Controller
             $usulanPembangunan->update($data);
             $usulanPembangunan->dusunsTerkait()->sync($dusunTerkaitIds);
 
-            if ($wasSupportingData || $usulanPembangunan->is_data_pendukung_penilaian) {
-                $recalculationFlagService->mark((int) $usulanPembangunan->tahun, 'Ada usulan diterima atau diperbarui.');
+            if ($wasSupportingData || $usulanPembangunan->status_usulan === UsulanPembangunan::STATUS_DITERIMA) {
+                $recalculationFlagService->mark($tahun, 'Ada usulan diterima atau diperbarui.');
             }
 
             Log::info('[USULAN_UPDATED] Data usulan berhasil diperbarui', [
@@ -207,19 +207,17 @@ class UsulanPembangunanController extends Controller
     public function updateStatus(Request $request, UsulanPembangunan $usulanPembangunan, RecalculationFlagService $recalculationFlagService): RedirectResponse
     {
         $data = $request->validate([
-            'status' => ['required', Rule::in(UsulanPembangunan::STATUSES)],
+            'status_usulan' => ['required', Rule::in(UsulanPembangunan::STATUSES)],
             'catatan_admin' => ['nullable', 'string'],
         ]);
 
         try {
-            $wasSupportingData = (bool) $usulanPembangunan->is_data_pendukung_penilaian;
-            $data['is_data_pendukung_penilaian'] = in_array($data['status'], [UsulanPembangunan::STATUS_DITERIMA, UsulanPembangunan::STATUS_MASUK_PRIORITAS], true)
-                && $usulanPembangunan->tipe_usulan !== UsulanPembangunan::TIPE_UMUM_DESA;
+            $wasSupportingData = $usulanPembangunan->status_usulan === UsulanPembangunan::STATUS_DITERIMA;
 
             $usulanPembangunan->update($data);
 
-            if ($wasSupportingData || $usulanPembangunan->is_data_pendukung_penilaian) {
-                $recalculationFlagService->mark((int) $usulanPembangunan->tahun, 'Ada usulan diterima atau diperbarui.');
+            if ($wasSupportingData || $usulanPembangunan->status_usulan === UsulanPembangunan::STATUS_DITERIMA) {
+                $recalculationFlagService->mark((int) $usulanPembangunan->tahunPerencanaan->tahun, 'Ada usulan diterima atau diperbarui.');
             }
 
             Log::info('[USULAN_STATUS_UPDATED] Status usulan berhasil diperbarui', [
@@ -227,7 +225,7 @@ class UsulanPembangunanController extends Controller
                 'role' => $request->user()->role,
                 'dusun_id' => $usulanPembangunan->dusun_id,
                 'usulan_id' => $usulanPembangunan->id,
-                'status' => $usulanPembangunan->status,
+                'status' => $usulanPembangunan->status_usulan,
             ]);
 
             return back()->with('success', 'Status usulan pembangunan berhasil diperbarui.');
@@ -258,7 +256,7 @@ class UsulanPembangunanController extends Controller
             $usulans = UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
                 ->whereIn('id', $selectedIds)
                 ->tahun($tahun)
-                ->diterimaAtauPrioritas()
+                ->diterima()
                 ->orderBy('dusun_id')
                 ->orderBy('nama_kegiatan')
                 ->get();
@@ -294,20 +292,8 @@ class UsulanPembangunanController extends Controller
     public function destroy(Request $request, UsulanPembangunan $usulanPembangunan, RecalculationFlagService $recalculationFlagService): RedirectResponse
     {
         try {
-            if ($usulanPembangunan->status === UsulanPembangunan::STATUS_MASUK_PRIORITAS) {
-                Log::warning('[USULAN_DELETE_BLOCKED] Usulan masuk prioritas tidak dapat dihapus', [
-                    'error_code' => 'USULAN_DELETE_BLOCKED',
-                    'user_id' => $request->user()->id,
-                    'role' => $request->user()->role,
-                    'dusun_id' => $usulanPembangunan->dusun_id,
-                    'usulan_id' => $usulanPembangunan->id,
-                ]);
-
-                return back()->with('error', 'Usulan yang sudah masuk prioritas tidak dapat dihapus. Kode Error: USULAN_DELETE_BLOCKED');
-            }
-
-            $wasSupportingData = (bool) $usulanPembangunan->is_data_pendukung_penilaian;
-            $tahun = (int) $usulanPembangunan->tahun;
+            $wasSupportingData = $usulanPembangunan->status_usulan === UsulanPembangunan::STATUS_DITERIMA;
+            $tahun = (int) $usulanPembangunan->tahunPerencanaan->tahun;
             $usulanPembangunan->delete();
 
             if ($wasSupportingData) {
@@ -347,7 +333,7 @@ class UsulanPembangunanController extends Controller
             'diproses' => (clone $query)->diproses()->count(),
             'diterima' => (clone $query)->diterima()->count(),
             'ditolak' => (clone $query)->ditolak()->count(),
-            'masuk_prioritas' => (clone $query)->masukPrioritas()->count(),
+            'masuk_prioritas' => 0,
         ];
     }
 

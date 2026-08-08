@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Dusun;
+use App\Models\TahunPerencanaan;
 use App\Models\User;
 use App\Models\UsulanPembangunan;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,9 +21,9 @@ class UsulanPembangunanFactory extends Factory
     public function definition(): array
     {
         return [
+            'tahun_perencanaan_id' => TahunPerencanaan::factory(),
             'dusun_id' => Dusun::factory(),
             'user_id' => User::factory(),
-            'tahun' => now()->year,
             'nama_kegiatan' => fake()->randomElement([
                 'Pembangunan Jalan Dusun',
                 'Perbaikan Drainase',
@@ -32,7 +33,9 @@ class UsulanPembangunanFactory extends Factory
             'jumlah_usulan' => fake()->numberBetween(1, 10),
             'estimasi_anggaran' => fake()->randomFloat(2, 10000000, 250000000),
             'deskripsi' => fake()->optional()->paragraph(),
-            'status' => UsulanPembangunan::STATUS_DIAJUKAN,
+            'tipe_usulan' => UsulanPembangunan::TIPE_DUSUN,
+            'status_usulan' => UsulanPembangunan::STATUS_DIAJUKAN,
+            'status_pelaksanaan' => 'belum_dilaksanakan',
             'catatan_admin' => null,
         ];
     }

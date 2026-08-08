@@ -5,6 +5,7 @@ namespace App\Http\Controllers\KepalaDusun;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUsulanPembangunanRequest;
 use App\Http\Requests\UpdateUsulanPembangunanRequest;
+use App\Models\TahunPerencanaan;
 use App\Models\UsulanPembangunan;
 use App\Services\TahunAktifService;
 use Illuminate\Http\RedirectResponse;
@@ -42,7 +43,7 @@ class UsulanPembangunanController extends Controller
                     });
                 })
                 ->when($request->filled('status'), function ($query) use ($request): void {
-                    $query->where('status', $request->string('status')->toString());
+                    $query->where('status_usulan', $request->string('status')->toString());
                 })
                 ->latest()
                 ->paginate(10)
@@ -117,9 +118,11 @@ class UsulanPembangunanController extends Controller
             $data['tipe_usulan'] = UsulanPembangunan::TIPE_DUSUN;
             $data['jumlah_usulan'] = $data['jumlah_usulan'] ?? 1;
             $data['sumber_usulan'] = $data['sumber_usulan'] ?? 'Usulan Kepala Dusun';
-            $data['status'] = UsulanPembangunan::STATUS_DIAJUKAN;
-            $data['status_prioritas'] = UsulanPembangunan::PRIORITAS_BELUM_DINILAI;
-            $data['is_data_pendukung_penilaian'] = false;
+            $tahun = (int) $data['tahun'];
+            unset($data['tahun']);
+            $data['tahun_perencanaan_id'] = TahunPerencanaan::where('tahun', $tahun)->value('id');
+            $data['status_usulan'] = UsulanPembangunan::STATUS_DIAJUKAN;
+            $data['status_pelaksanaan'] = 'belum_dilaksanakan';
             $data['catatan_admin'] = null;
 
             $usulan = UsulanPembangunan::create($data);
@@ -148,7 +151,7 @@ class UsulanPembangunanController extends Controller
     {
         $this->authorizeUsulan($request, $usulanPembangunan);
 
-        if ($usulanPembangunan->status !== UsulanPembangunan::STATUS_DIAJUKAN) {
+        if ($usulanPembangunan->status_usulan !== UsulanPembangunan::STATUS_DIAJUKAN) {
             return back()->with('error', 'Usulan hanya dapat diubah ketika status masih diajukan. Kode Error: USULAN_LOCKED');
         }
 
@@ -163,12 +166,11 @@ class UsulanPembangunanController extends Controller
         try {
             $this->authorizeUsulan($request, $usulanPembangunan);
 
-            if ($usulanPembangunan->status !== UsulanPembangunan::STATUS_DIAJUKAN) {
+            if ($usulanPembangunan->status_usulan !== UsulanPembangunan::STATUS_DIAJUKAN) {
                 return back()->with('error', 'Usulan hanya dapat diubah ketika status masih diajukan. Kode Error: USULAN_LOCKED');
             }
 
             $usulanPembangunan->update($request->safe()->only([
-                'tahun',
                 'nama_kegiatan',
                 'lokasi_kegiatan',
                 'prakiraan_volume',
@@ -183,12 +185,13 @@ class UsulanPembangunanController extends Controller
                 'estimasi_anggaran',
                 'deskripsi',
             ]));
+            $tahun = (int) $request->validated('tahun');
             $usulanPembangunan->forceFill([
+                'tahun_perencanaan_id' => TahunPerencanaan::where('tahun', $tahun)->value('id'),
                 'tipe_usulan' => UsulanPembangunan::TIPE_DUSUN,
                 'dusun_id' => $request->user()->dusun_id,
                 'jumlah_usulan' => $request->validated('jumlah_usulan') ?? 1,
                 'sumber_usulan' => $request->validated('sumber_usulan') ?? 'Usulan Kepala Dusun',
-                'is_data_pendukung_penilaian' => false,
             ])->save();
             $usulanPembangunan->dusunsTerkait()->sync([$request->user()->dusun_id]);
 
@@ -218,7 +221,7 @@ class UsulanPembangunanController extends Controller
         try {
             $this->authorizeUsulan($request, $usulanPembangunan);
 
-            if ($usulanPembangunan->status !== UsulanPembangunan::STATUS_DIAJUKAN) {
+            if ($usulanPembangunan->status_usulan !== UsulanPembangunan::STATUS_DIAJUKAN) {
                 return back()->with('error', 'Usulan hanya dapat dihapus ketika status masih diajukan. Kode Error: USULAN_LOCKED');
             }
 

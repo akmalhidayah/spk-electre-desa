@@ -17,9 +17,14 @@ class ElectreResult extends Model
 
     protected $fillable = [
         'electre_calculation_id',
-        'dusun_id',
+        'usulan_pembangunan_id',
+        'kode_alternatif',
+        'nama_program_snapshot',
+        'lokasi_snapshot',
+        'nama_dusun_snapshot',
         'ranking',
         'skor_dominasi',
+        'total_preferensi',
         'status_prioritas',
         'keterangan',
     ];
@@ -29,12 +34,13 @@ class ElectreResult extends Model
         return [
             'ranking' => 'integer',
             'skor_dominasi' => 'integer',
+            'total_preferensi' => 'decimal:8',
         ];
     }
 
     public function scopeRanking(Builder $query): Builder
     {
-        return $query->orderBy('ranking')->orderByDesc('skor_dominasi');
+        return $query->orderBy('ranking')->orderByDesc('skor_dominasi')->orderByDesc('total_preferensi');
     }
 
     public function calculation(): BelongsTo
@@ -42,8 +48,13 @@ class ElectreResult extends Model
         return $this->belongsTo(ElectreCalculation::class, 'electre_calculation_id');
     }
 
-    public function dusun(): BelongsTo
+    public function program(): BelongsTo
     {
-        return $this->belongsTo(Dusun::class);
+        return $this->belongsTo(UsulanPembangunan::class, 'usulan_pembangunan_id');
+    }
+
+    public function usulanPembangunan(): BelongsTo
+    {
+        return $this->program();
     }
 }

@@ -7,7 +7,9 @@ use App\Models\ElectreCalculation;
 use App\Models\ElectreResult;
 use App\Models\KeputusanAkhir;
 use App\Models\Kriteria;
+use App\Models\TahunPerencanaan;
 use App\Models\User;
+use App\Models\UsulanPembangunan;
 use Database\Seeders\KriteriaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,14 +18,14 @@ class KriteriaC4DanPdfKeputusanTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_kriteria_seeder_menyimpan_c4_sebagai_kondisi_jalan(): void
+    public function test_kriteria_seeder_menyimpan_c4_sebagai_kondisi_objek_pembangunan(): void
     {
         $this->seed(KriteriaSeeder::class);
 
         $this->assertDatabaseHas('kriterias', [
             'kode' => 'C4',
-            'nama_kriteria' => 'Kondisi Jalan',
-            'deskripsi' => 'Menggambarkan kondisi akses jalan pada masing-masing dusun sebagai pertimbangan prioritas pembangunan. Semakin buruk kondisi jalan, maka semakin tinggi kebutuhan pembangunan.',
+            'nama_kriteria' => 'Kondisi Objek Pembangunan',
+            'deskripsi' => 'Menilai kondisi aktual objek atau layanan yang menjadi sasaran pembangunan.',
             'bobot' => 15,
             'tipe' => Kriteria::TIPE_BENEFIT,
             'status' => Kriteria::STATUS_AKTIF,
@@ -34,11 +36,11 @@ class KriteriaC4DanPdfKeputusanTest extends TestCase
     {
         $kepalaDesa = User::factory()->kepalaDesa()->create();
         $admin = User::factory()->create();
-        $dusun = Dusun::factory()->create([
-            'kode_alternatif' => 'A1',
-            'nama_dusun' => 'Dusun Uji',
-        ]);
+        $dusun = Dusun::factory()->create(['nama_dusun' => 'Dusun Uji']);
+        $periode = TahunPerencanaan::factory()->create(['tahun' => 2026]);
+        $program = UsulanPembangunan::factory()->create(['tahun_perencanaan_id' => $periode->id, 'dusun_id' => $dusun->id]);
         $calculation = ElectreCalculation::factory()->create([
+            'tahun_perencanaan_id' => $periode->id,
             'status' => ElectreCalculation::STATUS_SELESAI,
             'calculated_by' => $admin->id,
             'calculated_at' => now(),
@@ -47,14 +49,18 @@ class KriteriaC4DanPdfKeputusanTest extends TestCase
         ]);
         $result = ElectreResult::factory()->create([
             'electre_calculation_id' => $calculation->id,
-            'dusun_id' => $dusun->id,
+            'usulan_pembangunan_id' => $program->id,
+            'kode_alternatif' => 'A1',
+            'nama_program_snapshot' => $program->nama_kegiatan,
+            'lokasi_snapshot' => $program->lokasi_kegiatan,
+            'nama_dusun_snapshot' => $dusun->nama_dusun,
             'ranking' => 1,
         ]);
         $keputusan = KeputusanAkhir::create([
             'electre_calculation_id' => $calculation->id,
             'electre_result_id' => $result->id,
-            'dusun_id' => $dusun->id,
-            'tahun' => $calculation->tahun,
+            'usulan_pembangunan_id' => $program->id,
+            'tahun_perencanaan_id' => $periode->id,
             'nomor_keputusan' => '01/KPTS/TEST',
             'tanggal_keputusan' => now()->toDateString(),
             'status' => KeputusanAkhir::STATUS_DITETAPKAN,

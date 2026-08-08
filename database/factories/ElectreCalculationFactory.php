@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\ElectreCalculation;
+use App\Models\TahunPerencanaan;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,8 +22,8 @@ class ElectreCalculationFactory extends Factory
         $tahun = now()->year;
 
         return [
+            'tahun_perencanaan_id' => TahunPerencanaan::factory(),
             'kode_perhitungan' => 'EL-'.$tahun.'-'.fake()->unique()->numerify('####'),
-            'tahun' => $tahun,
             'judul' => 'Perhitungan ELECTRE Tahun '.$tahun,
             'deskripsi' => fake()->optional()->sentence(),
             'status' => ElectreCalculation::STATUS_DRAFT,

@@ -31,9 +31,9 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="status_update" class="form-label">Status</label>
-                        <select id="status_update" name="status" class="form-control @error('status') is-invalid @enderror" required>
+                        <select id="status_update" name="status_usulan" class="form-control @error('status_usulan') is-invalid @enderror" required>
                             @foreach ($statuses as $status)
-                                <option value="{{ $status }}" @selected(old('status', $usulan->status) === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
+                                <option value="{{ $status }}" @selected(old('status_usulan', $usulan->status_usulan) === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
                             @endforeach
                         </select>
                         @error('status')<div class="field-error">{{ $message }}</div>@enderror

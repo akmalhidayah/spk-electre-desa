@@ -114,13 +114,13 @@
         </div>
 
         <div class="form-group">
-            <label for="status" class="form-label">Status</label>
-            <select id="status" name="status" class="form-control @error('status') is-invalid @enderror">
+            <label for="status_usulan" class="form-label">Status Usulan</label>
+            <select id="status_usulan" name="status_usulan" class="form-control @error('status_usulan') is-invalid @enderror">
                 @foreach ($statuses as $status)
-                    <option value="{{ $status }}" @selected(old('status', $usulan->status ?? 'diajukan') === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
+                    <option value="{{ $status }}" @selected(old('status_usulan', $usulan->status_usulan ?? 'diajukan') === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
                 @endforeach
             </select>
-            @error('status')<div class="field-error">{{ $message }}</div>@enderror
+            @error('status_usulan')<div class="field-error">{{ $message }}</div>@enderror
         </div>
 
         <div class="form-group form-group-full">

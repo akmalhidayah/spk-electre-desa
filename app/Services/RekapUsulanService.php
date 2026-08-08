@@ -15,7 +15,6 @@ class RekapUsulanService
     public function perDusun(int $tahun, ?EloquentCollection $dusuns = null): Collection
     {
         $dusuns ??= Dusun::aktif()
-            ->orderBy('kode_alternatif')
             ->orderBy('nama_dusun')
             ->get();
 
@@ -32,7 +31,7 @@ class RekapUsulanService
                 return $usulan->dusunsTerkait->contains('id', $dusun->id);
             });
 
-            $diterima = $items->where('status', UsulanPembangunan::STATUS_DITERIMA);
+            $diterima = $items->where('status_usulan', UsulanPembangunan::STATUS_DITERIMA);
 
             return [
                 'dusun' => $dusun,

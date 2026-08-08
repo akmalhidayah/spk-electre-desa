@@ -267,7 +267,6 @@ class UserController extends Controller
     private function activeDusuns()
     {
         return Dusun::aktif()
-            ->orderBy('kode_alternatif')
             ->orderBy('nama_dusun')
             ->get();
     }

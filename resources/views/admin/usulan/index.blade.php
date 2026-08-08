@@ -118,9 +118,9 @@
                                             @csrf
                                             @method('PATCH')
                                             <div class="inline-status-row">
-                                                <select name="status" class="form-control inline-status-select" aria-label="Status usulan {{ $usulan->nama_kegiatan }}">
+                                                <select name="status_usulan" class="form-control inline-status-select" aria-label="Status usulan {{ $usulan->nama_kegiatan }}">
                                                     @foreach ($statuses as $status)
-                                                        <option value="{{ $status }}" @selected($usulan->status === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
+                                                        <option value="{{ $status }}" @selected($usulan->status_usulan === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
                                                     @endforeach
                                                 </select>
                                                 <button type="submit" class="btn btn-sm btn-secondary action-icon-btn" title="Simpan status dan catatan" aria-label="Simpan status dan catatan">
@@ -171,9 +171,9 @@
                                 @csrf
                                 @method('PATCH')
                                 <div class="inline-status-row">
-                                    <select name="status" class="form-control inline-status-select" aria-label="Status usulan {{ $usulan->nama_kegiatan }}">
+                                    <select name="status_usulan" class="form-control inline-status-select" aria-label="Status usulan {{ $usulan->nama_kegiatan }}">
                                         @foreach ($statuses as $status)
-                                            <option value="{{ $status }}" @selected($usulan->status === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
+                                            <option value="{{ $status }}" @selected($usulan->status_usulan === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
                                         @endforeach
                                     </select>
                                     <button type="submit" class="btn btn-sm btn-secondary action-icon-btn" title="Simpan status dan catatan" aria-label="Simpan status dan catatan">

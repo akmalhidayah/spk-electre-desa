@@ -112,12 +112,12 @@ class HasilRekomendasiController extends Controller
             $data = $this->viewData($electreCalculation);
             $data['pdfTitle'] = 'Laporan Keputusan Prioritas Pembangunan';
             $data['kriterias'] = Kriteria::aktif()->ordered()->get();
-            $data['acceptedUsulans'] = $this->acceptedUsulansForYear((int) $electreCalculation->tahun);
+            $data['acceptedUsulans'] = $this->acceptedUsulansForYear((int) $electreCalculation->tahunPerencanaan->tahun);
             $data['kepalaDesaName'] = $pejabatDesaService->kepalaDesaName();
 
             return Pdf::loadView('pdf.hasil-rekomendasi', $data)
                 ->setPaper('a4', 'portrait')
-                ->stream('laporan-hasil-rekomendasi-'.$electreCalculation->tahun.'-v'.$electreCalculation->versi.'.pdf');
+                ->stream('laporan-hasil-rekomendasi-'.$electreCalculation->tahunPerencanaan->tahun.'-v'.$electreCalculation->versi.'.pdf');
         } catch (HttpException $e) {
             throw $e;
         } catch (Throwable $e) {
@@ -143,7 +143,7 @@ class HasilRekomendasiController extends Controller
                 'usulans' => $usulans,
             ])
                 ->setPaper('a4', 'portrait')
-                ->stream('usulan-diterima-'.$electreCalculation->tahun.'-'.$dusun->id.'.pdf');
+                ->stream('usulan-diterima-'.$electreCalculation->tahunPerencanaan->tahun.'-'.$dusun->id.'.pdf');
         } catch (HttpException $e) {
             throw $e;
         } catch (Throwable $e) {
@@ -172,7 +172,7 @@ class HasilRekomendasiController extends Controller
     {
         return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
             ->tahun($tahun)
-            ->diterimaAtauPrioritas()
+            ->diterima()
             ->orderBy('dusun_id')
             ->orderBy('nama_kegiatan')
             ->get();
@@ -181,8 +181,8 @@ class HasilRekomendasiController extends Controller
     private function acceptedUsulansForDusun(ElectreCalculation $calculation, Dusun $dusun)
     {
         return UsulanPembangunan::with(['dusun', 'dusunsTerkait'])
-            ->tahun((int) $calculation->tahun)
-            ->diterimaAtauPrioritas()
+            ->periode($calculation->tahun_perencanaan_id)
+            ->diterima()
             ->where(function ($query) use ($dusun): void {
                 $query->where('dusun_id', $dusun->id)
                     ->orWhereHas('dusunsTerkait', fn ($query) => $query->where('dusuns.id', $dusun->id));
@@ -217,7 +217,7 @@ class HasilRekomendasiController extends Controller
      */
     private function viewData(ElectreCalculation $calculation): array
     {
-        $calculation->load(['results.dusun', 'details', 'calculator']);
+        $calculation->load(['results.program.dusun', 'results.program.dusunsTerkait', 'details', 'calculator', 'tahunPerencanaan']);
         $details = $calculation->details->keyBy('tahap');
 
         return [

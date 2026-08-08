@@ -18,9 +18,8 @@ class DusunFactory extends Factory
     public function definition(): array
     {
         return [
-            'kode_alternatif' => fake()->unique()->bothify('A##'),
             'nama_dusun' => 'Dusun '.fake()->unique()->city(),
-            'luas_tanah' => fake()->randomFloat(2, 1, 500),
+            'luas_wilayah' => fake()->randomFloat(2, 1, 500),
             'jumlah_penduduk' => fake()->numberBetween(100, 5000),
             'keterangan' => fake()->optional()->sentence(),
             'status' => Dusun::STATUS_AKTIF,

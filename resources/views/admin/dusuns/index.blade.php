@@ -66,9 +66,8 @@
                         <thead>
                             <tr>
                                 <th>No</th>
-                                <th>Kode Alternatif</th>
                                 <th>Nama Dusun</th>
-                                <th>Luas Tanah</th>
+                                <th>Luas Wilayah</th>
                                 <th>Jumlah Penduduk</th>
                                 <th>Status</th>
                                 <th class="text-right">Aksi</th>
@@ -79,15 +78,12 @@
                                 <tr>
                                     <td>{{ ($dusuns->firstItem() ?? 0) + $loop->index }}</td>
                                     <td>
-                                        <span class="code-pill">{{ $dusun->kode_alternatif ?? '-' }}</span>
-                                    </td>
-                                    <td>
                                         <strong>{{ $dusun->nama_dusun }}</strong>
                                         @if ($dusun->keterangan)
                                             <small>{{ \Illuminate\Support\Str::limit($dusun->keterangan, 60) }}</small>
                                         @endif
                                     </td>
-                                    <td>{{ $dusun->luas_tanah !== null ? number_format((float) $dusun->luas_tanah, 2, ',', '.') : '-' }}</td>
+                                    <td>{{ $dusun->luas_wilayah !== null ? number_format((float) $dusun->luas_wilayah, 2, ',', '.') : '-' }}</td>
                                     <td>{{ $dusun->jumlah_penduduk !== null ? number_format($dusun->jumlah_penduduk, 0, ',', '.') : '-' }}</td>
                                     <td>
                                         <span class="badge {{ $dusun->status === 'aktif' ? 'badge-success' : 'badge-muted' }}">
@@ -142,7 +138,6 @@
                         <article class="mobile-card">
                             <div class="mobile-card-head">
                                 <div>
-                                    <span class="code-pill">{{ $dusun->kode_alternatif ?? '-' }}</span>
                                     <h3>{{ $dusun->nama_dusun }}</h3>
                                 </div>
                                 <span class="badge {{ $dusun->status === 'aktif' ? 'badge-success' : 'badge-muted' }}">
@@ -151,8 +146,8 @@
                             </div>
                             <dl class="meta-grid">
                                 <div>
-                                    <dt>Luas Tanah</dt>
-                                    <dd>{{ $dusun->luas_tanah !== null ? number_format((float) $dusun->luas_tanah, 2, ',', '.') : '-' }}</dd>
+                                    <dt>Luas Wilayah</dt>
+                                    <dd>{{ $dusun->luas_wilayah !== null ? number_format((float) $dusun->luas_wilayah, 2, ',', '.') : '-' }}</dd>
                                 </div>
                                 <div>
                                     <dt>Jumlah Penduduk</dt>
