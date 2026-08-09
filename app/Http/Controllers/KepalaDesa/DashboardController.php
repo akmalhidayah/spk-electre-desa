@@ -30,7 +30,7 @@ class DashboardController extends Controller
             'perhitunganTerakhir' => $perhitunganTerakhir,
             'totalDusunAktif' => Dusun::aktif()->count(),
             'prioritasUtamaTerbaru' => $perhitunganTerakhir
-                ? ElectreResult::with('dusun')->where('electre_calculation_id', $perhitunganTerakhir->id)->where('ranking', 1)->first()
+                ? ElectreResult::with('program.dusun')->where('electre_calculation_id', $perhitunganTerakhir->id)->where('ranking', 1)->first()
                 : null,
         ]);
     }

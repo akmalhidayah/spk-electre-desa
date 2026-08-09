@@ -22,16 +22,18 @@ class UsulanPembangunanController extends Controller
         try {
             $user = $request->user();
             $tahun = $tahunAktifService->resolveYear($request->filled('tahun') ? $request->integer('tahun') : null);
-            $baseQuery = UsulanPembangunan::with(['dusun', 'dusunsTerkait', 'pengaju'])->tahun($tahun);
+            $dusunQuery = UsulanPembangunan::with(['dusun', 'dusunsTerkait', 'pengaju']);
 
             if ($user->dusun_id) {
-                $baseQuery->where(function ($query) use ($user): void {
+                $dusunQuery->where(function ($query) use ($user): void {
                     $query->where('dusun_id', $user->dusun_id)
                         ->orWhereHas('dusunsTerkait', fn ($query) => $query->where('dusuns.id', $user->dusun_id));
                 });
             } else {
-                $baseQuery->whereRaw('1 = 0');
+                $dusunQuery->whereRaw('1 = 0');
             }
+
+            $baseQuery = (clone $dusunQuery)->tahun($tahun);
 
             $usulans = (clone $baseQuery)
                 ->when($request->filled('q'), function ($query) use ($request): void {
@@ -53,7 +55,10 @@ class UsulanPembangunanController extends Controller
                 'dusun' => $user->dusun,
                 'usulans' => $usulans,
                 'statuses' => UsulanPembangunan::STATUSES,
-                'tahunTersedia' => (clone $baseQuery)->select('tahun')->distinct()->orderByDesc('tahun')->pluck('tahun'),
+                'tahunTersedia' => TahunPerencanaan::whereIn(
+                    'id',
+                    (clone $dusunQuery)->select('tahun_perencanaan_id')->distinct(),
+                )->orderByDesc('tahun')->pluck('tahun'),
                 'stats' => $this->stats($user->dusun_id, $tahun),
                 'filters' => [
                     'q' => $request->string('q')->toString(),
@@ -282,7 +287,7 @@ class UsulanPembangunanController extends Controller
             'diajukan' => (clone $query)->diajukan()->count(),
             'diproses' => (clone $query)->diproses()->count(),
             'diterima' => (clone $query)->diterima()->count(),
-            'masuk_prioritas' => (clone $query)->masukPrioritas()->count(),
+            'masuk_prioritas' => (clone $query)->whereHas('electreResults')->count(),
         ];
     }
 

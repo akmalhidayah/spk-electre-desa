@@ -29,7 +29,7 @@
             </article>
             <article class="stat-card stat-solid stat-amber">
                 <div class="stat-card-row">
-                    <div><div class="stat-label">Prioritas Utama Terbaru</div><div class="stat-value stat-value-code">{{ $prioritasUtamaTerbaru?->dusun?->nama_dusun ?? '-' }}</div></div>
+                    <div><div class="stat-label">Prioritas Utama Terbaru</div><div class="stat-value stat-value-code">{{ $prioritasUtamaTerbaru?->nama_program_snapshot ?? '-' }}</div></div>
                     <span class="stat-icon icon-amber"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9Z" /></svg></span>
                 </div>
             </article>

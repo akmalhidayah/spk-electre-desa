@@ -19,13 +19,13 @@
         </section>
 
         <section class="alert alert-success">
-            Pilih dusun yang akan ditetapkan sebagai prioritas pembangunan. Ranking pertama merupakan rekomendasi utama dari sistem, namun keputusan akhir tetap dapat disesuaikan dengan hasil musyawarah desa.
+            Pilih program yang akan ditetapkan sebagai prioritas pembangunan. Ranking pertama merupakan rekomendasi utama dari sistem, namun keputusan akhir tetap dapat disesuaikan dengan hasil musyawarah desa.
         </section>
 
         @if ($topResult)
             <section class="panel priority-highlight">
                 <span class="badge badge-priority">Rekomendasi Utama Sistem</span>
-                <h2>{{ $topResult->dusun?->nama_dusun ?? '-' }}</h2>
+                <h2>{{ $topResult->nama_program_snapshot ?? '-' }}</h2>
                 <p>Ranking {{ $topResult->ranking }} dengan skor dominasi {{ $topResult->skor_dominasi }}.</p>
             </section>
         @endif

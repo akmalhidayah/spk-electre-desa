@@ -35,7 +35,7 @@ class DashboardController extends Controller
             'totalDiproses' => (clone $query)->diproses()->count(),
             'totalDiterima' => (clone $query)->diterima()->count(),
             'totalDitolak' => (clone $query)->ditolak()->count(),
-            'totalMasukPrioritas' => 0,
+            'totalMasukPrioritas' => (clone $query)->whereHas('electreResults')->count(),
             'latestUsulans' => (clone $query)->latest()->take(5)->get(),
         ]);
     }

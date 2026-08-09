@@ -18,7 +18,7 @@
         <section class="page-header-card">
             <div>
                 <h2>Rekomendasi Prioritas Pembangunan</h2>
-                <p>Hasil perangkingan dusun berdasarkan metode ELECTRE.</p>
+                <p>Hasil perangkingan program pembangunan berdasarkan metode ELECTRE.</p>
             </div>
             <div class="action-group">
                 <a href="{{ route('kepala-desa.hasil-rekomendasi.index') }}" class="btn btn-light">Kembali</a>
@@ -33,13 +33,13 @@
         </section>
 
         <section class="alert alert-success">
-            Ranking pertama menunjukkan dusun yang paling direkomendasikan sebagai prioritas pembangunan berdasarkan kriteria dan bobot yang digunakan.
+            Ranking pertama menunjukkan program yang paling direkomendasikan sebagai prioritas pembangunan berdasarkan kriteria dan bobot yang digunakan.
         </section>
 
         @if ($topResult)
             <section class="panel priority-highlight">
                 <span class="badge badge-priority">Prioritas Utama</span>
-                <h2>{{ $topResult->dusun?->nama_dusun ?? '-' }}</h2>
+                <h2>{{ $topResult->nama_program_snapshot ?? '-' }}</h2>
                 <p>Direkomendasikan sebagai prioritas pembangunan dengan skor dominasi {{ $topResult->skor_dominasi }}.</p>
             </section>
         @endif

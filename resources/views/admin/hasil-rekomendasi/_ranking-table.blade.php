@@ -7,7 +7,7 @@
     <div class="matrix-toolbar">
         <div>
             <h2 class="panel-title">Ranking Rekomendasi</h2>
-            <p class="panel-text">Ranking pertama menunjukkan dusun yang paling direkomendasikan sebagai prioritas pembangunan.</p>
+            <p class="panel-text">Ranking pertama menunjukkan program yang paling direkomendasikan sebagai prioritas pembangunan.</p>
         </div>
     </div>
 

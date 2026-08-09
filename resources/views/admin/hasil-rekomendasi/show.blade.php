@@ -24,8 +24,8 @@
         @if ($topResult)
             <section class="panel priority-highlight">
                 <span class="badge badge-priority">Prioritas Utama</span>
-                <h2>{{ $topResult->dusun?->nama_dusun ?? '-' }}</h2>
-                <p>Dusun ini memperoleh ranking pertama dengan skor dominasi {{ $topResult->skor_dominasi }}.</p>
+                <h2>{{ $topResult->nama_program_snapshot ?? '-' }}</h2>
+                <p>Program ini memperoleh ranking pertama dengan skor dominasi {{ $topResult->skor_dominasi }}.</p>
             </section>
         @endif
 

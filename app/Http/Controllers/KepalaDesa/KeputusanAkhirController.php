@@ -73,7 +73,7 @@ class KeputusanAkhirController extends Controller
 
     public function create(ElectreCalculation $electreCalculation): View|RedirectResponse
     {
-        $electreCalculation->load(['results.program.dusun', 'results.program.dusunsTerkait', 'keputusanAkhir', 'periode']);
+        $electreCalculation->load(['results.program.dusun', 'results.program.dusunsTerkait', 'keputusanAkhir', 'tahunPerencanaan']);
 
         if ($electreCalculation->status !== ElectreCalculation::STATUS_SELESAI) {
             return redirect()

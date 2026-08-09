@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ElectreCalculation;
+use App\Models\KeputusanAkhir;
 use App\Models\Kriteria;
 use App\Models\PenilaianAlternatif;
 use App\Models\TahunPerencanaan;
@@ -99,5 +100,52 @@ class PartialPenilaianElectreTest extends TestCase
         $this->assertSame(['A1', 'A4', 'A2', 'A3'], $results->pluck('kode_alternatif')->all());
         $this->assertSame([3, 2, 1, 0], $results->pluck('skor_dominasi')->all());
         $this->assertSame(64, UsulanPembangunan::periode($periode->id)->count());
+
+        $this->actingAs($admin)
+            ->get(route('admin.electre.show', $calculation))
+            ->assertOk();
+
+        $this->actingAs($admin)
+            ->get(route('admin.hasil-rekomendasi.show', $calculation))
+            ->assertOk()
+            ->assertSee('Pembangunan Talud Pasar');
+
+        $kepalaDesa = User::where('email', 'kepaladesa@example.com')->firstOrFail();
+
+        $calculation->forceFill(['is_latest' => true])->save();
+
+        $this->actingAs($kepalaDesa)
+            ->get(route('kepala-desa.dashboard', ['tahun' => 2026]))
+            ->assertOk()
+            ->assertSee('Pembangunan Talud Pasar');
+
+        $this->actingAs($kepalaDesa)
+            ->get(route('kepala-desa.hasil-rekomendasi.show', $calculation))
+            ->assertOk()
+            ->assertSee('Pembangunan Talud Pasar');
+
+        $this->actingAs($kepalaDesa)
+            ->get(route('kepala-desa.keputusan-akhir.create', $calculation))
+            ->assertOk();
+
+        $decisionResponse = $this->actingAs($kepalaDesa)
+            ->post(route('kepala-desa.keputusan-akhir.store'), [
+                'electre_calculation_id' => $calculation->id,
+                'electre_result_id' => $results->first()->id,
+                'tanggal_keputusan' => now()->toDateString(),
+                'status' => 'ditetapkan',
+            ]);
+
+        $keputusan = KeputusanAkhir::where('electre_calculation_id', $calculation->id)->firstOrFail();
+
+        $decisionResponse
+            ->assertRedirect(route('kepala-desa.keputusan-akhir.show', $keputusan))
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success', 'Keputusan akhir berhasil disimpan.');
+
+        $this->assertSame($results->first()->id, $keputusan->electre_result_id);
+        $this->assertSame(KeputusanAkhir::STATUS_DITETAPKAN, $keputusan->status);
+        $this->assertNotEmpty($keputusan->snapshot_data);
+        $this->assertNotEmpty($keputusan->pdf_path);
     }
 }
