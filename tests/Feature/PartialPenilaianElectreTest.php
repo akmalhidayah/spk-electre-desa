@@ -3,12 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\ElectreCalculation;
+use App\Models\ElectreResult;
+use App\Models\ElectreResultDetail;
 use App\Models\KeputusanAkhir;
 use App\Models\Kriteria;
 use App\Models\PenilaianAlternatif;
 use App\Models\TahunPerencanaan;
 use App\Models\User;
 use App\Models\UsulanPembangunan;
+use App\Services\BudgetAllocationService;
 use App\Services\ElectreService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,6 +38,10 @@ class PartialPenilaianElectreTest extends TestCase
             'Rehabilitasi Posyandu',
             'Pembangunan Lanjutan Jembatan Liu Sirie',
         ], $programs->take(4)->pluck('nama_kegiatan')->all());
+
+        $programs->take(4)->each(fn (UsulanPembangunan $program, int $index) => $program->forceFill([
+            'estimasi_anggaran' => ($index + 1) * 10000000,
+        ])->save());
 
         $scores = [
             [4, 5, 5, 5, 4, 5],
@@ -99,6 +106,10 @@ class PartialPenilaianElectreTest extends TestCase
         $this->assertStringContainsString('JENIS_PERHITUNGAN=PENGUJIAN', $calculation->notes);
         $this->assertSame(['A1', 'A4', 'A2', 'A3'], $results->pluck('kode_alternatif')->all());
         $this->assertSame([3, 2, 1, 0], $results->pluck('skor_dominasi')->all());
+        $rankingSummary = collect($calculation->details->firstWhere('tahap', 'ranking_summary')->data);
+        $metadataAlternatif = collect($calculation->details->firstWhere('tahap', 'metadata_alternatif')->data);
+        $this->assertSame(10000000.0, (float) $rankingSummary->firstWhere('kode_alternatif', 'A1')['estimasi_anggaran']);
+        $this->assertSame(10000000.0, (float) $metadataAlternatif->firstWhere('kode', 'A1')['estimasi_anggaran']);
         $this->assertSame(64, UsulanPembangunan::periode($periode->id)->count());
 
         $this->actingAs($admin)
@@ -108,11 +119,13 @@ class PartialPenilaianElectreTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.hasil-rekomendasi.show', $calculation))
             ->assertOk()
-            ->assertSee('Pembangunan Talud Pasar');
+            ->assertSee('Pembangunan Talud Pasar')
+            ->assertSee('Rp 10.000.000');
 
         $kepalaDesa = User::where('email', 'kepaladesa@example.com')->firstOrFail();
 
-        $calculation->forceFill(['is_latest' => true])->save();
+        $periode->forceFill(['pagu_anggaran' => 100000000])->save();
+        $calculation->forceFill(['is_latest' => true, 'notes' => 'JENIS_PERHITUNGAN=REGULER; fixture pengujian keputusan.'])->save();
 
         $this->actingAs($kepalaDesa)
             ->get(route('kepala-desa.dashboard', ['tahun' => 2026]))
@@ -122,7 +135,8 @@ class PartialPenilaianElectreTest extends TestCase
         $this->actingAs($kepalaDesa)
             ->get(route('kepala-desa.hasil-rekomendasi.show', $calculation))
             ->assertOk()
-            ->assertSee('Pembangunan Talud Pasar');
+            ->assertSee('Pembangunan Talud Pasar')
+            ->assertSee('Rp 10.000.000');
 
         $this->actingAs($kepalaDesa)
             ->get(route('kepala-desa.keputusan-akhir.create', $calculation))
@@ -131,7 +145,7 @@ class PartialPenilaianElectreTest extends TestCase
         $decisionResponse = $this->actingAs($kepalaDesa)
             ->post(route('kepala-desa.keputusan-akhir.store'), [
                 'electre_calculation_id' => $calculation->id,
-                'electre_result_id' => $results->first()->id,
+                'electre_result_ids' => $results->take(2)->pluck('id')->all(),
                 'tanggal_keputusan' => now()->toDateString(),
                 'status' => 'ditetapkan',
             ]);
@@ -144,8 +158,56 @@ class PartialPenilaianElectreTest extends TestCase
             ->assertSessionHas('success', 'Keputusan akhir berhasil disimpan.');
 
         $this->assertSame($results->first()->id, $keputusan->electre_result_id);
+        $this->assertCount(2, $keputusan->details);
         $this->assertSame(KeputusanAkhir::STATUS_DITETAPKAN, $keputusan->status);
         $this->assertNotEmpty($keputusan->snapshot_data);
+        $this->assertSame(10000000.0, (float) data_get($keputusan->snapshot_data, 'selected_result.estimasi_anggaran'));
         $this->assertNotEmpty($keputusan->pdf_path);
+        $budgetSummary = app(BudgetAllocationService::class)->summary($periode->refresh());
+        $this->assertSame(50000000.0, $budgetSummary['total_ditetapkan']);
+        $this->assertSame(50000000.0, $budgetSummary['sisa_pagu']);
+        $this->assertSame(100000000.0, (float) $periode->fresh()->pagu_anggaran);
+
+        $calculation->update(['is_latest' => false]);
+        $expensiveProgram = $programs[4];
+        $expensiveProgram->update(['estimasi_anggaran' => 60000000]);
+        $nextCalculation = ElectreCalculation::factory()->create([
+            'tahun_perencanaan_id' => $periode->id,
+            'status' => ElectreCalculation::STATUS_SELESAI,
+            'versi' => 999,
+            'is_latest' => true,
+            'notes' => 'JENIS_PERHITUNGAN=REGULER',
+        ]);
+        $expensiveResult = ElectreResult::factory()->create([
+            'electre_calculation_id' => $nextCalculation->id,
+            'usulan_pembangunan_id' => $expensiveProgram->id,
+            'kode_alternatif' => 'A5',
+            'ranking' => 1,
+        ]);
+        ElectreResultDetail::create(['electre_calculation_id' => $nextCalculation->id, 'tahap' => 'ranking_summary', 'data' => [['usulan_pembangunan_id' => $expensiveProgram->id, 'estimasi_anggaran' => 60000000]]]);
+        ElectreResultDetail::create(['electre_calculation_id' => $nextCalculation->id, 'tahap' => 'metadata_alternatif', 'data' => [['id' => $expensiveProgram->id, 'estimasi_anggaran' => 60000000]]]);
+
+        $this->actingAs($kepalaDesa)->post(route('kepala-desa.keputusan-akhir.store'), [
+            'electre_calculation_id' => $nextCalculation->id,
+            'electre_result_ids' => [$expensiveResult->id],
+            'tanggal_keputusan' => now()->toDateString(),
+            'status' => 'ditetapkan',
+        ])->assertSessionHas('error', fn ($message) => str_contains($message, 'melebihi sisa pagu'));
+        $this->assertDatabaseMissing('keputusan_akhirs', ['electre_calculation_id' => $nextCalculation->id]);
+
+        $this->actingAs($admin)->put(route('admin.tahun-perencanaan.update', $periode), [
+            'tahun' => 2026,
+            'nama_periode' => $periode->nama_periode,
+            'pagu_anggaran' => 40000000,
+        ])->assertSessionHasErrors('pagu_anggaran');
+        $this->assertSame(100000000.0, (float) $periode->fresh()->pagu_anggaran);
+
+        $programs->first()->update(['nama_kegiatan' => 'Nama Live Berubah', 'estimasi_anggaran' => 99000000]);
+        $periode->forceFill(['pagu_anggaran' => 200000000])->save();
+        $this->assertSame('Pembangunan Talud Pasar', data_get($keputusan->fresh()->snapshot_data, 'selected_results.0.nama_program'));
+        $this->assertSame(10000000.0, (float) data_get($keputusan->snapshot_data, 'selected_results.0.estimasi_anggaran'));
+        $this->actingAs($kepalaDesa)->get(route('kepala-desa.keputusan-akhir.pdf', $keputusan))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
     }
 }

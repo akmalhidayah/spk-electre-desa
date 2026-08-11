@@ -45,7 +45,7 @@ class StoreUsulanPembangunanRequest extends FormRequest
             'sumber_dokumen' => ['nullable', 'string', 'max:255'],
             'nomor_dokumen' => ['nullable', 'string', 'max:255'],
             'jumlah_usulan' => ['nullable', 'integer', 'min:0'],
-            'estimasi_anggaran' => ['nullable', 'numeric', 'min:0'],
+            'estimasi_anggaran' => ['required', 'numeric', 'min:0'],
             'anggaran_realisasi' => ['nullable', 'numeric', 'min:0'],
             'deskripsi' => ['nullable', 'string'],
             'kondisi_awal' => ['nullable', 'string'],

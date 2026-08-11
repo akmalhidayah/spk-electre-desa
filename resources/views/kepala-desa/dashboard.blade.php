@@ -14,6 +14,8 @@
             <a href="{{ route('kepala-desa.hasil-rekomendasi.index') }}" class="btn btn-primary btn-auto">Hasil Rekomendasi</a>
         </section>
 
+        <section class="panel"><h2 class="panel-title">Ringkasan Anggaran Pembangunan Tahun {{ $tahun }}</h2><x-budget-summary :summary="$budgetSummary" /></section>
+
         <section class="stat-grid">
             <article class="stat-card stat-solid stat-indigo">
                 <div class="stat-card-row">

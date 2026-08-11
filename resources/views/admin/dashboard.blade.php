@@ -13,6 +13,8 @@
             <a href="{{ route('admin.electre.index') }}" class="btn btn-primary btn-auto">Proses ELECTRE</a>
         </section>
 
+        <section class="panel"><h2 class="panel-title">Ringkasan Anggaran Pembangunan Tahun {{ $tahunPenilaian }}</h2><x-budget-summary :summary="$budgetSummary" /></section>
+
         <section class="stat-grid">
             <article class="stat-card stat-solid stat-teal">
                 <div class="stat-card-row">

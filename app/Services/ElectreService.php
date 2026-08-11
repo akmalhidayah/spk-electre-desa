@@ -85,7 +85,7 @@ class ElectreService
                 }
 
                 $this->storeDetails($calculation, [
-                    'metadata_alternatif' => $dusuns->map(fn (UsulanPembangunan $program) => ['id' => $program->id, 'kode' => $codes[$program->id], 'nama_program' => $program->nama_kegiatan, 'lokasi' => $program->lokasi_label])->values()->all(),
+                    'metadata_alternatif' => $dusuns->map(fn (UsulanPembangunan $program) => ['id' => $program->id, 'kode' => $codes[$program->id], 'nama_program' => $program->nama_kegiatan, 'lokasi' => $program->lokasi_label, 'estimasi_anggaran' => $program->estimasi_anggaran !== null ? (float) $program->estimasi_anggaran : null])->values()->all(),
                     'metadata_kriteria' => $kriterias->map(fn (Kriteria $kriteria) => ['id' => $kriteria->id, 'kode' => $kriteria->kode, 'nama' => $kriteria->nama_kriteria, 'bobot' => $kriteria->bobot, 'tipe' => $kriteria->tipe, 'skala' => $kriteria->skala_penilaian])->values()->all(),
                     'matriks_keputusan' => $this->readableCriteriaMatrix($decisionMatrix, $dusuns, $kriterias, $codes),
                     'normalisasi' => [
@@ -429,6 +429,7 @@ class ElectreService
                 'nama_program' => $dusun->nama_kegiatan,
                 'lokasi' => $dusun->lokasi_label,
                 'nama_dusun' => $dusun->dusun?->nama_dusun,
+                'estimasi_anggaran' => $dusun->estimasi_anggaran !== null ? (float) $dusun->estimasi_anggaran : null,
                 'skor_dominasi' => array_sum($aggregateDominance[$dusun->id]),
                 'total_preferensi' => $this->totalPreferenceScore($weightedMatrix[$dusun->id], $kriterias),
                 'tie_score' => $this->totalPreferenceScore($weightedMatrix[$dusun->id], $kriterias),

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class KeputusanAkhir extends Model
 {
@@ -70,5 +71,10 @@ class KeputusanAkhir extends Model
     public function penetap(): BelongsTo
     {
         return $this->belongsTo(User::class, 'ditetapkan_oleh');
+    }
+
+    public function details(): HasMany
+    {
+        return $this->hasMany(KeputusanAkhirDetail::class)->orderBy('ranking_snapshot');
     }
 }

@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>{{ $pdfTitle ?? 'Daftar Usulan Pembangunan Diterima' }}</title>
+    <title>{{ $pdfTitle ?? 'Daftar Usulan Pembangunan' }}</title>
     <style>
         @page { margin: 24px 28px 42px; }
         body { background: #ffffff; color: #111827; font-family: DejaVu Sans, Arial, sans-serif; font-size: 10px; line-height: 1.35; margin: 0; }
@@ -73,7 +73,7 @@
     </div>
 
     <div class="document-title">
-        <h1>Daftar Usulan Pembangunan Diterima</h1>
+        <h1>Daftar Usulan Pembangunan</h1>
         <h2>Tahun {{ $tahun }}</h2>
     </div>
 
@@ -83,7 +83,7 @@
             <tr><td>Kecamatan</td><td>: Sinjai Borong</td></tr>
             <tr><td>Kabupaten</td><td>: Sinjai</td></tr>
             <tr><td>Provinsi</td><td>: Sulawesi Selatan</td></tr>
-            <tr><td>Total Dicetak</td><td>: {{ $usulans->count() }} usulan diterima</td></tr>
+            <tr><td>Total Dicetak</td><td>: {{ $usulans->count() }} usulan</td></tr>
         </table>
     </div>
 
@@ -100,6 +100,7 @@
                 <th class="col-benefit">PR</th>
                 <th class="col-benefit">A-RTM</th>
                 <th>Kategori</th>
+                <th>Jumlah Anggaran</th>
             </tr>
         </thead>
         <tbody>
@@ -117,10 +118,11 @@
                     <td class="text-center">{{ $usulan->penerima_manfaat_pr !== null ? number_format($usulan->penerima_manfaat_pr, 0, ',', '.') : '-' }}</td>
                     <td class="text-center">{{ $usulan->penerima_manfaat_a_rtm !== null ? number_format($usulan->penerima_manfaat_a_rtm, 0, ',', '.') : '-' }}</td>
                     <td>{{ $usulan->kategori_kegiatan ?: '-' }}</td>
+                    <td>{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format((float) $usulan->estimasi_anggaran, 0, ',', '.') : '-' }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="10" class="text-center">Tidak ada usulan diterima yang dipilih.</td>
+                    <td colspan="11" class="text-center">Tidak ada usulan yang dipilih.</td>
                 </tr>
             @endforelse
         </tbody>

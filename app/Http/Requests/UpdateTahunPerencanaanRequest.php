@@ -27,6 +27,7 @@ class UpdateTahunPerencanaanRequest extends FormRequest
             ],
             'nama_periode' => ['nullable', 'string', 'max:255'],
             'deskripsi' => ['nullable', 'string'],
+            'pagu_anggaran' => ['required', 'numeric', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'is_locked' => ['nullable', 'boolean'],
         ];

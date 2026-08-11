@@ -9,7 +9,7 @@
         <section class="page-header-card">
             <div>
                 <h2>Riwayat Usulan Pembangunan</h2>
-                <p>Daftar usulan pembangunan yang diajukan oleh dusun Anda.</p>
+                <p>Daftar kebutuhan pembangunan dusun Anda.</p>
             </div>
             <a href="{{ route('kepala-dusun.usulan.create') }}" class="btn btn-primary btn-auto">
                 <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
@@ -36,15 +36,6 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="filter-field">
-                    <label for="status" class="form-label">Status</label>
-                    <select id="status" name="status" class="form-control">
-                        <option value="">Semua</option>
-                        @foreach ($statuses as $status)
-                            <option value="{{ $status }}" @selected($filters['status'] === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
-                        @endforeach
-                    </select>
-                </div>
                 <div class="filter-actions">
                     <button type="submit" class="btn btn-secondary">Filter</button>
                     <a href="{{ route('kepala-dusun.usulan.index') }}" class="btn btn-light">Reset</a>
@@ -62,7 +53,7 @@
                                 <th>Tahun</th>
                                 <th>Usulan</th>
                                 <th>Detail</th>
-                                <th>Status</th>
+                                <th>Jumlah Anggaran</th>
                                 <th class="text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -82,20 +73,9 @@
                                             · {{ number_format($usulan->total_penerima_manfaat, 0, ',', '.') }} penerima
                                         </small>
                                     </td>
-                                    <td><span class="badge {{ $usulan->status_badge_class }}">{{ $usulan->status_label }}</span></td>
+                                    <td>{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format((float) $usulan->estimasi_anggaran, 0, ',', '.') : '-' }}</td>
                                     <td>
-                                        @if ($usulan->status_usulan === \App\Models\UsulanPembangunan::STATUS_DIAJUKAN)
-                                            <div class="action-group">
-                                                <a href="{{ route('kepala-dusun.usulan.edit', $usulan) }}" class="btn btn-sm btn-light">Edit</a>
-                                                <form method="POST" action="{{ route('kepala-dusun.usulan.destroy', $usulan) }}" class="js-confirm" data-title="Hapus Usulan?" data-text="Data usulan akan dihapus. Lanjutkan?" data-icon="warning" data-confirm-button="Ya, Hapus">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
-                                                </form>
-                                            </div>
-                                        @else
-                                            <span class="badge badge-muted">Terkunci</span>
-                                        @endif
+                                        <div class="action-group"><a href="{{ route('kepala-dusun.usulan.edit', $usulan) }}" class="btn btn-sm btn-light">Edit</a><form method="POST" action="{{ route('kepala-dusun.usulan.destroy', $usulan) }}" class="js-confirm" data-title="Hapus Usulan?" data-text="Data usulan akan dihapus. Lanjutkan?" data-icon="warning" data-confirm-button="Ya, Hapus">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-danger">Hapus</button></form></div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -111,28 +91,17 @@
                                     <span class="code-pill">{{ $usulan->tahun }}</span>
                                     <h3>{{ $usulan->nama_kegiatan }}</h3>
                                 </div>
-                                <span class="badge {{ $usulan->status_badge_class }}">{{ $usulan->status_label }}</span>
                             </div>
                             <dl class="meta-grid">
                                 <div><dt>Lokasi</dt><dd>{{ $usulan->lokasi_kegiatan ?: '-' }}</dd></div>
                                 <div><dt>Volume</dt><dd>{{ $usulan->prakiraan_volume !== null ? number_format((float) $usulan->prakiraan_volume, 0, ',', '.').' '.$usulan->satuan : '-' }}</dd></div>
                                 <div><dt>Penerima</dt><dd>{{ number_format($usulan->total_penerima_manfaat, 0, ',', '.') }}</dd></div>
                                 <div><dt>Kategori</dt><dd>{{ $usulan->kategori_kegiatan ?: '-' }}</dd></div>
+                                <div><dt>Jumlah Anggaran</dt><dd>{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format((float) $usulan->estimasi_anggaran, 0, ',', '.') : '-' }}</dd></div>
                             </dl>
-                            @if ($usulan->catatan_admin)
-                                <p><strong>Catatan:</strong> {{ $usulan->catatan_admin }}</p>
-                            @endif
                             <div class="mobile-actions">
-                                @if ($usulan->status_usulan === \App\Models\UsulanPembangunan::STATUS_DIAJUKAN)
-                                    <a href="{{ route('kepala-dusun.usulan.edit', $usulan) }}" class="btn btn-sm btn-light">Edit</a>
-                                    <form method="POST" action="{{ route('kepala-dusun.usulan.destroy', $usulan) }}" class="js-confirm" data-title="Hapus Usulan?" data-text="Data usulan akan dihapus. Lanjutkan?" data-icon="warning" data-confirm-button="Ya, Hapus">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
-                                    </form>
-                                @else
-                                    <span class="badge badge-muted">Terkunci</span>
-                                @endif
+                                <a href="{{ route('kepala-dusun.usulan.edit', $usulan) }}" class="btn btn-sm btn-light">Edit</a>
+                                <form method="POST" action="{{ route('kepala-dusun.usulan.destroy', $usulan) }}" class="js-confirm" data-title="Hapus Usulan?" data-text="Data usulan akan dihapus. Lanjutkan?" data-icon="warning" data-confirm-button="Ya, Hapus">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-danger">Hapus</button></form>
                             </div>
                         </article>
                     @endforeach
@@ -143,7 +112,7 @@
                 <div class="empty-state">
                     <div class="empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M14 3v6h6M8 13h8M8 17h5" /></svg></div>
                     <h3>Belum ada usulan pembangunan</h3>
-                    <p>Ajukan kebutuhan pembangunan dusun Anda agar dapat ditinjau admin.</p>
+                    <p>Tambahkan kebutuhan pembangunan dusun.</p>
                     @if ($dusun)
                         <a href="{{ route('kepala-dusun.usulan.create') }}" class="btn btn-primary btn-auto">Ajukan Usulan</a>
                     @endif

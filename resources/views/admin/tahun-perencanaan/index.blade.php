@@ -21,6 +21,7 @@
                         <tr>
                             <th>Tahun</th>
                             <th>Nama Periode</th>
+                            <th>Pagu Anggaran</th>
                             <th>Status</th>
                             <th>Hitung Ulang</th>
                             <th>Perhitungan Terakhir</th>
@@ -32,6 +33,7 @@
                             <tr>
                                 <td><strong>{{ $periode->tahun }}</strong></td>
                                 <td>{{ $periode->nama_periode ?? '-' }}</td>
+                                <td>{{ $periode->pagu_anggaran !== null ? 'Rp '.number_format((float) $periode->pagu_anggaran, 0, ',', '.') : '-' }}</td>
                                 <td>
                                     <span class="badge {{ $periode->is_active ? 'badge-success' : 'badge-light' }}">{{ $periode->is_active ? 'Aktif' : 'Tidak Aktif' }}</span>
                                     <span class="badge {{ $periode->is_locked ? 'badge-warning' : 'badge-light' }}">{{ $periode->is_locked ? 'Terkunci' : 'Terbuka' }}</span>
@@ -71,7 +73,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6">
+                                <td colspan="7">
                                     <div class="empty-state">
                                         <h3>Belum ada periode</h3>
                                         <p>Tambahkan tahun perencanaan untuk mulai memakai filter tahun aktif.</p>

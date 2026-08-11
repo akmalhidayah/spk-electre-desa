@@ -16,11 +16,6 @@
             @error('tahun')<div class="field-error">{{ $message }}</div>@enderror
         </div>
 
-        <div class="form-group">
-            <label class="form-label">Status Awal</label>
-            <input type="text" value="Diajukan" class="form-control" readonly>
-        </div>
-
         <div class="form-group form-group-full">
             <label for="nama_kegiatan" class="form-label">Nama Kegiatan <span class="required">*</span></label>
             <input id="nama_kegiatan" type="text" name="nama_kegiatan" value="{{ old('nama_kegiatan', $usulan->nama_kegiatan) }}" class="form-control @error('nama_kegiatan') is-invalid @enderror" maxlength="255" required placeholder="Contoh: Pengecoran Lanjutan Jln. Poros Pasar">
@@ -83,14 +78,18 @@
             @error('kategori_kegiatan')<div class="field-error">{{ $message }}</div>@enderror
         </div>
 
+        <div class="form-group">
+            <label for="estimasi_anggaran" class="form-label">Jumlah Anggaran (Rp) <span class="required">*</span></label>
+            <input id="estimasi_anggaran" type="number" min="0" step="0.01" name="estimasi_anggaran" value="{{ old('estimasi_anggaran', $usulan->estimasi_anggaran) }}" class="form-control @error('estimasi_anggaran') is-invalid @enderror" placeholder="Contoh: 50000000" required>
+            @error('estimasi_anggaran')<div class="field-error">{{ $message }}</div>@enderror
+        </div>
+
         <div class="form-group form-group-full">
             <label for="deskripsi" class="form-label">Deskripsi</label>
             <textarea id="deskripsi" name="deskripsi" rows="4" class="form-control @error('deskripsi') is-invalid @enderror" placeholder="Jelaskan kebutuhan, lokasi, dan manfaat kegiatan">{{ old('deskripsi', $usulan->deskripsi) }}</textarea>
             @error('deskripsi')<div class="field-error">{{ $message }}</div>@enderror
         </div>
     </div>
-
-    <div class="alert alert-warning">Status usulan otomatis diajukan. Perubahan status hanya dapat dilakukan oleh admin.</div>
 
     <div class="form-actions">
         <a href="{{ route('kepala-dusun.usulan.index') }}" class="btn btn-light">Kembali</a>

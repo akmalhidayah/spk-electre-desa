@@ -15,6 +15,8 @@
     @endphp
 
     <div class="stack">
+        <x-budget-summary :summary="$budgetSummary" />
+        @if ($budgetSummary['pagu'] === null)<div class="alert alert-warning">Pagu anggaran pembangunan tahun ini belum diatur.</div>@endif
         <section class="page-header-card">
             <div>
                 <h2>Rekomendasi Prioritas Pembangunan</h2>
@@ -26,8 +28,10 @@
                 @if ($keputusanAkhir)
                     <span class="badge badge-success">Keputusan akhir sudah dibuat</span>
                     <a href="{{ route('kepala-desa.keputusan-akhir.show', $keputusanAkhir) }}" class="btn btn-secondary btn-auto">Lihat Keputusan Akhir</a>
-                @else
+                @elseif ($canCreateDecision)
                     <a href="{{ route('kepala-desa.keputusan-akhir.create', $calculation) }}" class="btn btn-secondary btn-auto">Tetapkan Keputusan Akhir</a>
+                @else
+                    <span class="badge badge-warning">Penetapan belum tersedia</span>
                 @endif
             </div>
         </section>
@@ -40,6 +44,7 @@
             <section class="panel priority-highlight">
                 <span class="badge badge-priority">Prioritas Utama</span>
                 <h2>{{ $topResult->nama_program_snapshot ?? '-' }}</h2>
+                <p>Jumlah Anggaran: {{ $topResult->estimasi_anggaran_snapshot !== null ? 'Rp '.number_format((float) $topResult->estimasi_anggaran_snapshot, 0, ',', '.') : '-' }}</p>
                 <p>Direkomendasikan sebagai prioritas pembangunan dengan skor dominasi {{ $topResult->skor_dominasi }}.</p>
             </section>
         @endif

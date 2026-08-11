@@ -9,6 +9,7 @@ use App\Models\Kriteria;
 use App\Models\TahunPerencanaan;
 use App\Models\User;
 use App\Models\UsulanPembangunan;
+use App\Services\BudgetAllocationService;
 use App\Services\PejabatDesaService;
 use App\Services\TahunAktifService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -21,12 +22,16 @@ use Throwable;
 
 class HasilRekomendasiController extends Controller
 {
+    public function __construct(private readonly BudgetAllocationService $budgetService) {}
+
     public function index(Request $request, TahunAktifService $tahunAktifService): View|RedirectResponse
     {
         try {
             $tahun = $tahunAktifService->resolveYear($request->filled('tahun') ? $request->integer('tahun') : null);
             $query = ElectreCalculation::with(['calculator', 'keputusanAkhir'])
                 ->selesai()
+                ->latestVersion()
+                ->where('notes', 'like', 'JENIS_PERHITUNGAN=REGULER%')
                 ->tahun($tahun)
                 ->when($request->filled('q'), function ($query) use ($request): void {
                     $keyword = $request->string('q')->toString();
@@ -136,14 +141,14 @@ class HasilRekomendasiController extends Controller
             $kepalaDusunName = $pejabatDesaService->kepalaDusunName($dusun) ?? $this->kepalaDusunForDusun($dusun)?->name;
 
             return Pdf::loadView('pdf.usulan-diterima-dusun', [
-                'pdfTitle' => 'Daftar Usulan Pembangunan Diterima '.$dusun->nama_dusun,
+                'pdfTitle' => 'Daftar Usulan Pembangunan '.$dusun->nama_dusun,
                 'calculation' => $electreCalculation,
                 'dusun' => $dusun,
                 'kepalaDusunName' => $kepalaDusunName,
                 'usulans' => $usulans,
             ])
                 ->setPaper('a4', 'portrait')
-                ->stream('usulan-diterima-'.$electreCalculation->tahunPerencanaan->tahun.'-'.$dusun->id.'.pdf');
+                ->stream('usulan-'.$electreCalculation->tahunPerencanaan->tahun.'-'.$dusun->id.'.pdf');
         } catch (HttpException $e) {
             throw $e;
         } catch (Throwable $e) {
@@ -219,10 +224,16 @@ class HasilRekomendasiController extends Controller
     {
         $calculation->load(['results.program.dusun', 'results.program.dusunsTerkait', 'details', 'calculator', 'tahunPerencanaan']);
         $details = $calculation->details->keyBy('tahap');
+        $budget = $this->budgetService->simulate($calculation->tahunPerencanaan, $calculation);
 
         return [
             'calculation' => $calculation,
-            'results' => $calculation->results->sortBy('ranking')->values(),
+            'results' => $budget['results'],
+            'budgetSummary' => $budget['summary'],
+            'canCreateDecision' => $this->budgetService->isOfficialCalculation($calculation)
+                && $budget['summary']['pagu'] !== null
+                && ! $calculation->keputusanAkhir
+                && $budget['results']->contains(fn ($result) => ! in_array($result->status_anggaran, ['ditetapkan', 'anggaran_belum_diisi'], true)),
             'details' => $details,
             'threshold' => $details->get('threshold')?->data ?? [],
             'aggregateDominance' => $details->get('aggregate_dominance')?->data ?? [],

@@ -9,7 +9,7 @@
         <section class="page-header-card">
             <div>
                 <h2>Ajukan Usulan Pembangunan</h2>
-                <p>Status usulan baru otomatis menjadi diajukan dan akan ditinjau oleh admin.</p>
+                <p>Tambahkan kebutuhan pembangunan dusun.</p>
             </div>
             <a href="{{ route('kepala-dusun.usulan.index') }}" class="btn btn-light">Kembali</a>
         </section>

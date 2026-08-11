@@ -18,7 +18,7 @@
             <div class="page-header-actions">
                 <button type="button" class="btn btn-secondary btn-auto" data-open-accepted-pdf-modal @disabled($acceptedPdfCount === 0)>
                     <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" /><path d="M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M7 14h10v7H7Z" /></svg>
-                    PDF Usulan Diterima
+                    PDF Usulan
                 </button>
                 <a href="{{ route('admin.usulan.create') }}" class="btn btn-primary btn-auto">
                     <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
@@ -60,18 +60,6 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="filter-field input-with-icon">
-                    <label for="status" class="form-label sr-only">Status</label>
-                    <span class="input-icon">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-                    </span>
-                    <select id="status" name="status" class="form-control">
-                        <option value="">Semua</option>
-                        @foreach ($statuses as $status)
-                            <option value="{{ $status }}" @selected($filters['status'] === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
-                        @endforeach
-                    </select>
-                </div>
                 <div class="filter-actions">
                     <button type="submit" class="btn btn-secondary">
                         <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-4.3-4.3" /><path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" /></svg>
@@ -95,8 +83,7 @@
                                 <th>Tahun</th>
                                 <th>Dusun</th>
                                 <th>Nama Kegiatan</th>
-                                <th>Estimasi Anggaran</th>
-                                <th>Status & Catatan</th>
+                                <th>Jumlah Anggaran</th>
                                 <th class="text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -113,26 +100,6 @@
                                         @endif
                                     </td>
                                     <td>{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format((float) $usulan->estimasi_anggaran, 0, ',', '.') : '-' }}</td>
-                                    <td class="inline-status-cell">
-                                        <form method="POST" action="{{ route('admin.usulan.update-status', $usulan) }}" class="inline-status-form">
-                                            @csrf
-                                            @method('PATCH')
-                                            <div class="inline-status-row">
-                                                <select name="status_usulan" class="form-control inline-status-select" aria-label="Status usulan {{ $usulan->nama_kegiatan }}">
-                                                    @foreach ($statuses as $status)
-                                                        <option value="{{ $status }}" @selected($usulan->status_usulan === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
-                                                    @endforeach
-                                                </select>
-                                                <button type="submit" class="btn btn-sm btn-secondary action-icon-btn" title="Simpan status dan catatan" aria-label="Simpan status dan catatan">
-                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" /><path d="M17 21v-8H7v8" /><path d="M7 3v5h8" /></svg>
-                                                </button>
-                                            </div>
-                                            <details class="inline-note-dropdown">
-                                                <summary>Catatan</summary>
-                                                <textarea name="catatan_admin" rows="3" class="form-control" placeholder="Catatan admin">{{ $usulan->catatan_admin }}</textarea>
-                                            </details>
-                                        </form>
-                                    </td>
                                     <td>
                                         <div class="action-group icon-actions">
                                             <a href="{{ route('admin.usulan.edit', $usulan) }}" class="btn btn-sm btn-light action-icon-btn" title="Edit usulan" aria-label="Edit usulan">
@@ -161,30 +128,11 @@
                                     <span class="code-pill">{{ $usulan->tahun }}</span>
                                     <h3>{{ $usulan->nama_kegiatan }}</h3>
                                 </div>
-                                <span class="badge {{ $usulan->status_badge_class }}">{{ $usulan->status_label }}</span>
                             </div>
                             <dl class="meta-grid">
                                 <div><dt>Dusun</dt><dd>{{ $usulan->dusun?->nama_dusun ?? '-' }}</dd></div>
-                                <div><dt>Anggaran</dt><dd>{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format((float) $usulan->estimasi_anggaran, 0, ',', '.') : '-' }}</dd></div>
+                                <div><dt>Jumlah Anggaran</dt><dd>{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format((float) $usulan->estimasi_anggaran, 0, ',', '.') : '-' }}</dd></div>
                             </dl>
-                            <form method="POST" action="{{ route('admin.usulan.update-status', $usulan) }}" class="inline-status-form mobile-inline-status">
-                                @csrf
-                                @method('PATCH')
-                                <div class="inline-status-row">
-                                    <select name="status_usulan" class="form-control inline-status-select" aria-label="Status usulan {{ $usulan->nama_kegiatan }}">
-                                        @foreach ($statuses as $status)
-                                            <option value="{{ $status }}" @selected($usulan->status_usulan === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
-                                        @endforeach
-                                    </select>
-                                    <button type="submit" class="btn btn-sm btn-secondary action-icon-btn" title="Simpan status dan catatan" aria-label="Simpan status dan catatan">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" /><path d="M17 21v-8H7v8" /><path d="M7 3v5h8" /></svg>
-                                    </button>
-                                </div>
-                                <details class="inline-note-dropdown">
-                                    <summary>Catatan</summary>
-                                    <textarea name="catatan_admin" rows="3" class="form-control" placeholder="Catatan admin">{{ $usulan->catatan_admin }}</textarea>
-                                </details>
-                            </form>
                             <div class="mobile-actions icon-actions">
                                 <a href="{{ route('admin.usulan.edit', $usulan) }}" class="btn btn-sm btn-light action-icon-btn" title="Edit usulan" aria-label="Edit usulan">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
@@ -217,8 +165,8 @@
         <div class="modal-card accepted-pdf-modal" role="dialog" aria-modal="true" aria-labelledby="acceptedPdfTitle">
             <div class="modal-head">
                 <div>
-                    <h3 id="acceptedPdfTitle">Cetak PDF Usulan Diterima</h3>
-                    <p>Pilih usulan diterima tahun {{ $filters['tahun'] }} yang ingin ditampilkan di PDF.</p>
+                    <h3 id="acceptedPdfTitle">Cetak PDF Usulan</h3>
+                    <p>Pilih usulan tahun {{ $filters['tahun'] }} yang ingin ditampilkan di PDF.</p>
                 </div>
                 <button type="button" class="icon-button" data-close-accepted-pdf-modal aria-label="Tutup modal">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
@@ -233,7 +181,7 @@
                     <div class="modal-toolbar">
                         <label class="checkbox-row select-all-row">
                             <input type="checkbox" data-accepted-pdf-select-all checked>
-                            <span>Pilih semua usulan diterima</span>
+                            <span>Pilih semua usulan</span>
                         </label>
                         <span class="selection-counter" data-accepted-pdf-counter>{{ $acceptedPdfCount }} dipilih</span>
                     </div>
@@ -265,8 +213,8 @@
                 </form>
             @else
                 <div class="empty-state compact-empty">
-                    <h3>Belum ada usulan diterima</h3>
-                    <p>Ubah status usulan menjadi diterima pada tahun {{ $filters['tahun'] }} sebelum mencetak PDF.</p>
+                    <h3>Belum ada usulan</h3>
+                    <p>Tambahkan usulan pada tahun {{ $filters['tahun'] }} sebelum mencetak PDF.</p>
                 </div>
             @endif
         </div>

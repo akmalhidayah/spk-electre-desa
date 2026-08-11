@@ -108,19 +108,9 @@
         </div>
 
         <div class="form-group">
-            <label for="estimasi_anggaran" class="form-label">Estimasi Anggaran</label>
-            <input id="estimasi_anggaran" type="number" min="0" step="0.01" name="estimasi_anggaran" value="{{ old('estimasi_anggaran', $usulan->estimasi_anggaran) }}" class="form-control @error('estimasi_anggaran') is-invalid @enderror" placeholder="Contoh: 1000000">
+            <label for="estimasi_anggaran" class="form-label">Jumlah Anggaran (Rp) <span class="required">*</span></label>
+            <input id="estimasi_anggaran" type="number" min="0" step="0.01" name="estimasi_anggaran" value="{{ old('estimasi_anggaran', $usulan->estimasi_anggaran) }}" class="form-control @error('estimasi_anggaran') is-invalid @enderror" placeholder="Contoh: 50000000" required>
             @error('estimasi_anggaran')<div class="field-error">{{ $message }}</div>@enderror
-        </div>
-
-        <div class="form-group">
-            <label for="status_usulan" class="form-label">Status Usulan</label>
-            <select id="status_usulan" name="status_usulan" class="form-control @error('status_usulan') is-invalid @enderror">
-                @foreach ($statuses as $status)
-                    <option value="{{ $status }}" @selected(old('status_usulan', $usulan->status_usulan ?? 'diajukan') === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
-                @endforeach
-            </select>
-            @error('status_usulan')<div class="field-error">{{ $message }}</div>@enderror
         </div>
 
         <div class="form-group form-group-full">
@@ -129,11 +119,6 @@
             @error('deskripsi')<div class="field-error">{{ $message }}</div>@enderror
         </div>
 
-        <div class="form-group form-group-full">
-            <label for="catatan_admin" class="form-label">Catatan Admin</label>
-            <textarea id="catatan_admin" name="catatan_admin" rows="3" class="form-control @error('catatan_admin') is-invalid @enderror" placeholder="Catatan tinjauan admin">{{ old('catatan_admin', $usulan->catatan_admin) }}</textarea>
-            @error('catatan_admin')<div class="field-error">{{ $message }}</div>@enderror
-        </div>
     </div>
 
     <div class="form-actions">

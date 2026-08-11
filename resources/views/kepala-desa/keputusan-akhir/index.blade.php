@@ -47,7 +47,8 @@
                             <th>No</th>
                             <th>Nomor Keputusan</th>
                             <th>Tahun</th>
-                            <th>Dusun Terpilih</th>
+                            <th>Program Ditetapkan</th>
+                            <th>Total Anggaran</th>
                             <th>Status</th>
                             <th>Tanggal</th>
                             <th>Perhitungan</th>
@@ -60,7 +61,9 @@
                                 <td>{{ $keputusans->firstItem() + $loop->index }}</td>
                                 <td>{{ $keputusan->nomor_keputusan ?: '-' }}</td>
                                 <td>{{ $keputusan->tahun ?: ($keputusan->calculation?->tahun ?? '-') }}</td>
-                                <td><strong>{{ $keputusan->program?->nama_kegiatan ?? '-' }}</strong></td>
+                                @php($details = $keputusan->details->isNotEmpty() ? $keputusan->details : collect([$keputusan->program]))
+                                <td><strong>{{ $details->first()?->nama_program_snapshot ?? $details->first()?->nama_kegiatan ?? '-' }}</strong>{{ $details->count() > 1 ? ' + '.($details->count() - 1).' lainnya' : '' }}</td>
+                                <td>{{ 'Rp '.number_format((float) $details->sum(fn ($item) => $item->estimasi_anggaran_snapshot ?? $item->estimasi_anggaran ?? 0), 0, ',', '.') }}</td>
                                 <td>
                                     <span class="badge {{ $keputusan->status === 'ditetapkan' ? 'badge-success' : 'badge-warning' }}">
                                         {{ ucfirst($keputusan->status) }}
@@ -75,7 +78,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8">
+                                <td colspan="9">
                                     <div class="empty-state">
                                         <strong>Belum ada keputusan akhir.</strong>
                                         <p>Buka hasil rekomendasi, lalu tetapkan keputusan akhir dari perhitungan yang sudah selesai.</p>
@@ -94,7 +97,9 @@
                             <span class="badge {{ $keputusan->status === 'ditetapkan' ? 'badge-success' : 'badge-warning' }}">{{ ucfirst($keputusan->status) }}</span>
                             <span>{{ $keputusan->tanggal_keputusan?->format('d/m/Y') ?? '-' }}</span>
                         </div>
-                        <h3>{{ $keputusan->program?->nama_kegiatan ?? '-' }}</h3>
+                        @php($details = $keputusan->details->isNotEmpty() ? $keputusan->details : collect([$keputusan->program]))
+                        <h3>{{ $details->count() }} Program</h3>
+                        <p>Total Anggaran: Rp {{ number_format((float) $details->sum(fn ($item) => $item->estimasi_anggaran_snapshot ?? $item->estimasi_anggaran ?? 0), 0, ',', '.') }}</p>
                         <p>{{ $keputusan->nomor_keputusan ?: 'Nomor keputusan belum diisi' }}</p>
                         <p>Tahun {{ $keputusan->tahun ?: ($keputusan->calculation?->tahun ?? '-') }} · {{ $keputusan->calculation?->kode_perhitungan ?? '-' }}</p>
                         <a href="{{ route('kepala-desa.keputusan-akhir.show', $keputusan) }}" class="btn btn-light">Lihat Keputusan</a>

@@ -12,6 +12,11 @@
         @error('nama_periode') <small class="form-error">{{ $message }}</small> @enderror
     </div>
     <div class="form-group full">
+        <label for="pagu_anggaran" class="form-label">Pagu Anggaran Pembangunan (Rp)</label>
+        <input id="pagu_anggaran" type="number" name="pagu_anggaran" min="0" step="0.01" value="{{ old('pagu_anggaran', $periode->pagu_anggaran) }}" class="form-control" required>
+        @error('pagu_anggaran') <small class="form-error">{{ $message }}</small> @enderror
+    </div>
+    <div class="form-group full">
         <label for="deskripsi" class="form-label">Deskripsi</label>
         <textarea id="deskripsi" name="deskripsi" rows="4" class="form-control">{{ old('deskripsi', $periode->deskripsi) }}</textarea>
         @error('deskripsi') <small class="form-error">{{ $message }}</small> @enderror

@@ -10,6 +10,7 @@ use App\Models\Kriteria;
 use App\Models\TahunPerencanaan;
 use App\Models\User;
 use App\Models\UsulanPembangunan;
+use App\Services\BudgetAllocationService;
 use App\Services\KeputusanAkhirSnapshotService;
 use App\Services\PejabatDesaService;
 use App\Services\TahunAktifService;
@@ -22,6 +23,8 @@ use Throwable;
 
 class HasilRekomendasiController extends Controller
 {
+    public function __construct(private readonly BudgetAllocationService $budgetService) {}
+
     public function index(Request $request, TahunAktifService $tahunAktifService): View|RedirectResponse
     {
         try {
@@ -154,14 +157,14 @@ class HasilRekomendasiController extends Controller
             $kepalaDusunName = $pejabatDesaService->kepalaDusunName($dusun) ?? $this->kepalaDusunForDusun($dusun)?->name;
 
             return Pdf::loadView('pdf.usulan-diterima-dusun', [
-                'pdfTitle' => 'Daftar Usulan Pembangunan Diterima '.$dusun->nama_dusun,
+                'pdfTitle' => 'Daftar Usulan Pembangunan '.$dusun->nama_dusun,
                 'calculation' => $electreCalculation,
                 'dusun' => $dusun,
                 'kepalaDusunName' => $kepalaDusunName,
                 'usulans' => $usulans,
             ])
                 ->setPaper('a4', 'portrait')
-                ->stream('usulan-diterima-'.$electreCalculation->tahunPerencanaan->tahun.'-'.$dusun->id.'.pdf');
+                ->stream('usulan-'.$electreCalculation->tahunPerencanaan->tahun.'-'.$dusun->id.'.pdf');
         } catch (Throwable $e) {
             Log::error('[HASIL_REKOMENDASI_DUSUN_PDF_FAILED] Gagal membuat PDF usulan per dusun admin', $this->logContext($e, $request, $electreCalculation));
 
@@ -176,10 +179,12 @@ class HasilRekomendasiController extends Controller
     {
         $calculation->load(['results.program.dusun', 'results.program.dusunsTerkait', 'details', 'calculator', 'tahunPerencanaan']);
         $details = $calculation->details->keyBy('tahap');
+        $budget = $this->budgetService->simulate($calculation->tahunPerencanaan, $calculation);
 
         return [
             'calculation' => $calculation,
-            'results' => $calculation->results->sortBy('ranking')->values(),
+            'results' => $budget['results'],
+            'budgetSummary' => $budget['summary'],
             'details' => $details,
             'matriksKeputusan' => $details->get('matriks_keputusan')?->data ?? [],
             'normalisasi' => $details->get('normalisasi')?->data ?? [],

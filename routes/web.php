@@ -98,7 +98,6 @@ Route::prefix('admin')
         Route::post('/usulan-pembangunan/export-pdf', [AdminUsulanPembangunanController::class, 'exportAcceptedPdf'])->name('usulan.export-pdf');
         Route::get('/usulan-pembangunan/{usulanPembangunan}/edit', [AdminUsulanPembangunanController::class, 'edit'])->name('usulan.edit');
         Route::put('/usulan-pembangunan/{usulanPembangunan}', [AdminUsulanPembangunanController::class, 'update'])->name('usulan.update');
-        Route::patch('/usulan-pembangunan/{usulanPembangunan}/status', [AdminUsulanPembangunanController::class, 'updateStatus'])->name('usulan.update-status');
         Route::delete('/usulan-pembangunan/{usulanPembangunan}', [AdminUsulanPembangunanController::class, 'destroy'])->name('usulan.destroy');
 
         Route::get('/penilaian-alternatif', [PenilaianAlternatifController::class, 'index'])->name('penilaian.index');

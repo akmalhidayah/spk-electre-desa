@@ -7,6 +7,8 @@ use App\Http\Requests\StoreKeputusanAkhirRequest;
 use App\Models\ElectreCalculation;
 use App\Models\ElectreResult;
 use App\Models\KeputusanAkhir;
+use App\Models\TahunPerencanaan;
+use App\Services\BudgetAllocationService;
 use App\Services\KeputusanAkhirSnapshotService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\QueryException;
@@ -23,7 +25,7 @@ class KeputusanAkhirController extends Controller
     public function index(Request $request): View|RedirectResponse
     {
         try {
-            $query = KeputusanAkhir::with(['calculation.tahunPerencanaan', 'program.dusun', 'penetap'])
+            $query = KeputusanAkhir::with(['calculation.tahunPerencanaan', 'program.dusun', 'details', 'penetap'])
                 ->whereIn('status', [KeputusanAkhir::STATUS_DRAFT, KeputusanAkhir::STATUS_DITETAPKAN])
                 ->latest();
 
@@ -71,14 +73,14 @@ class KeputusanAkhirController extends Controller
         }
     }
 
-    public function create(ElectreCalculation $electreCalculation): View|RedirectResponse
+    public function create(ElectreCalculation $electreCalculation, BudgetAllocationService $budgetService): View|RedirectResponse
     {
         $electreCalculation->load(['results.program.dusun', 'results.program.dusunsTerkait', 'keputusanAkhir', 'tahunPerencanaan']);
 
-        if ($electreCalculation->status !== ElectreCalculation::STATUS_SELESAI) {
+        if (! $budgetService->isOfficialCalculation($electreCalculation)) {
             return redirect()
                 ->route('kepala-desa.hasil-rekomendasi.index')
-                ->with('error', 'Perhitungan ELECTRE belum selesai. Kode Error: KEPUTUSAN_AKHIR_INVALID_CALCULATION');
+                ->with('error', 'Keputusan hanya dapat dibuat dari perhitungan reguler terbaru yang sudah selesai. Kode Error: KEPUTUSAN_AKHIR_INVALID_CALCULATION');
         }
 
         if ($electreCalculation->keputusanAkhir) {
@@ -87,25 +89,35 @@ class KeputusanAkhirController extends Controller
                 ->with('error', 'Keputusan akhir untuk perhitungan ini sudah dibuat. Kode Error: KEPUTUSAN_AKHIR_DUPLICATE');
         }
 
+        $budget = $budgetService->simulate($electreCalculation->tahunPerencanaan, $electreCalculation);
+
+        if ($budget['summary']['pagu'] === null) {
+            return redirect()->route('kepala-desa.hasil-rekomendasi.show', $electreCalculation)
+                ->with('error', 'Pagu anggaran pembangunan tahun ini belum diatur.');
+        }
+
         return view('kepala-desa.keputusan-akhir.create', [
             'calculation' => $electreCalculation,
-            'results' => $electreCalculation->results->sortBy('ranking')->values(),
+            'results' => $budget['results'],
+            'budgetSummary' => $budget['summary'],
         ]);
     }
 
-    public function store(StoreKeputusanAkhirRequest $request, KeputusanAkhirSnapshotService $snapshotService): RedirectResponse
+    public function store(StoreKeputusanAkhirRequest $request, KeputusanAkhirSnapshotService $snapshotService, BudgetAllocationService $budgetService): RedirectResponse
     {
         try {
             $data = $request->validated();
 
-            $keputusan = DB::transaction(function () use ($data, $request, $snapshotService): KeputusanAkhir {
+            $keputusan = DB::transaction(function () use ($data, $request, $snapshotService, $budgetService): KeputusanAkhir {
                 $calculation = ElectreCalculation::whereKey($data['electre_calculation_id'])
                     ->lockForUpdate()
                     ->firstOrFail();
 
-                if ($calculation->status !== ElectreCalculation::STATUS_SELESAI) {
-                    throw new RuntimeException('Perhitungan ELECTRE belum selesai. Kode Error: KEPUTUSAN_AKHIR_INVALID_CALCULATION');
+                if (! $budgetService->isOfficialCalculation($calculation)) {
+                    throw new RuntimeException('Keputusan hanya dapat dibuat dari perhitungan reguler terbaru yang sudah selesai. Kode Error: KEPUTUSAN_AKHIR_INVALID_CALCULATION');
                 }
+
+                $periode = TahunPerencanaan::whereKey($calculation->tahun_perencanaan_id)->lockForUpdate()->firstOrFail();
 
                 $existing = KeputusanAkhir::where('electre_calculation_id', $calculation->id)
                     ->whereIn('status', [KeputusanAkhir::STATUS_DRAFT, KeputusanAkhir::STATUS_DITETAPKAN])
@@ -116,14 +128,39 @@ class KeputusanAkhirController extends Controller
                     throw new RuntimeException('Keputusan akhir untuk perhitungan ini sudah dibuat. Kode Error: KEPUTUSAN_AKHIR_DUPLICATE');
                 }
 
-                $result = ElectreResult::where('electre_calculation_id', $calculation->id)
-                    ->whereKey($data['electre_result_id'])
+                $results = ElectreResult::with('program.dusun')
+                    ->where('electre_calculation_id', $calculation->id)
+                    ->whereIn('id', $data['electre_result_ids'])
                     ->lockForUpdate()
-                    ->first();
+                    ->get()
+                    ->sortBy('ranking')
+                    ->values();
 
-                if (! $result) {
+                if ($results->count() !== count($data['electre_result_ids'])) {
                     throw new RuntimeException('Program yang dipilih tidak terdapat pada hasil rekomendasi ini. Kode Error: KEPUTUSAN_AKHIR_INVALID_PROGRAM');
                 }
+
+                $summary = $budgetService->summary($periode);
+                if ($summary['pagu'] === null) {
+                    throw new RuntimeException('Pagu anggaran pembangunan tahun ini belum diatur.');
+                }
+
+                $alreadyDetermined = collect($summary['program_ids_ditetapkan']);
+                if ($results->contains(fn ($result) => $alreadyDetermined->contains((int) $result->usulan_pembangunan_id))) {
+                    throw new RuntimeException('Salah satu program yang dipilih sudah ditetapkan pada keputusan lain.');
+                }
+
+                $amounts = $budgetService->amountMap($calculation);
+                if ($results->contains(fn ($result) => $amounts->get($result->id) === null)) {
+                    throw new RuntimeException('Jumlah anggaran seluruh program yang dipilih harus sudah diisi.');
+                }
+
+                $selectedTotal = (float) $results->sum(fn ($result) => $amounts->get($result->id));
+                if ($selectedTotal > (float) $summary['sisa_pagu']) {
+                    throw new RuntimeException('Total anggaran program yang dipilih melebihi sisa pagu. Total dipilih: Rp'.number_format($selectedTotal, 0, ',', '.').'. Sisa pagu: Rp'.number_format((float) $summary['sisa_pagu'], 0, ',', '.').'.');
+                }
+
+                $result = $results->first();
 
                 $payload = [
                     'electre_calculation_id' => $calculation->id,
@@ -142,6 +179,20 @@ class KeputusanAkhirController extends Controller
                 $payload['decided_at'] = $data['status'] === KeputusanAkhir::STATUS_DITETAPKAN ? now() : null;
 
                 $keputusan = KeputusanAkhir::create($payload);
+
+                foreach ($results as $selectedResult) {
+                    $keputusan->details()->create([
+                        'electre_result_id' => $selectedResult->id,
+                        'usulan_pembangunan_id' => $selectedResult->usulan_pembangunan_id,
+                        'kode_alternatif_snapshot' => $selectedResult->kode_alternatif,
+                        'nama_program_snapshot' => $selectedResult->nama_program_snapshot,
+                        'lokasi_snapshot' => $selectedResult->lokasi_snapshot,
+                        'nama_dusun_snapshot' => $selectedResult->nama_dusun_snapshot,
+                        'ranking_snapshot' => $selectedResult->ranking,
+                        'skor_dominasi_snapshot' => $selectedResult->skor_dominasi,
+                        'estimasi_anggaran_snapshot' => $amounts->get($selectedResult->id),
+                    ]);
+                }
 
                 if ($keputusan->status === KeputusanAkhir::STATUS_DITETAPKAN) {
                     $keputusan = $snapshotService->saveSnapshot($keputusan);
@@ -183,7 +234,7 @@ class KeputusanAkhirController extends Controller
             Log::error('[KEPUTUSAN_AKHIR_STORE_FAILED] Gagal menyimpan keputusan akhir', [
                 'user_id' => $request->user()?->id,
                 'calculation_id' => $request->input('electre_calculation_id'),
-                'electre_result_id' => $request->input('electre_result_id'),
+                'electre_result_ids' => $request->input('electre_result_ids'),
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -245,12 +296,14 @@ class KeputusanAkhirController extends Controller
      */
     private function viewData(KeputusanAkhir $keputusanAkhir): array
     {
-        $keputusanAkhir->load(['calculation.results.program.dusun', 'calculation.results.program.dusunsTerkait', 'calculation.calculator', 'calculation.tahunPerencanaan', 'program.dusun', 'program.dusunsTerkait', 'penetap', 'result']);
+        $keputusanAkhir->load(['calculation.results.program.dusun', 'calculation.results.program.dusunsTerkait', 'calculation.calculator', 'calculation.tahunPerencanaan', 'program.dusun', 'program.dusunsTerkait', 'details.program', 'penetap', 'result']);
 
         return [
             'keputusan' => $keputusanAkhir,
             'calculation' => $keputusanAkhir->calculation,
             'results' => $keputusanAkhir->calculation?->results?->sortBy('ranking')->values() ?? collect(),
+            'selectedDetails' => $keputusanAkhir->details->isNotEmpty() ? $keputusanAkhir->details : collect([$keputusanAkhir->result]),
+            'budgetSummary' => data_get($keputusanAkhir->snapshot_data, 'budget_summary', []),
         ];
     }
 }

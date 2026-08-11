@@ -109,12 +109,18 @@
                 <td>{{ $calculation->calculator?->name ?? '-' }}</td>
             </tr>
             <tr>
-                <td>Jumlah Dusun Dinilai</td>
+                <td>Jumlah Program Dinilai</td>
                 <td>{{ $calculation->total_alternatif ?? 0 }}</td>
                 <td>Jumlah Dasar Penilaian</td>
                 <td>{{ $calculation->total_kriteria ?? 0 }}</td>
             </tr>
         </table>
+    </div>
+
+    <div class="section">
+        <h3>Ringkasan Anggaran</h3>
+        <table class="meta-table"><tr><td>Pagu</td><td>{{ $budgetSummary['pagu'] !== null ? 'Rp '.number_format((float) $budgetSummary['pagu'], 0, ',', '.') : 'Pagu belum diatur' }}</td><td>Sudah Ditetapkan</td><td>Rp {{ number_format((float) $budgetSummary['total_ditetapkan'], 0, ',', '.') }}</td></tr><tr><td>Sisa Pagu</td><td>{{ $budgetSummary['sisa_pagu'] !== null ? 'Rp '.number_format((float) $budgetSummary['sisa_pagu'], 0, ',', '.') : '-' }}</td><td>Program Ditetapkan</td><td>{{ $budgetSummary['jumlah_program_ditetapkan'] }}</td></tr></table>
+        <p class="note">Status keterakomodasian anggaran merupakan simulasi dan tidak mengubah hasil perangkingan ELECTRE.</p>
     </div>
 
     <div class="section">
@@ -126,8 +132,10 @@
                     <th>Urutan</th>
                     <th>Kode</th>
                     <th>Program dan Lokasi</th>
+                    <th>Jumlah Anggaran</th>
                     <th>Nilai Akhir</th>
                     <th>Keterangan Prioritas</th>
+                    <th>Status Anggaran</th>
                     <th>Catatan</th>
                 </tr>
             </thead>
@@ -137,8 +145,10 @@
                         <td>{{ $result->ranking ?? '-' }}</td>
                         <td>{{ $result->kode_alternatif }}</td>
                         <td>{{ $result->nama_program_snapshot ?? $result->nama_program ?? '-' }}<br>{{ $result->lokasi_snapshot ?? $result->lokasi ?? '-' }}</td>
+                        <td>{{ ($result->estimasi_anggaran_snapshot ?? null) !== null ? 'Rp '.number_format((float) $result->estimasi_anggaran_snapshot, 0, ',', '.') : '-' }}</td>
                         <td>{{ $result->skor_dominasi ?? 0 }}</td>
                         <td>{{ $result->status_prioritas ?? '-' }}</td>
+                        <td>{{ $result->label_anggaran ?? '-' }}</td>
                         <td>
                             @if ((int) ($result->ranking ?? 0) === 1)
                                 Rekomendasi utama berdasarkan hasil penilaian.
@@ -148,7 +158,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6">Data hasil ranking tidak tersedia.</td></tr>
+                    <tr><td colspan="8">Data hasil ranking tidak tersedia.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -157,6 +167,7 @@
             <div class="priority">
                 Program yang menjadi prioritas utama pembangunan adalah <strong>{{ $topResult->nama_program_snapshot ?? $topResult->nama_program ?? '-' }}</strong>
                 dengan nilai akhir <strong>{{ $topResult->skor_dominasi }}</strong>.
+                Jumlah Anggaran: <strong>{{ ($topResult->estimasi_anggaran_snapshot ?? null) !== null ? 'Rp '.number_format((float) $topResult->estimasi_anggaran_snapshot, 0, ',', '.') : '-' }}</strong>.
             </div>
         @endif
     </div>
@@ -185,8 +196,8 @@
     </div>
 
     <div class="section page-break">
-        <h3>Lampiran Daftar Usulan Pembangunan Diterima Tahun {{ $calculation->tahun ?? '-' }}</h3>
-        <p class="appendix-note">Lampiran ini berisi usulan pembangunan berstatus diterima pada tahun yang sama dengan hasil rekomendasi.</p>
+        <h3>Lampiran Daftar Usulan Pembangunan Tahun {{ $calculation->tahun ?? '-' }}</h3>
+        <p class="appendix-note">Lampiran ini berisi usulan pembangunan pada tahun yang sama dengan hasil rekomendasi.</p>
         <table class="appendix-table">
             <thead>
                 <tr>
@@ -200,6 +211,7 @@
                     <th class="col-benefit">PR</th>
                     <th class="col-benefit">A-RTM</th>
                     <th>Kategori</th>
+                    <th>Jumlah Anggaran</th>
                 </tr>
             </thead>
             <tbody>
@@ -217,9 +229,10 @@
                         <td class="text-center">{{ $usulan->penerima_manfaat_pr !== null ? number_format($usulan->penerima_manfaat_pr, 0, ',', '.') : '-' }}</td>
                         <td class="text-center">{{ $usulan->penerima_manfaat_a_rtm !== null ? number_format($usulan->penerima_manfaat_a_rtm, 0, ',', '.') : '-' }}</td>
                         <td>{{ $usulan->kategori_kegiatan ?: '-' }}</td>
+                        <td>{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format((float) $usulan->estimasi_anggaran, 0, ',', '.') : '-' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="10" class="text-center">Belum ada usulan pembangunan diterima pada tahun ini.</td></tr>
+                    <tr><td colspan="11" class="text-center">Belum ada usulan pembangunan pada tahun ini.</td></tr>
                 @endforelse
             </tbody>
         </table>

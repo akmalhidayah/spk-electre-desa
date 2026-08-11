@@ -21,7 +21,7 @@
 
         <section class="panel priority-highlight">
             <span class="badge badge-success">{{ ucfirst($keputusan->status) }}</span>
-            <h2>{{ $keputusan->program?->nama_kegiatan ?? 'Program belum dipilih' }}</h2>
+            <h2>{{ $selectedDetails->count() }} Program Ditetapkan</h2>
             <p>{{ $keputusan->dasar_pertimbangan ?? 'Dasar pertimbangan belum diisi.' }}</p>
             <dl class="meta-grid">
                 <div><dt>Nomor Keputusan</dt><dd>{{ $keputusan->nomor_keputusan ?? '-' }}</dd></div>
@@ -33,6 +33,18 @@
                 <p>{{ $keputusan->catatan_keputusan }}</p>
             @endif
         </section>
+
+        <section class="panel">
+            <h2 class="panel-title">Program yang Ditetapkan</h2>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>No</th><th>Ranking</th><th>Kode</th><th>Program</th><th>Jumlah Anggaran</th></tr></thead><tbody>
+                @foreach ($selectedDetails as $detail)<tr><td>{{ $loop->iteration }}</td><td>{{ $detail->ranking_snapshot ?? $detail->ranking ?? '-' }}</td><td>{{ $detail->kode_alternatif_snapshot ?? $detail->kode_alternatif ?? '-' }}</td><td>{{ $detail->nama_program_snapshot ?? '-' }}</td><td>{{ ($detail->estimasi_anggaran_snapshot ?? $detail->program?->estimasi_anggaran ?? null) !== null ? 'Rp '.number_format((float) ($detail->estimasi_anggaran_snapshot ?? $detail->program?->estimasi_anggaran), 0, ',', '.') : '-' }}</td></tr>@endforeach
+            </tbody></table></div>
+            <p><strong>Total Anggaran Keputusan Ini:</strong> Rp {{ number_format((float) $selectedDetails->sum(fn ($item) => $item->estimasi_anggaran_snapshot ?? 0), 0, ',', '.') }}</p>
+        </section>
+
+        @if ($budgetSummary)
+            <section class="panel"><h2 class="panel-title">Ringkasan Anggaran Saat Penetapan</h2><dl class="meta-grid"><div><dt>Pagu</dt><dd>{{ isset($budgetSummary['pagu_anggaran']) ? 'Rp '.number_format((float) $budgetSummary['pagu_anggaran'], 0, ',', '.') : '-' }}</dd></div><div><dt>Penetapan Ini</dt><dd>Rp {{ number_format((float) ($budgetSummary['total_keputusan_ini'] ?? 0), 0, ',', '.') }}</dd></div><div><dt>Total Setelah Penetapan</dt><dd>Rp {{ number_format((float) ($budgetSummary['total_ditetapkan_setelah_keputusan'] ?? 0), 0, ',', '.') }}</dd></div><div><dt>Sisa Pagu</dt><dd>Rp {{ number_format((float) ($budgetSummary['sisa_pagu_setelah_keputusan'] ?? 0), 0, ',', '.') }}</dd></div></dl></section>
+        @endif
 
         @include('admin.hasil-rekomendasi._ranking-table', ['results' => $results])
     </div>

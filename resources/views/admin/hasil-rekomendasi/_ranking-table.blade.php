@@ -19,8 +19,10 @@
                         <th>Ranking</th>
                         <th>Kode Alternatif</th>
                         <th>Program dan Lokasi</th>
+                        <th>Jumlah Anggaran</th>
                         <th>Skor Dominasi</th>
                         <th>Status Prioritas</th>
+                        <th>Status Anggaran</th>
                         <th>Keterangan</th>
                         @if ($showDusunPdf)
                             <th class="text-right">PDF Usulan</th>
@@ -33,8 +35,10 @@
                             <td><strong>#{{ $result->ranking }}</strong></td>
                             <td><span class="code-pill">{{ $result->kode_alternatif }}</span></td>
                             <td><strong>{{ $result->nama_program_snapshot }}</strong><small>{{ $result->lokasi_snapshot ?? '-' }}</small></td>
+                            <td>{{ $result->estimasi_anggaran_snapshot !== null ? 'Rp '.number_format((float) $result->estimasi_anggaran_snapshot, 0, ',', '.') : '-' }}</td>
                             <td>{{ $result->skor_dominasi }}</td>
                             <td><span class="badge {{ $result->ranking === 1 ? 'badge-priority' : 'badge-info' }}">{{ $result->status_prioritas }}</span></td>
+                            <td><span class="badge {{ $result->status_anggaran === 'terakomodasi' ? 'badge-success' : ($result->status_anggaran === 'ditetapkan' ? 'badge-info' : 'badge-warning') }}">{{ $result->label_anggaran }}</span></td>
                             <td>{{ $result->keterangan ?? '-' }}</td>
                             @if ($showDusunPdf)
                                 <td>
@@ -68,6 +72,8 @@
                     <dl class="meta-grid">
                         <div><dt>Kode</dt><dd>{{ $result->kode_alternatif }}</dd></div>
                         <div><dt>Skor Dominasi</dt><dd>{{ $result->skor_dominasi }}</dd></div>
+                        <div><dt>Jumlah Anggaran</dt><dd>{{ $result->estimasi_anggaran_snapshot !== null ? 'Rp '.number_format((float) $result->estimasi_anggaran_snapshot, 0, ',', '.') : '-' }}</dd></div>
+                        <div><dt>Status Anggaran</dt><dd>{{ $result->label_anggaran }}</dd></div>
                     </dl>
                     <p>{{ $result->keterangan ?? '-' }}</p>
                     @if ($showDusunPdf && $result->program?->dusun)

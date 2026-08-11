@@ -1106,66 +1106,12 @@ svg {
 }
 
 .admin-usulan-table {
-    min-width: 1040px;
+    min-width: 850px;
 }
 
 .admin-usulan-table th:last-child,
 .admin-usulan-table td:last-child {
     width: 82px;
-}
-
-.inline-status-cell {
-    min-width: 210px;
-}
-
-.inline-status-form {
-    display: grid;
-    gap: 8px;
-}
-
-.inline-status-row {
-    align-items: center;
-    display: flex;
-    gap: 6px;
-}
-
-.inline-status-select {
-    font-size: 13px;
-    min-height: 32px;
-    padding: 7px 30px 7px 10px;
-}
-
-.inline-note-dropdown {
-    color: var(--slate-600);
-    font-size: 12px;
-}
-
-.inline-note-dropdown summary {
-    cursor: pointer;
-    display: inline-flex;
-    font-weight: 800;
-    list-style: none;
-}
-
-.inline-note-dropdown summary::-webkit-details-marker {
-    display: none;
-}
-
-.inline-note-dropdown summary::after {
-    content: "v";
-    font-size: 10px;
-    margin-left: 6px;
-    margin-top: 1px;
-}
-
-.inline-note-dropdown[open] summary {
-    margin-bottom: 6px;
-}
-
-.inline-note-dropdown textarea {
-    font-size: 13px;
-    min-height: 76px;
-    resize: vertical;
 }
 
 .code-pill {
@@ -1226,10 +1172,6 @@ svg {
 
 .stat-card-inline .stat-value {
     font-size: 30px;
-}
-
-.status-form {
-    margin-top: 18px;
 }
 
 .scale-panel,

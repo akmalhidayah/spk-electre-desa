@@ -19,7 +19,8 @@ class StoreKeputusanAkhirRequest extends FormRequest
     {
         return [
             'electre_calculation_id' => ['required', 'exists:electre_calculations,id'],
-            'electre_result_id' => ['required', 'exists:electre_results,id'],
+            'electre_result_ids' => ['required', 'array', 'min:1'],
+            'electre_result_ids.*' => ['required', 'integer', 'distinct', 'exists:electre_results,id'],
             'nomor_keputusan' => ['nullable', 'string', 'max:100'],
             'tanggal_keputusan' => ['required', 'date'],
             'status' => ['required', Rule::in(['draft', 'ditetapkan'])],

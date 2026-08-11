@@ -15,7 +15,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
 
@@ -47,9 +46,6 @@ class UsulanPembangunanController extends Controller
                             ->orWhereHas('dusunsTerkait', fn ($query) => $query->where('dusuns.id', $dusunId));
                     });
                 })
-                ->when($request->filled('status'), function ($query) use ($request): void {
-                    $query->where('status_usulan', $request->string('status')->toString());
-                })
                 ->when($request->filled('tipe_usulan'), function ($query) use ($request): void {
                     $query->where('tipe_usulan', $request->string('tipe_usulan')->toString());
                 })
@@ -63,7 +59,6 @@ class UsulanPembangunanController extends Controller
             return view('admin.usulan.index', [
                 'usulans' => $usulans,
                 'dusuns' => Dusun::aktif()->orderBy('nama_dusun')->get(),
-                'statuses' => UsulanPembangunan::STATUSES,
                 'tipeUsulans' => UsulanPembangunan::TIPE_USULANS,
                 'tahunTersedia' => TahunPerencanaan::orderByDesc('tahun')->pluck('tahun'),
                 'kategoriTersedia' => UsulanPembangunan::tahun($tahun)->whereNotNull('kategori_kegiatan')->distinct()->orderBy('kategori_kegiatan')->pluck('kategori_kegiatan'),
@@ -79,7 +74,6 @@ class UsulanPembangunanController extends Controller
                     'q' => $request->string('q')->toString(),
                     'tahun' => (string) $tahun,
                     'dusun_id' => $request->string('dusun_id')->toString(),
-                    'status' => $request->string('status')->toString(),
                     'tipe_usulan' => $request->string('tipe_usulan')->toString(),
                     'kategori_kegiatan' => $request->string('kategori_kegiatan')->toString(),
                 ],
@@ -97,12 +91,12 @@ class UsulanPembangunanController extends Controller
     {
         return view('admin.usulan.create', [
             'usulan' => new UsulanPembangunan([
+                'tahun_perencanaan_id' => TahunPerencanaan::where('tahun', $tahunAktifService->getActiveYear())->value('id'),
                 'tipe_usulan' => UsulanPembangunan::TIPE_DUSUN,
-                'status_usulan' => UsulanPembangunan::STATUS_DIAJUKAN,
+                'status_usulan' => UsulanPembangunan::STATUS_DITERIMA,
                 'status_pelaksanaan' => 'belum_dilaksanakan',
             ]),
             'dusuns' => Dusun::aktif()->orderBy('nama_dusun')->get(),
-            'statuses' => UsulanPembangunan::STATUSES,
             'tipeUsulans' => UsulanPembangunan::TIPE_USULANS,
         ]);
     }
@@ -118,7 +112,8 @@ class UsulanPembangunanController extends Controller
             $tahun = (int) $data['tahun'];
             unset($data['tahun']);
             $data['tahun_perencanaan_id'] = TahunPerencanaan::where('tahun', $tahun)->value('id');
-            $data['status_usulan'] = $data['status_usulan'] ?? UsulanPembangunan::STATUS_DIAJUKAN;
+            $data['status_usulan'] = UsulanPembangunan::STATUS_DITERIMA;
+            $data['catatan_admin'] = null;
             $data['status_pelaksanaan'] = $data['status_pelaksanaan'] ?? 'belum_dilaksanakan';
 
             if ($data['tipe_usulan'] === UsulanPembangunan::TIPE_UMUM_DESA) {
@@ -128,9 +123,7 @@ class UsulanPembangunanController extends Controller
             $usulan = UsulanPembangunan::create($data);
             $usulan->dusunsTerkait()->sync($dusunTerkaitIds);
 
-            if ($usulan->status_usulan === UsulanPembangunan::STATUS_DITERIMA) {
-                $recalculationFlagService->mark($tahun, 'Ada usulan diterima atau diperbarui.');
-            }
+            $recalculationFlagService->mark($tahun, 'Ada usulan diterima atau diperbarui.');
 
             Log::info('[USULAN_CREATED] Data usulan berhasil dibuat', [
                 'user_id' => $request->user()->id,
@@ -156,7 +149,6 @@ class UsulanPembangunanController extends Controller
         return view('admin.usulan.edit', [
             'usulan' => $usulanPembangunan->load(['dusun', 'dusunsTerkait', 'pengaju']),
             'dusuns' => Dusun::aktif()->orderBy('nama_dusun')->get(),
-            'statuses' => UsulanPembangunan::STATUSES,
             'tipeUsulans' => UsulanPembangunan::TIPE_USULANS,
         ]);
     }
@@ -164,7 +156,7 @@ class UsulanPembangunanController extends Controller
     public function update(UpdateUsulanPembangunanRequest $request, UsulanPembangunan $usulanPembangunan, RecalculationFlagService $recalculationFlagService): RedirectResponse
     {
         try {
-            $wasSupportingData = $usulanPembangunan->status_usulan === UsulanPembangunan::STATUS_DITERIMA;
+            $tahunLama = (int) $usulanPembangunan->tahunPerencanaan->tahun;
             $data = $request->validated();
             $dusunTerkaitIds = $this->normalizeDusunTerkaitIds($data);
             unset($data['dusun_terkait_ids']);
@@ -172,7 +164,8 @@ class UsulanPembangunanController extends Controller
             $tahun = (int) $data['tahun'];
             unset($data['tahun']);
             $data['tahun_perencanaan_id'] = TahunPerencanaan::where('tahun', $tahun)->value('id');
-            $data['status_usulan'] = $data['status_usulan'] ?? $usulanPembangunan->status_usulan;
+            $data['status_usulan'] = UsulanPembangunan::STATUS_DITERIMA;
+            $data['catatan_admin'] = null;
 
             if ($data['tipe_usulan'] === UsulanPembangunan::TIPE_UMUM_DESA) {
                 $data['dusun_id'] = null;
@@ -181,8 +174,8 @@ class UsulanPembangunanController extends Controller
             $usulanPembangunan->update($data);
             $usulanPembangunan->dusunsTerkait()->sync($dusunTerkaitIds);
 
-            if ($wasSupportingData || $usulanPembangunan->status_usulan === UsulanPembangunan::STATUS_DITERIMA) {
-                $recalculationFlagService->mark($tahun, 'Ada usulan diterima atau diperbarui.');
+            foreach (array_unique([$tahunLama, $tahun]) as $tahunBerubah) {
+                $recalculationFlagService->mark($tahunBerubah, 'Ada usulan diterima atau diperbarui.');
             }
 
             Log::info('[USULAN_UPDATED] Data usulan berhasil diperbarui', [
@@ -204,40 +197,6 @@ class UsulanPembangunanController extends Controller
         }
     }
 
-    public function updateStatus(Request $request, UsulanPembangunan $usulanPembangunan, RecalculationFlagService $recalculationFlagService): RedirectResponse
-    {
-        $data = $request->validate([
-            'status_usulan' => ['required', Rule::in(UsulanPembangunan::STATUSES)],
-            'catatan_admin' => ['nullable', 'string'],
-        ]);
-
-        try {
-            $wasSupportingData = $usulanPembangunan->status_usulan === UsulanPembangunan::STATUS_DITERIMA;
-
-            $usulanPembangunan->update($data);
-
-            if ($wasSupportingData || $usulanPembangunan->status_usulan === UsulanPembangunan::STATUS_DITERIMA) {
-                $recalculationFlagService->mark((int) $usulanPembangunan->tahunPerencanaan->tahun, 'Ada usulan diterima atau diperbarui.');
-            }
-
-            Log::info('[USULAN_STATUS_UPDATED] Status usulan berhasil diperbarui', [
-                'user_id' => $request->user()->id,
-                'role' => $request->user()->role,
-                'dusun_id' => $usulanPembangunan->dusun_id,
-                'usulan_id' => $usulanPembangunan->id,
-                'status' => $usulanPembangunan->status_usulan,
-            ]);
-
-            return back()->with('success', 'Status usulan pembangunan berhasil diperbarui.');
-        } catch (Throwable $e) {
-            Log::error('[USULAN_STATUS_FAILED] Gagal memperbarui status usulan pembangunan', $this->logContext($e, $request, $usulanPembangunan));
-
-            return back()
-                ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui status usulan. Silakan coba kembali. Kode Error: USULAN_STATUS_FAILED');
-        }
-    }
-
     public function exportAcceptedPdf(Request $request, PejabatDesaService $pejabatDesaService)
     {
         $data = $request->validate([
@@ -245,8 +204,8 @@ class UsulanPembangunanController extends Controller
             'usulan_ids' => ['required', 'array', 'min:1'],
             'usulan_ids.*' => ['integer', 'distinct', 'exists:usulan_pembangunans,id'],
         ], [
-            'usulan_ids.required' => 'Pilih minimal satu usulan diterima untuk dicetak.',
-            'usulan_ids.min' => 'Pilih minimal satu usulan diterima untuk dicetak.',
+            'usulan_ids.required' => 'Pilih minimal satu usulan untuk dicetak.',
+            'usulan_ids.min' => 'Pilih minimal satu usulan untuk dicetak.',
         ]);
 
         try {
@@ -262,10 +221,10 @@ class UsulanPembangunanController extends Controller
                 ->get();
 
             if ($usulans->count() !== count($selectedIds)) {
-                return back()->with('error', 'Sebagian usulan tidak valid, bukan status diterima, atau bukan tahun yang dipilih.');
+                return back()->with('error', 'Sebagian usulan tidak valid atau bukan tahun yang dipilih.');
             }
 
-            $pdfTitle = "Daftar Usulan Pembangunan Diterima Tahun {$tahun}";
+            $pdfTitle = "Daftar Usulan Pembangunan Tahun {$tahun}";
 
             Log::info('[USULAN_ACCEPTED_PDF_CREATED] PDF daftar usulan diterima dibuat', [
                 'user_id' => $request->user()?->id,
@@ -281,11 +240,11 @@ class UsulanPembangunanController extends Controller
                 'kepalaDesaName' => $pejabatDesaService->kepalaDesaName(),
             ])
                 ->setPaper('a4', 'landscape')
-                ->stream('daftar-usulan-diterima-'.$tahun.'.pdf');
+                ->stream('daftar-usulan-'.$tahun.'.pdf');
         } catch (Throwable $e) {
             Log::error('[USULAN_ACCEPTED_PDF_FAILED] Gagal membuat PDF daftar usulan diterima', $this->logContext($e, $request));
 
-            return back()->with('error', 'Terjadi kesalahan saat membuat PDF usulan diterima. Silakan coba kembali. Kode Error: USULAN_ACCEPTED_PDF_FAILED');
+            return back()->with('error', 'Terjadi kesalahan saat membuat PDF usulan. Silakan coba kembali. Kode Error: USULAN_ACCEPTED_PDF_FAILED');
         }
     }
 

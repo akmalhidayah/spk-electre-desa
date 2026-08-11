@@ -9,7 +9,7 @@
         <section class="page-header-card">
             <div>
                 <h2>{{ $usulan->nama_kegiatan }}</h2>
-                <p>Usulan hanya dapat diubah selama status masih diajukan.</p>
+                <p>Perbarui informasi program pembangunan dusun.</p>
             </div>
             <a href="{{ route('kepala-dusun.usulan.index') }}" class="btn btn-light">Kembali</a>
         </section>

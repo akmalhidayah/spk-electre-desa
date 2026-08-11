@@ -17,6 +17,7 @@ class TahunPerencanaan extends Model
         'tahun',
         'nama_periode',
         'deskripsi',
+        'pagu_anggaran',
         'is_active',
         'is_locked',
         'perlu_hitung_ulang',
@@ -29,6 +30,7 @@ class TahunPerencanaan extends Model
     {
         return [
             'tahun' => 'integer',
+            'pagu_anggaran' => 'decimal:2',
             'is_active' => 'boolean',
             'is_locked' => 'boolean',
             'perlu_hitung_ulang' => 'boolean',

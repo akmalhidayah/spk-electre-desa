@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>{{ $pdfTitle ?? 'Daftar Usulan Pembangunan Diterima per Dusun' }}</title>
+    <title>{{ $pdfTitle ?? 'Daftar Usulan Pembangunan per Dusun' }}</title>
     <style>
         @page { margin: 24px 32px 44px; }
         body { background: #ffffff; color: #111827; font-family: DejaVu Sans, Arial, sans-serif; font-size: 10px; line-height: 1.4; margin: 0; }
@@ -73,7 +73,7 @@
     </div>
 
     <div class="document-title">
-        <h1>Daftar Usulan Pembangunan Diterima</h1>
+        <h1>Daftar Usulan Pembangunan</h1>
         <h2>{{ $dusun->nama_dusun }} Tahun {{ $calculation->tahun }}</h2>
     </div>
 
@@ -83,7 +83,7 @@
             <tr><td>Dusun</td><td>: {{ $dusun->nama_dusun }}</td></tr>
             <tr><td>Kepala Dusun</td><td>: {{ $kepalaDusunName ?? $kepalaDusun?->name ?? '-' }}</td></tr>
             <tr><td>Tahun</td><td>: {{ $calculation->tahun }}</td></tr>
-            <tr><td>Total Usulan</td><td>: {{ $usulans->count() }} usulan diterima</td></tr>
+            <tr><td>Total Usulan</td><td>: {{ $usulans->count() }} usulan</td></tr>
         </table>
     </div>
 
@@ -99,6 +99,7 @@
                 <th class="col-benefit">PR</th>
                 <th class="col-benefit">A-RTM</th>
                 <th>Kategori</th>
+                <th>Jumlah Anggaran</th>
             </tr>
         </thead>
         <tbody>
@@ -115,10 +116,11 @@
                     <td class="text-center">{{ $usulan->penerima_manfaat_pr !== null ? number_format($usulan->penerima_manfaat_pr, 0, ',', '.') : '-' }}</td>
                     <td class="text-center">{{ $usulan->penerima_manfaat_a_rtm !== null ? number_format($usulan->penerima_manfaat_a_rtm, 0, ',', '.') : '-' }}</td>
                     <td>{{ $usulan->kategori_kegiatan ?: '-' }}</td>
+                    <td>{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format((float) $usulan->estimasi_anggaran, 0, ',', '.') : '-' }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" class="text-center">Belum ada usulan pembangunan diterima untuk dusun ini.</td>
+                    <td colspan="10" class="text-center">Belum ada usulan pembangunan untuk dusun ini.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -132,7 +134,7 @@
     </div>
 
     <div class="footer">
-        Dicetak pada: {{ now()->format('d/m/Y H:i') }} | Daftar usulan pembangunan diterima {{ $dusun->nama_dusun }}
+        Dicetak pada: {{ now()->format('d/m/Y H:i') }} | Daftar usulan pembangunan {{ $dusun->nama_dusun }}
     </div>
 </body>
 </html>

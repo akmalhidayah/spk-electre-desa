@@ -114,7 +114,7 @@
             <tr>
                 <td>Dasar Penilaian</td>
                 <td>{{ $calculation?->kode_perhitungan ?? '-' }}</td>
-                <td>Jumlah Dusun Dinilai</td>
+                <td>Jumlah Program Dinilai</td>
                 <td>{{ $calculation?->total_alternatif ?? $results->count() }}</td>
             </tr>
         </table>
@@ -123,11 +123,13 @@
     <div class="section">
         <h3>Penetapan Keputusan</h3>
         <p class="note">
-            Berdasarkan hasil penilaian prioritas pembangunan tahun {{ $tahunDokumen }}, data usulan pembangunan yang telah diterima, serta pertimbangan Pemerintah Desa Barambang dalam musyawarah, maka ditetapkan dusun prioritas pembangunan sebagai berikut.
+            Berdasarkan hasil penilaian prioritas pembangunan tahun {{ $tahunDokumen }}, data usulan pembangunan, serta pertimbangan Pemerintah Desa Barambang dalam musyawarah, maka ditetapkan program prioritas pembangunan sebagai berikut.
         </p>
         <div class="decision">
-            <strong>{{ $keputusan->program?->nama_kegiatan ?? '-' }}</strong>
-            Program <strong>{{ $keputusan->program?->nama_kegiatan ?? '-' }}</strong> ditetapkan sebagai prioritas pembangunan Desa Barambang Tahun {{ $tahunDokumen }}.
+            <table><thead><tr><th>No</th><th>Ranking</th><th>Kode Alternatif</th><th>Program</th><th>Jumlah Anggaran</th></tr></thead><tbody>
+            @foreach ($selectedDetails as $detail)<tr><td>{{ $loop->iteration }}</td><td>{{ $detail->ranking ?? $detail->ranking_snapshot ?? '-' }}</td><td>{{ $detail->kode_alternatif ?? $detail->kode_alternatif_snapshot ?? '-' }}</td><td>{{ $detail->nama_program ?? $detail->nama_program_snapshot ?? '-' }}</td><td>{{ ($detail->estimasi_anggaran ?? $detail->estimasi_anggaran_snapshot ?? null) !== null ? 'Rp '.number_format((float) ($detail->estimasi_anggaran ?? $detail->estimasi_anggaran_snapshot), 0, ',', '.') : '-' }}</td></tr>@endforeach
+            </tbody></table>
+            <strong>Total Anggaran Program Ditetapkan: Rp {{ number_format((float) collect($selectedDetails)->sum(fn ($item) => $item->estimasi_anggaran ?? $item->estimasi_anggaran_snapshot ?? 0), 0, ',', '.') }}</strong>
         </div>
         @if ($keputusan->dasar_pertimbangan)
             <p class="note"><strong>Pertimbangan Tambahan</strong><br>{{ $keputusan->dasar_pertimbangan }}</p>
@@ -137,11 +139,15 @@
         @endif
     </div>
 
+    @if (!empty($budgetSummary))
+    <div class="section"><h3>Ringkasan Anggaran</h3><table class="meta"><tr><td>Pagu Anggaran Tahun</td><td>{{ isset($budgetSummary['pagu_anggaran']) ? 'Rp '.number_format((float) $budgetSummary['pagu_anggaran'], 0, ',', '.') : '-' }}</td><td>Sebelum Keputusan</td><td>Rp {{ number_format((float) ($budgetSummary['total_ditetapkan_sebelum_keputusan'] ?? 0), 0, ',', '.') }}</td></tr><tr><td>Penetapan Ini</td><td>Rp {{ number_format((float) ($budgetSummary['total_keputusan_ini'] ?? 0), 0, ',', '.') }}</td><td>Sisa Pagu</td><td>Rp {{ number_format((float) ($budgetSummary['sisa_pagu_setelah_keputusan'] ?? 0), 0, ',', '.') }}</td></tr></table></div>
+    @endif
+
     <div class="section">
         <h3>Urutan Rekomendasi</h3>
         <table class="ranking">
             <thead>
-                <tr><th>Urutan</th><th>Kode Dusun</th><th>Nama Dusun</th><th>Nilai Akhir</th><th>Keterangan Prioritas</th></tr>
+                <tr><th>Urutan</th><th>Kode Alternatif</th><th>Program</th><th>Jumlah Anggaran</th><th>Nilai Akhir</th><th>Keterangan Prioritas</th></tr>
             </thead>
             <tbody>
                 @forelse ($results as $result)
@@ -149,11 +155,12 @@
                         <td>{{ $result->ranking }}</td>
                         <td>{{ $result->kode_alternatif ?? '-' }}</td>
                         <td>{{ $result->nama_program ?? $result->nama_program_snapshot ?? '-' }}</td>
+                        <td>{{ ($result->estimasi_anggaran ?? null) !== null ? 'Rp '.number_format((float) $result->estimasi_anggaran, 0, ',', '.') : '-' }}</td>
                         <td>{{ $result->skor_dominasi }}</td>
                         <td>{{ $result->status_prioritas ?? '-' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="5">Data hasil ranking tidak tersedia.</td></tr>
+                    <tr><td colspan="6">Data hasil ranking tidak tersedia.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -178,8 +185,8 @@
     </div>
 
     <div class="section page-break">
-        <h3>Lampiran Daftar Usulan Pembangunan Diterima Tahun {{ $tahunDokumen }}</h3>
-        <p class="appendix-note">Lampiran ini berisi seluruh usulan pembangunan berstatus diterima pada tahun keputusan.</p>
+        <h3>Lampiran Daftar Usulan Pembangunan Tahun {{ $tahunDokumen }}</h3>
+        <p class="appendix-note">Lampiran ini berisi seluruh usulan pembangunan pada tahun keputusan.</p>
         <table class="appendix-table">
             <thead>
                 <tr>
@@ -193,6 +200,7 @@
                     <th class="col-benefit">PR</th>
                     <th class="col-benefit">A-RTM</th>
                     <th>Kategori</th>
+                    <th>Jumlah Anggaran</th>
                 </tr>
             </thead>
             <tbody>
@@ -210,9 +218,10 @@
                         <td class="text-center">{{ $usulan->penerima_manfaat_pr !== null ? number_format($usulan->penerima_manfaat_pr, 0, ',', '.') : '-' }}</td>
                         <td class="text-center">{{ $usulan->penerima_manfaat_a_rtm !== null ? number_format($usulan->penerima_manfaat_a_rtm, 0, ',', '.') : '-' }}</td>
                         <td>{{ $usulan->kategori_kegiatan ?: '-' }}</td>
+                        <td>{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format((float) $usulan->estimasi_anggaran, 0, ',', '.') : '-' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="10" class="text-center">Belum ada usulan pembangunan diterima pada tahun keputusan ini.</td></tr>
+                    <tr><td colspan="11" class="text-center">Belum ada usulan pembangunan pada tahun keputusan ini.</td></tr>
                 @endforelse
             </tbody>
         </table>

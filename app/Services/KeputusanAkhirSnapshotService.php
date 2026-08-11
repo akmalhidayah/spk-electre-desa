@@ -13,7 +13,7 @@ use Illuminate\Support\Fluent;
 
 class KeputusanAkhirSnapshotService
 {
-    public function __construct(private readonly PejabatDesaService $pejabatDesaService) {}
+    public function __construct(private readonly PejabatDesaService $pejabatDesaService, private readonly BudgetAllocationService $budgetService) {}
 
     /**
      * @return array<string, mixed>
@@ -29,6 +29,7 @@ class KeputusanAkhirSnapshotService
             'program.dusun',
             'program.dusunsTerkait',
             'result.program.dusun',
+            'details.result.program.dusun',
             'penetap',
         ]);
 
@@ -37,6 +38,21 @@ class KeputusanAkhirSnapshotService
             ->keyBy('usulan_pembangunan_id');
         $results = $calculation?->results?->sortBy('ranking')->values() ?? collect();
         $selectedResult = $keputusan->result ?? $results->firstWhere('usulan_pembangunan_id', $keputusan->usulan_pembangunan_id);
+        $selectedResults = $keputusan->details->isNotEmpty()
+            ? $keputusan->details->map(fn ($detail): array => [
+                'electre_result_id' => $detail->electre_result_id,
+                'usulan_pembangunan_id' => $detail->usulan_pembangunan_id,
+                'kode_alternatif' => $detail->kode_alternatif_snapshot,
+                'nama_program' => $detail->nama_program_snapshot,
+                'lokasi' => $detail->lokasi_snapshot,
+                'nama_dusun' => $detail->nama_dusun_snapshot,
+                'ranking' => $detail->ranking_snapshot,
+                'skor_dominasi' => $detail->skor_dominasi_snapshot,
+                'estimasi_anggaran' => $detail->estimasi_anggaran_snapshot !== null ? (float) $detail->estimasi_anggaran_snapshot : null,
+            ])->values()
+            : collect([$this->resultSnapshot($selectedResult, $rankingSummary)]);
+        $budget = $this->budgetService->summary($keputusan->tahunPerencanaan);
+        $decisionTotal = (float) $selectedResults->sum('estimasi_anggaran');
         $snapshottedAt = now();
 
         return [
@@ -72,6 +88,14 @@ class KeputusanAkhirSnapshotService
                 'calculated_by' => $calculation?->calculator?->name,
             ],
             'selected_result' => $this->resultSnapshot($selectedResult, $rankingSummary),
+            'selected_results' => $selectedResults->all(),
+            'budget_summary' => [
+                'pagu_anggaran' => $budget['pagu'],
+                'total_ditetapkan_sebelum_keputusan' => max($budget['total_ditetapkan'] - $decisionTotal, 0),
+                'total_keputusan_ini' => $decisionTotal,
+                'total_ditetapkan_setelah_keputusan' => $budget['total_ditetapkan'],
+                'sisa_pagu_setelah_keputusan' => $budget['sisa_pagu'],
+            ],
             'results' => $results
                 ->map(fn (ElectreResult $result): array => $this->resultSnapshot($result, $rankingSummary))
                 ->values()
@@ -206,6 +230,7 @@ class KeputusanAkhirSnapshotService
             'nama_program' => $result?->nama_program_snapshot,
             'lokasi' => $result?->lokasi_snapshot,
             'nama_dusun' => $result?->nama_dusun_snapshot,
+            'estimasi_anggaran' => data_get($summary, 'estimasi_anggaran', $result?->program?->estimasi_anggaran),
             'ranking' => $result?->ranking,
             'skor_dominasi' => $result?->skor_dominasi,
             'total_preferensi' => $result?->total_preferensi ?? data_get($summary, 'total_preferensi'),
@@ -230,7 +255,10 @@ class KeputusanAkhirSnapshotService
             'id' => $selected['usulan_pembangunan_id'] ?? null,
             'nama_kegiatan' => $selected['nama_program'] ?? null,
             'lokasi_label' => $selected['lokasi'] ?? null,
+            'estimasi_anggaran' => $selected['estimasi_anggaran'] ?? null,
         ]);
+        $keputusan->selected_results = collect($snapshot['selected_results'] ?? [$selected])->map(fn (array $result): Fluent => $this->resultObject($result));
+        $keputusan->budget_summary = new Fluent($snapshot['budget_summary'] ?? []);
         $keputusan->penetap = new Fluent($snapshot['penetap'] ?? []);
 
         $calculation = new Fluent($snapshot['calculation'] ?? []);
@@ -242,6 +270,8 @@ class KeputusanAkhirSnapshotService
             'keputusan' => $keputusan,
             'calculation' => $calculation,
             'results' => collect($snapshot['results'] ?? [])->map(fn (array $result): Fluent => $this->resultObject($result)),
+            'selectedDetails' => $keputusan->selected_results,
+            'budgetSummary' => $snapshot['budget_summary'] ?? [],
             'kriterias' => collect($snapshot['kriterias'] ?? [])->map(fn (array $kriteria): Fluent => new Fluent($kriteria)),
             'acceptedUsulans' => collect($snapshot['accepted_usulans'] ?? [])->map(fn (array $usulan): Fluent => $this->usulanObject($usulan)),
             'kepalaDesaName' => data_get($snapshot, 'kepala_desa.nama'),
@@ -260,6 +290,7 @@ class KeputusanAkhirSnapshotService
             'id' => $result['usulan_pembangunan_id'] ?? null,
             'nama_kegiatan' => $result['nama_program'] ?? null,
             'lokasi_label' => $result['lokasi'] ?? null,
+            'estimasi_anggaran' => $result['estimasi_anggaran'] ?? null,
         ]);
 
         return $object;

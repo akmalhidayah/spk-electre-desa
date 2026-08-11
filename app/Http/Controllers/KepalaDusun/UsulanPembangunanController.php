@@ -7,6 +7,7 @@ use App\Http\Requests\StoreUsulanPembangunanRequest;
 use App\Http\Requests\UpdateUsulanPembangunanRequest;
 use App\Models\TahunPerencanaan;
 use App\Models\UsulanPembangunan;
+use App\Services\RecalculationFlagService;
 use App\Services\TahunAktifService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,9 +45,6 @@ class UsulanPembangunanController extends Controller
                             ->orWhere('deskripsi', 'like', "%{$keyword}%");
                     });
                 })
-                ->when($request->filled('status'), function ($query) use ($request): void {
-                    $query->where('status_usulan', $request->string('status')->toString());
-                })
                 ->latest()
                 ->paginate(10)
                 ->withQueryString();
@@ -54,7 +52,6 @@ class UsulanPembangunanController extends Controller
             return view('kepala-dusun.usulan.index', [
                 'dusun' => $user->dusun,
                 'usulans' => $usulans,
-                'statuses' => UsulanPembangunan::STATUSES,
                 'tahunTersedia' => TahunPerencanaan::whereIn(
                     'id',
                     (clone $dusunQuery)->select('tahun_perencanaan_id')->distinct(),
@@ -63,7 +60,6 @@ class UsulanPembangunanController extends Controller
                 'filters' => [
                     'q' => $request->string('q')->toString(),
                     'tahun' => (string) $tahun,
-                    'status' => $request->string('status')->toString(),
                 ],
             ]);
         } catch (Throwable $e) {
@@ -84,16 +80,15 @@ class UsulanPembangunanController extends Controller
         return view('kepala-dusun.usulan.create', [
             'dusun' => $request->user()->dusun,
             'usulan' => new UsulanPembangunan([
-                'tahun' => $tahunAktifService->getActiveYear(),
+                'tahun_perencanaan_id' => TahunPerencanaan::where('tahun', $tahunAktifService->getActiveYear())->value('id'),
                 'jumlah_usulan' => 1,
                 'tipe_usulan' => UsulanPembangunan::TIPE_DUSUN,
                 'sumber_usulan' => 'Usulan Kepala Dusun',
-                'status' => UsulanPembangunan::STATUS_DIAJUKAN,
             ]),
         ]);
     }
 
-    public function store(StoreUsulanPembangunanRequest $request): RedirectResponse
+    public function store(StoreUsulanPembangunanRequest $request, RecalculationFlagService $recalculationFlagService): RedirectResponse
     {
         try {
             $user = $request->user();
@@ -126,12 +121,13 @@ class UsulanPembangunanController extends Controller
             $tahun = (int) $data['tahun'];
             unset($data['tahun']);
             $data['tahun_perencanaan_id'] = TahunPerencanaan::where('tahun', $tahun)->value('id');
-            $data['status_usulan'] = UsulanPembangunan::STATUS_DIAJUKAN;
+            $data['status_usulan'] = UsulanPembangunan::STATUS_DITERIMA;
             $data['status_pelaksanaan'] = 'belum_dilaksanakan';
             $data['catatan_admin'] = null;
 
             $usulan = UsulanPembangunan::create($data);
             $usulan->dusunsTerkait()->sync([$user->dusun_id]);
+            $recalculationFlagService->mark($tahun, 'Ada usulan diterima atau diperbarui.');
 
             Log::info('[USULAN_KEPALA_DUSUN_CREATED] Usulan kepala dusun berhasil dibuat', [
                 'user_id' => $user->id,
@@ -142,7 +138,7 @@ class UsulanPembangunanController extends Controller
 
             return redirect()
                 ->route('kepala-dusun.usulan.index')
-                ->with('success', 'Usulan pembangunan berhasil diajukan.');
+                ->with('success', 'Usulan pembangunan berhasil disimpan.');
         } catch (Throwable $e) {
             Log::error('[USULAN_KEPALA_DUSUN_STORE_FAILED] Gagal menyimpan usulan kepala dusun', $this->logContext($e, $request));
 
@@ -156,24 +152,18 @@ class UsulanPembangunanController extends Controller
     {
         $this->authorizeUsulan($request, $usulanPembangunan);
 
-        if ($usulanPembangunan->status_usulan !== UsulanPembangunan::STATUS_DIAJUKAN) {
-            return back()->with('error', 'Usulan hanya dapat diubah ketika status masih diajukan. Kode Error: USULAN_LOCKED');
-        }
-
         return view('kepala-dusun.usulan.edit', [
             'dusun' => $request->user()->dusun,
             'usulan' => $usulanPembangunan,
         ]);
     }
 
-    public function update(UpdateUsulanPembangunanRequest $request, UsulanPembangunan $usulanPembangunan): RedirectResponse
+    public function update(UpdateUsulanPembangunanRequest $request, UsulanPembangunan $usulanPembangunan, RecalculationFlagService $recalculationFlagService): RedirectResponse
     {
         try {
             $this->authorizeUsulan($request, $usulanPembangunan);
 
-            if ($usulanPembangunan->status_usulan !== UsulanPembangunan::STATUS_DIAJUKAN) {
-                return back()->with('error', 'Usulan hanya dapat diubah ketika status masih diajukan. Kode Error: USULAN_LOCKED');
-            }
+            $tahunLama = (int) $usulanPembangunan->tahunPerencanaan->tahun;
 
             $usulanPembangunan->update($request->safe()->only([
                 'nama_kegiatan',
@@ -197,8 +187,14 @@ class UsulanPembangunanController extends Controller
                 'dusun_id' => $request->user()->dusun_id,
                 'jumlah_usulan' => $request->validated('jumlah_usulan') ?? 1,
                 'sumber_usulan' => $request->validated('sumber_usulan') ?? 'Usulan Kepala Dusun',
+                'status_usulan' => UsulanPembangunan::STATUS_DITERIMA,
+                'catatan_admin' => null,
             ])->save();
             $usulanPembangunan->dusunsTerkait()->sync([$request->user()->dusun_id]);
+
+            foreach (array_unique([$tahunLama, $tahun]) as $tahunBerubah) {
+                $recalculationFlagService->mark($tahunBerubah, 'Ada usulan diterima atau diperbarui.');
+            }
 
             Log::info('[USULAN_KEPALA_DUSUN_UPDATED] Usulan kepala dusun berhasil diperbarui', [
                 'user_id' => $request->user()->id,
@@ -221,16 +217,14 @@ class UsulanPembangunanController extends Controller
         }
     }
 
-    public function destroy(Request $request, UsulanPembangunan $usulanPembangunan): RedirectResponse
+    public function destroy(Request $request, UsulanPembangunan $usulanPembangunan, RecalculationFlagService $recalculationFlagService): RedirectResponse
     {
         try {
             $this->authorizeUsulan($request, $usulanPembangunan);
 
-            if ($usulanPembangunan->status_usulan !== UsulanPembangunan::STATUS_DIAJUKAN) {
-                return back()->with('error', 'Usulan hanya dapat dihapus ketika status masih diajukan. Kode Error: USULAN_LOCKED');
-            }
-
+            $tahun = (int) $usulanPembangunan->tahunPerencanaan->tahun;
             $usulanPembangunan->delete();
+            $recalculationFlagService->mark($tahun, 'Ada usulan diterima atau diperbarui.');
 
             Log::info('[USULAN_KEPALA_DUSUN_DELETED] Usulan kepala dusun berhasil dihapus', [
                 'user_id' => $request->user()->id,

@@ -20,6 +20,7 @@ class StoreTahunPerencanaanRequest extends FormRequest
             'tahun' => ['required', 'integer', 'min:2020', 'max:2100', 'unique:tahun_perencanaans,tahun'],
             'nama_periode' => ['nullable', 'string', 'max:255'],
             'deskripsi' => ['nullable', 'string'],
+            'pagu_anggaran' => ['required', 'numeric', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'is_locked' => ['nullable', 'boolean'],
         ];

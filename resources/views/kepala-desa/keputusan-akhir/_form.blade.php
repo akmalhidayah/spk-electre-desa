@@ -11,16 +11,21 @@
     <input type="hidden" name="electre_calculation_id" value="{{ $calculation->id }}">
 
     <div class="form-grid">
-        <div class="form-group form-group-full">
-            <label for="electre_result_id" class="form-label">Program Prioritas <span class="required">*</span></label>
-            <select id="electre_result_id" name="electre_result_id" class="form-control @error('electre_result_id') is-invalid @enderror" required>
+        <div class="form-group form-group-full" data-budget-selection data-available-budget="{{ $budgetSummary['sisa_pagu'] }}">
+            <label class="form-label">Program Prioritas <span class="required">*</span></label>
+            <x-budget-summary :summary="$budgetSummary" />
+            <div class="selection-counter">Total Program Dipilih: <strong data-selected-total>Rp 0</strong> · Sisa Setelah Penetapan: <strong data-after-total>Rp {{ number_format((float) $budgetSummary['sisa_pagu'], 0, ',', '.') }}</strong></div>
+            <div class="stack">
                 @foreach ($results as $result)
-                    <option value="{{ $result->id }}" @selected((string) old('electre_result_id', $results->first()?->id) === (string) $result->id)>
-                        Ranking {{ $result->ranking }} - {{ $result->nama_program_snapshot }} - {{ $result->lokasi_snapshot ?? '-' }} - Skor dominasi {{ $result->skor_dominasi }}
-                    </option>
+                    @php($disabled = in_array($result->status_anggaran, ['ditetapkan', 'anggaran_belum_diisi', 'pagu_belum_diatur'], true))
+                    <label class="checkbox-row panel">
+                        <input type="checkbox" name="electre_result_ids[]" value="{{ $result->id }}" data-budget-amount="{{ $result->estimasi_anggaran_snapshot }}" @checked(in_array($result->id, old('electre_result_ids', []))) @disabled($disabled)>
+                        <span><strong>#{{ $result->ranking }} {{ $result->kode_alternatif }} — {{ $result->nama_program_snapshot }}</strong><br>{{ $result->lokasi_snapshot ?? '-' }} · {{ $result->estimasi_anggaran_snapshot !== null ? 'Rp '.number_format((float) $result->estimasi_anggaran_snapshot, 0, ',', '.') : '-' }} · {{ $result->label_anggaran }}</span>
+                    </label>
                 @endforeach
-            </select>
-            @error('electre_result_id')<div class="field-error">{{ $message }}</div>@enderror
+            </div>
+            <div class="field-error" data-budget-warning hidden>Total anggaran program yang dipilih melebihi sisa pagu.</div>
+            @error('electre_result_ids')<div class="field-error">{{ $message }}</div>@enderror
         </div>
 
         <div class="form-group">
@@ -82,11 +87,34 @@
 
     <div class="form-actions">
         <a href="{{ route('kepala-desa.hasil-rekomendasi.show', $calculation) }}" class="btn btn-light">Kembali</a>
-        <button type="submit" class="btn btn-primary btn-auto" data-loading-text="Menyimpan...">
+        <button type="submit" class="btn btn-primary btn-auto" data-loading-text="Menyimpan..." data-budget-submit>
             Simpan Keputusan Akhir
         </button>
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var wrap = document.querySelector('[data-budget-selection]');
+    if (!wrap) return;
+    var available = Number(wrap.dataset.availableBudget || 0);
+    var boxes = wrap.querySelectorAll('input[data-budget-amount]');
+    var selected = wrap.querySelector('[data-selected-total]');
+    var after = wrap.querySelector('[data-after-total]');
+    var warning = wrap.querySelector('[data-budget-warning]');
+    var submit = document.querySelector('[data-budget-submit]');
+    var rupiah = function (value) { return 'Rp ' + Math.max(value, 0).toLocaleString('id-ID'); };
+    var update = function () {
+        var total = Array.from(boxes).filter(function (box) { return box.checked; }).reduce(function (sum, box) { return sum + Number(box.dataset.budgetAmount || 0); }, 0);
+        selected.textContent = rupiah(total);
+        after.textContent = rupiah(available - total);
+        warning.hidden = total <= available;
+        submit.disabled = total > available;
+    };
+    boxes.forEach(function (box) { box.addEventListener('change', update); });
+    update();
+});
+</script>
 
 <div class="modal-backdrop" data-signature-modal hidden>
     <div class="modal-card signature-modal-card" role="dialog" aria-modal="true" aria-labelledby="signatureModalTitle">
