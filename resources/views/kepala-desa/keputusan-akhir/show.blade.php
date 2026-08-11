@@ -13,6 +13,22 @@
             </div>
             <div class="form-actions">
                 <a href="{{ route('kepala-desa.keputusan-akhir.pdf', $keputusan) }}" class="btn btn-primary btn-auto" target="_blank">Cetak PDF Penetapan</a>
+                @if ($keputusan->status === \App\Models\KeputusanAkhir::STATUS_DITETAPKAN)
+                    <form
+                        method="POST"
+                        action="{{ route('kepala-desa.keputusan-akhir.destroy', $keputusan) }}"
+                        class="js-confirm"
+                        data-title="Batalkan keputusan ini?"
+                        data-text="Keputusan ini berisi {{ $cancellationSummary['program_count'] }} program dengan total anggaran Rp{{ number_format($cancellationSummary['total_anggaran'], 0, ',', '.') }}. Program akan dilepas dari alokasi anggaran dan keputusan dihapus permanen. Tindakan ini tidak dapat dibatalkan."
+                        data-icon="warning"
+                        data-confirm-button="Batalkan Keputusan"
+                        data-confirm-color="#b91c1c"
+                    >
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-auto">Batalkan Keputusan</button>
+                    </form>
+                @endif
                 @if ($calculation)
                     <a href="{{ route('kepala-desa.hasil-rekomendasi.show', $calculation) }}" class="btn btn-light">Kembali</a>
                 @endif

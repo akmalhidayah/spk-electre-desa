@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\UsulanPembangunan;
 use App\Services\BudgetAllocationService;
 use App\Services\ElectreService;
+use App\Services\RecalculationFlagService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
@@ -124,8 +125,12 @@ class PartialPenilaianElectreTest extends TestCase
 
         $kepalaDesa = User::where('email', 'kepaladesa@example.com')->firstOrFail();
 
-        $periode->forceFill(['pagu_anggaran' => 100000000])->save();
+        $periode->forceFill([
+            'pagu_anggaran' => 100000000,
+        ])->save();
         $calculation->forceFill(['is_latest' => true, 'notes' => 'JENIS_PERHITUNGAN=REGULER; fixture pengujian keputusan.'])->save();
+        app(RecalculationFlagService::class)->clear(2026, $calculation->id);
+        $this->assertTrue(app(BudgetAllocationService::class)->isOfficialCalculation($calculation->fresh()));
 
         $this->actingAs($kepalaDesa)
             ->get(route('kepala-desa.dashboard', ['tahun' => 2026]))

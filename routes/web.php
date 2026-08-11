@@ -146,5 +146,6 @@ Route::prefix('kepala-desa')
         Route::get('/keputusan-akhir/{electreCalculation}/create', [KepalaDesaKeputusanAkhirController::class, 'create'])->name('keputusan-akhir.create');
         Route::post('/keputusan-akhir', [KepalaDesaKeputusanAkhirController::class, 'store'])->name('keputusan-akhir.store');
         Route::get('/keputusan-akhir/{keputusanAkhir}/pdf', [KepalaDesaKeputusanAkhirController::class, 'pdf'])->name('keputusan-akhir.pdf');
+        Route::delete('/keputusan-akhir/{keputusanAkhir}', [KepalaDesaKeputusanAkhirController::class, 'destroy'])->name('keputusan-akhir.destroy');
         Route::get('/keputusan-akhir/{keputusanAkhir}', [KepalaDesaKeputusanAkhirController::class, 'show'])->name('keputusan-akhir.show');
     });

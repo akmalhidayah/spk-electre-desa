@@ -15,8 +15,6 @@ class KeputusanAkhir extends Model
 
     public const STATUS_DITETAPKAN = 'ditetapkan';
 
-    public const STATUS_DIBATALKAN = 'dibatalkan';
-
     protected $table = 'keputusan_akhirs';
 
     protected $fillable = [

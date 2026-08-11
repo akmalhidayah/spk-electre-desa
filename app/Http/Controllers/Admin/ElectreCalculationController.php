@@ -12,6 +12,7 @@ use App\Services\ElectreService;
 use App\Services\TahunAktifService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use RuntimeException;
@@ -129,10 +130,46 @@ class ElectreCalculationController extends Controller
     {
         try {
             if ($electreCalculation->keputusanAkhir()->exists()) {
-                return back()->with('error', 'Perhitungan ini sudah memiliki keputusan akhir dan tidak boleh dihapus.');
+                return back()->with('error', 'Hasil perhitungan tidak dapat dihapus karena masih digunakan pada Keputusan Akhir. Batalkan Keputusan Akhir terlebih dahulu.');
             }
 
-            $electreCalculation->delete();
+            DB::transaction(function () use ($electreCalculation): void {
+                $calculation = ElectreCalculation::query()
+                    ->whereKey($electreCalculation->getKey())
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($calculation->keputusanAkhir()->exists()) {
+                    throw new RuntimeException('Hasil perhitungan tidak dapat dihapus karena masih digunakan pada Keputusan Akhir. Batalkan Keputusan Akhir terlebih dahulu.');
+                }
+
+                $periode = TahunPerencanaan::query()
+                    ->whereKey($calculation->tahun_perencanaan_id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+                $wasLatest = $calculation->is_latest;
+
+                $calculation->delete();
+
+                if ($wasLatest) {
+                    $previousRegular = ElectreCalculation::query()
+                        ->where('tahun_perencanaan_id', $periode->id)
+                        ->where('status', ElectreCalculation::STATUS_SELESAI)
+                        ->where('notes', 'like', 'JENIS_PERHITUNGAN=REGULER%')
+                        ->orderByDesc('versi')
+                        ->orderByDesc('id')
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($previousRegular) {
+                        $previousRegular->update(['is_latest' => true]);
+                    }
+
+                    $periode->update([
+                        'last_electre_calculation_id' => $previousRegular?->id,
+                    ]);
+                }
+            });
 
             Log::info('[ELECTRE_DELETED] Histori perhitungan ELECTRE berhasil dihapus', [
                 'user_id' => $request->user()->id,
@@ -143,6 +180,8 @@ class ElectreCalculationController extends Controller
             return redirect()
                 ->route('admin.electre.index')
                 ->with('success', 'Histori perhitungan ELECTRE berhasil dihapus.');
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         } catch (Throwable $e) {
             Log::error('[ELECTRE_DELETE_FAILED] Gagal menghapus histori ELECTRE', $this->logContext($e, $request, $electreCalculation));
 

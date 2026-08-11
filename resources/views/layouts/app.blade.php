@@ -366,6 +366,7 @@
                     var text = form.dataset.text || 'Apakah Anda yakin ingin melanjutkan?';
                     var icon = form.dataset.icon || 'warning';
                     var confirmButton = form.dataset.confirmButton || 'Ya, lanjutkan';
+                    var confirmColor = form.dataset.confirmColor || '#047857';
 
                     if (!window.Swal) {
                         if (!window.confirm(text)) {
@@ -384,7 +385,7 @@
                         showCancelButton: true,
                         confirmButtonText: confirmButton,
                         cancelButtonText: 'Batal',
-                        confirmButtonColor: '#047857',
+                        confirmButtonColor: confirmColor,
                         cancelButtonColor: '#64748b'
                     }).then(function (result) {
                         if (result.isConfirmed) {

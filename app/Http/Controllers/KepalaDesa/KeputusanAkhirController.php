@@ -16,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use RuntimeException;
 use Throwable;
@@ -291,6 +292,53 @@ class KeputusanAkhirController extends Controller
             ->stream('draft-keputusan-akhir-'.$keputusanAkhir->id.'.pdf');
     }
 
+    public function destroy(Request $request, KeputusanAkhir $keputusanAkhir): RedirectResponse
+    {
+        abort_unless($request->user()?->isKepalaDesa(), 403);
+
+        $pdfPath = null;
+
+        try {
+            DB::transaction(function () use ($keputusanAkhir, &$pdfPath): void {
+                $lockedDecision = KeputusanAkhir::query()
+                    ->whereKey($keputusanAkhir->getKey())
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($lockedDecision->status !== KeputusanAkhir::STATUS_DITETAPKAN) {
+                    throw new RuntimeException('Hanya keputusan yang sudah ditetapkan yang dapat dibatalkan.');
+                }
+
+                $pdfPath = $lockedDecision->pdf_path;
+                $lockedDecision->delete();
+            });
+
+            if ($pdfPath && Storage::disk('public')->exists($pdfPath)) {
+                Storage::disk('public')->delete($pdfPath);
+            }
+
+            Log::info('[KEPUTUSAN_AKHIR_CANCELLED] Keputusan akhir dihapus permanen', [
+                'user_id' => $request->user()->id,
+                'keputusan_id' => $keputusanAkhir->id,
+                'calculation_id' => $keputusanAkhir->electre_calculation_id,
+            ]);
+
+            return redirect()
+                ->route('kepala-desa.keputusan-akhir.index')
+                ->with('success', 'Keputusan berhasil dibatalkan. Alokasi anggaran telah diperbarui.');
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (Throwable $e) {
+            Log::error('[KEPUTUSAN_AKHIR_CANCEL_FAILED] Gagal membatalkan keputusan akhir', [
+                'user_id' => $request->user()?->id,
+                'keputusan_id' => $keputusanAkhir->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Keputusan akhir gagal dibatalkan. Kode Error: KEPUTUSAN_AKHIR_CANCEL_FAILED');
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -298,12 +346,20 @@ class KeputusanAkhirController extends Controller
     {
         $keputusanAkhir->load(['calculation.results.program.dusun', 'calculation.results.program.dusunsTerkait', 'calculation.calculator', 'calculation.tahunPerencanaan', 'program.dusun', 'program.dusunsTerkait', 'details.program', 'penetap', 'result']);
 
+        $selectedDetails = $keputusanAkhir->details->isNotEmpty()
+            ? $keputusanAkhir->details
+            : collect([$keputusanAkhir->result])->filter();
+
         return [
             'keputusan' => $keputusanAkhir,
             'calculation' => $keputusanAkhir->calculation,
             'results' => $keputusanAkhir->calculation?->results?->sortBy('ranking')->values() ?? collect(),
-            'selectedDetails' => $keputusanAkhir->details->isNotEmpty() ? $keputusanAkhir->details : collect([$keputusanAkhir->result]),
+            'selectedDetails' => $selectedDetails,
             'budgetSummary' => data_get($keputusanAkhir->snapshot_data, 'budget_summary', []),
+            'cancellationSummary' => [
+                'program_count' => $selectedDetails->count(),
+                'total_anggaran' => (float) $selectedDetails->sum(fn ($item) => $item->estimasi_anggaran_snapshot ?? $item->program?->estimasi_anggaran ?? 0),
+            ],
         ];
     }
 }
