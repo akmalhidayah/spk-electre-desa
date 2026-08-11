@@ -30,6 +30,7 @@ class AdminTahunPerencanaanPaguTest extends TestCase
             ->get(route('admin.tahun-perencanaan.index'))
             ->assertOk()
             ->assertSee('Pagu Anggaran Pembangunan Tahun 2026')
+            ->assertSee('Tahun &amp; Pagu Anggaran', false)
             ->assertSee('name="pagu_anggaran"', false)
             ->assertSee('value="250000000.00"', false)
             ->assertSee('Simpan Pagu');

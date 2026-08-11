@@ -49,8 +49,9 @@
                     'type' => 'group',
                     'label' => 'Master Data',
                     'icon' => 'database',
-                    'active' => request()->routeIs('admin.dusuns.*') || request()->routeIs('admin.kriterias.*'),
+                    'active' => request()->routeIs('admin.dusuns.*') || request()->routeIs('admin.kriterias.*') || request()->routeIs('admin.tahun-perencanaan.*'),
                     'children' => [
+                        ['label' => 'Tahun & Pagu Anggaran', 'icon' => 'calendar', 'href' => route('admin.tahun-perencanaan.index'), 'active' => request()->routeIs('admin.tahun-perencanaan.*')],
                         ['label' => 'Data Dusun', 'icon' => 'map', 'href' => route('admin.dusuns.index'), 'active' => request()->routeIs('admin.dusuns.*')],
                         ['label' => 'Data Kriteria', 'icon' => 'list', 'href' => route('admin.kriterias.index'), 'active' => request()->routeIs('admin.kriterias.*')],
                     ],
@@ -130,6 +131,9 @@
                                                     @break
                                                 @case('list')
                                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h.01M3 12h.01M3 18h.01" /></svg>
+                                                    @break
+                                                @case('calendar')
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v4M18 3v4M4 9h16" /><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 13h3M8 17h6" /></svg>
                                                     @break
                                                 @default
                                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1Z" /></svg>
