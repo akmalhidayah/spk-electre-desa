@@ -5,18 +5,45 @@
 @section('page-title', 'Dashboard Kepala Desa')
 
 @section('content')
-    <div class="stack kepala-desa-dashboard role-dashboard">
-        <section class="dashboard-hero">
-            <div>
-                <span class="badge badge-success">Kepala Desa</span>
+    <div class="stack kepala-desa-dashboard role-dashboard dashboard-shell">
+        <section class="dashboard-hero dashboard-welcome">
+            <div class="dashboard-welcome-copy">
+                <span class="dashboard-eyebrow">Ringkasan Eksekutif</span>
                 <h2>Selamat Datang, Kepala Desa</h2>
+                <p>Pantau rekomendasi prioritas, penggunaan pagu, dan keputusan pembangunan desa secara ringkas.</p>
             </div>
-            <a href="{{ route('kepala-desa.hasil-rekomendasi.index') }}" class="btn btn-primary btn-auto">Hasil Rekomendasi</a>
+            <div class="dashboard-welcome-actions">
+                <a href="{{ route('kepala-desa.keputusan-akhir.index') }}" class="btn btn-secondary btn-auto">Keputusan Akhir</a>
+                <a href="{{ route('kepala-desa.hasil-rekomendasi.index') }}" class="btn btn-primary btn-auto">Hasil Rekomendasi</a>
+            </div>
         </section>
 
-        <section class="panel"><h2 class="panel-title">Ringkasan Anggaran Pembangunan Tahun {{ $tahun }}</h2><x-budget-summary :summary="$budgetSummary" /></section>
+        @php
+            $paguTersedia = $budgetSummary['pagu'] !== null;
+            $persentaseAlokasi = min((float) ($budgetSummary['persentase_alokasi'] ?? 0), 100);
+        @endphp
 
-        <section class="stat-grid">
+        <section class="budget-overview budget-overview-executive">
+            <div class="budget-overview-head">
+                <div><span class="dashboard-eyebrow">Anggaran Pembangunan</span><h2>Tahun Perencanaan {{ $tahun }}</h2></div>
+                <span class="badge {{ $paguTersedia ? 'badge-success' : 'badge-warning' }}">{{ $paguTersedia ? number_format($persentaseAlokasi, 1, ',', '.') . '% dialokasikan' : 'Pagu belum diatur' }}</span>
+            </div>
+            <div class="budget-overview-body">
+                <div class="budget-balance">
+                    <span>Sisa pagu tersedia</span>
+                    <strong>{{ $paguTersedia ? 'Rp '.number_format($budgetSummary['sisa_pagu'], 0, ',', '.') : 'Belum diatur' }}</strong>
+                    <div class="budget-progress"><span style="width: {{ $persentaseAlokasi }}%"></span></div>
+                    <small>{{ $paguTersedia ? number_format($budgetSummary['jumlah_program_ditetapkan']) . ' program telah masuk keputusan akhir.' : 'Pagu dapat diatur melalui data tahun perencanaan oleh admin.' }}</small>
+                </div>
+                <div class="budget-metrics">
+                    <div class="budget-metric"><span>Total pagu</span><strong>{{ $paguTersedia ? 'Rp '.number_format($budgetSummary['pagu'], 0, ',', '.') : '-' }}</strong></div>
+                    <div class="budget-metric"><span>Sudah ditetapkan</span><strong>Rp {{ number_format($budgetSummary['total_ditetapkan'], 0, ',', '.') }}</strong></div>
+                    <div class="budget-metric"><span>Program terpilih</span><strong>{{ number_format($budgetSummary['jumlah_program_ditetapkan']) }} program</strong></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="stat-grid dashboard-kpi-grid">
             <article class="stat-card stat-solid stat-indigo">
                 <div class="stat-card-row">
                     <div><div class="stat-label">Hasil Rekomendasi</div><div class="stat-value">{{ number_format($totalSelesai) }}</div></div>

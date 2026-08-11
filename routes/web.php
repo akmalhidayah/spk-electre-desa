@@ -63,6 +63,7 @@ Route::prefix('admin')
         Route::post('/tahun-perencanaan', [TahunPerencanaanController::class, 'store'])->name('tahun-perencanaan.store');
         Route::get('/tahun-perencanaan/{tahunPerencanaan}/edit', [TahunPerencanaanController::class, 'edit'])->name('tahun-perencanaan.edit');
         Route::put('/tahun-perencanaan/{tahunPerencanaan}', [TahunPerencanaanController::class, 'update'])->name('tahun-perencanaan.update');
+        Route::patch('/tahun-perencanaan/{tahunPerencanaan}/pagu', [TahunPerencanaanController::class, 'updatePagu'])->name('tahun-perencanaan.update-pagu');
         Route::patch('/tahun-perencanaan/{tahunPerencanaan}/set-active', [TahunPerencanaanController::class, 'setActive'])->name('tahun-perencanaan.set-active');
         Route::patch('/tahun-perencanaan/{tahunPerencanaan}/toggle-lock', [TahunPerencanaanController::class, 'toggleLock'])->name('tahun-perencanaan.toggle-lock');
 

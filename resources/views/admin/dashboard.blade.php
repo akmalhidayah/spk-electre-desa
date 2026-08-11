@@ -5,17 +5,52 @@
 @section('page-title', 'Dashboard Admin')
 
 @section('content')
-    <div class="stack admin-dashboard">
-        <section class="dashboard-hero">
-            <div>
+    <div class="stack admin-dashboard dashboard-shell">
+        <section class="dashboard-hero dashboard-welcome">
+            <div class="dashboard-welcome-copy">
+                <span class="dashboard-eyebrow">Pusat Kendali SPK</span>
                 <h2>Selamat Datang, Admin Desa</h2>
+                <p>Kelola data penilaian dan pantau kesiapan proses rekomendasi pembangunan dalam satu halaman.</p>
             </div>
-            <a href="{{ route('admin.electre.index') }}" class="btn btn-primary btn-auto">Proses ELECTRE</a>
+            <div class="dashboard-welcome-actions">
+                <a href="{{ route('admin.penilaian.index') }}" class="btn btn-secondary btn-auto">Kelola Penilaian</a>
+                <a href="{{ route('admin.electre.index') }}" class="btn btn-primary btn-auto">Proses ELECTRE</a>
+            </div>
         </section>
 
-        <section class="panel"><h2 class="panel-title">Ringkasan Anggaran Pembangunan Tahun {{ $tahunPenilaian }}</h2><x-budget-summary :summary="$budgetSummary" /></section>
+        @php
+            $paguTersedia = $budgetSummary['pagu'] !== null;
+            $persentaseAlokasi = min((float) ($budgetSummary['persentase_alokasi'] ?? 0), 100);
+        @endphp
 
-        <section class="stat-grid">
+        <section class="budget-overview">
+            <div class="budget-overview-head">
+                <div>
+                    <span class="dashboard-eyebrow">Anggaran Pembangunan</span>
+                    <h2>Tahun Perencanaan {{ $tahunPenilaian }}</h2>
+                </div>
+                <span class="badge {{ $paguTersedia ? 'badge-success' : 'badge-warning' }}">
+                    {{ $paguTersedia ? number_format($persentaseAlokasi, 1, ',', '.') . '% dialokasikan' : 'Pagu belum diatur' }}
+                </span>
+            </div>
+            <div class="budget-overview-body">
+                <div class="budget-balance">
+                    <span>Sisa pagu tersedia</span>
+                    <strong>{{ $paguTersedia ? 'Rp '.number_format($budgetSummary['sisa_pagu'], 0, ',', '.') : 'Belum diatur' }}</strong>
+                    <div class="budget-progress" aria-label="Persentase alokasi anggaran">
+                        <span style="width: {{ $persentaseAlokasi }}%"></span>
+                    </div>
+                    <small>{{ $paguTersedia ? 'Alokasi program mengikuti keputusan akhir yang telah ditetapkan.' : 'Atur pagu pada data tahun perencanaan untuk memantau alokasi.' }}</small>
+                </div>
+                <div class="budget-metrics">
+                    <div class="budget-metric"><span>Total pagu</span><strong>{{ $paguTersedia ? 'Rp '.number_format($budgetSummary['pagu'], 0, ',', '.') : '-' }}</strong></div>
+                    <div class="budget-metric"><span>Sudah ditetapkan</span><strong>Rp {{ number_format($budgetSummary['total_ditetapkan'], 0, ',', '.') }}</strong></div>
+                    <div class="budget-metric"><span>Program terpilih</span><strong>{{ number_format($budgetSummary['jumlah_program_ditetapkan']) }} program</strong></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="stat-grid dashboard-kpi-grid">
             <article class="stat-card stat-solid stat-teal">
                 <div class="stat-card-row">
                     <div><div class="stat-label">Dusun Aktif</div><div class="stat-value">{{ number_format($totalDusunAktif) }}</div></div>
@@ -115,8 +150,10 @@
             </article>
         </section>
 
-        <section class="panel">
-            <h2 class="panel-title">Usulan Terbaru</h2>
+        <section class="panel latest-proposals-panel">
+            <div class="dashboard-section-head">
+                <div><span class="dashboard-eyebrow">Data Masuk</span><h2 class="panel-title">Usulan Terbaru</h2></div>
+            </div>
             @if ($latestUsulan->count() > 0)
                 <div class="mini-list">
                     @foreach ($latestUsulan as $usulan)
@@ -125,7 +162,7 @@
                                 <strong>{{ $usulan->nama_kegiatan }}</strong>
                                 <span>{{ $usulan->dusun?->nama_dusun ?? '-' }} - {{ $usulan->tahun }}</span>
                             </div>
-                            <span class="badge {{ $usulan->status_badge_class }}">{{ $usulan->status_label }}</span>
+                            <span class="proposal-budget">{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format($usulan->estimasi_anggaran, 0, ',', '.') : 'Anggaran belum diisi' }}</span>
                         </div>
                     @endforeach
                 </div>

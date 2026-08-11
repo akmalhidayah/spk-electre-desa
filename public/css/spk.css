@@ -3192,6 +3192,260 @@ body {
     }
 }
 
+/* Dashboard information hierarchy and budget overview. */
+.dashboard-shell {
+    gap: 20px;
+}
+
+.dashboard-shell .dashboard-welcome {
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%);
+    border: 1px solid #cfe8e3;
+    box-shadow: 0 14px 36px rgba(15, 118, 110, 0.08);
+    display: flex;
+    min-height: 150px;
+    overflow: hidden;
+    padding: 28px 32px;
+    position: relative;
+}
+
+.dashboard-shell .dashboard-welcome::after {
+    background: rgba(15, 118, 110, 0.06);
+    border-radius: 999px;
+    content: "";
+    height: 220px;
+    position: absolute;
+    right: -70px;
+    top: -105px;
+    width: 220px;
+}
+
+.dashboard-welcome-copy,
+.dashboard-welcome-actions {
+    position: relative;
+    z-index: 1;
+}
+
+.dashboard-welcome-copy {
+    max-width: 670px;
+}
+
+.dashboard-eyebrow {
+    color: #0f766e;
+    display: block;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.dashboard-shell .dashboard-welcome h2 {
+    color: #0f172a;
+    font-size: clamp(25px, 3vw, 36px);
+    line-height: 1.15;
+    margin: 8px 0 8px;
+}
+
+.dashboard-shell .dashboard-welcome p {
+    color: #64748b;
+    display: block;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.dashboard-welcome-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.budget-overview {
+    background: #0f3d3a;
+    border: 1px solid #164e4a;
+    border-radius: 22px;
+    box-shadow: 0 18px 40px rgba(15, 61, 58, 0.15);
+    color: #ffffff;
+    overflow: hidden;
+    padding: 24px;
+}
+
+.budget-overview-head {
+    align-items: flex-start;
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.budget-overview .dashboard-eyebrow {
+    color: #99f6e4;
+}
+
+.budget-overview-head h2 {
+    color: #ffffff;
+    font-size: 20px;
+    margin: 6px 0 0;
+}
+
+.budget-overview-body {
+    display: grid;
+    gap: 26px;
+    grid-template-columns: minmax(280px, 1.15fr) minmax(360px, 1fr);
+    margin-top: 24px;
+}
+
+.budget-balance {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+    padding: 20px;
+}
+
+.budget-balance > span,
+.budget-metric span {
+    color: #b8d7d2;
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.budget-balance > strong {
+    display: block;
+    font-size: clamp(25px, 3vw, 36px);
+    margin-top: 8px;
+}
+
+.budget-balance small {
+    color: #c9dfdc;
+    display: block;
+    line-height: 1.45;
+    margin-top: 10px;
+}
+
+.budget-progress {
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    height: 8px;
+    margin-top: 18px;
+    overflow: hidden;
+}
+
+.budget-progress span {
+    background: #5eead4;
+    border-radius: inherit;
+    display: block;
+    height: 100%;
+}
+
+.budget-metrics {
+    display: grid;
+    gap: 10px;
+}
+
+.budget-metric {
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+    display: flex;
+    gap: 18px;
+    justify-content: space-between;
+    padding: 11px 2px 14px;
+}
+
+.budget-metric:last-child {
+    border-bottom: 0;
+}
+
+.budget-metric strong {
+    font-size: 15px;
+    text-align: right;
+}
+
+.dashboard-shell .dashboard-kpi-grid {
+    gap: 12px;
+}
+
+.dashboard-shell .dashboard-kpi-grid .stat-card.stat-solid {
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
+    min-height: 96px;
+}
+
+.dashboard-shell .dashboard-kpi-grid .stat-icon {
+    border: 0;
+}
+
+.dashboard-section-head {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.dashboard-section-head .panel-title {
+    margin-top: 5px;
+}
+
+.latest-proposals-panel .mini-list {
+    margin-top: 0;
+}
+
+.proposal-budget {
+    color: #0f766e;
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+    .budget-overview-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-shell .dashboard-welcome {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 22px 18px;
+    }
+
+    .dashboard-welcome-actions,
+    .dashboard-welcome-actions .btn {
+        width: 100%;
+    }
+
+    .budget-overview {
+        border-radius: 18px;
+        padding: 18px;
+    }
+
+    .budget-overview-head {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .budget-overview-body {
+        margin-top: 18px;
+    }
+
+    .budget-metric {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .budget-metric strong {
+        text-align: left;
+    }
+
+    .latest-proposals-panel .mini-list-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
 /* Admin dashboard refresh: solid color cards and chart-focused assessment panel. */
 .admin-dashboard .dashboard-hero {
     min-height: 104px;
@@ -3773,6 +4027,77 @@ body {
 
     .auth-hero-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+.budget-setting-card {
+    align-items: end;
+    background: linear-gradient(135deg, #ffffff, #f0fdfa);
+    border-color: #bfe3dc;
+    display: grid;
+    gap: 28px;
+    grid-template-columns: minmax(240px, 0.85fr) minmax(360px, 1.15fr);
+}
+
+.budget-setting-copy .panel-title {
+    margin-top: 7px;
+}
+
+.budget-setting-form {
+    align-items: end;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: minmax(240px, 1fr) auto;
+}
+
+.budget-setting-form .form-helper {
+    display: block;
+    margin-top: 7px;
+}
+
+@media (max-width: 900px) {
+    .budget-setting-card,
+    .budget-setting-form {
+        grid-template-columns: 1fr;
+    }
+
+    .budget-setting-form .btn {
+        width: 100%;
+    }
+}
+
+/* Keep the redesigned dashboards authoritative over older role-specific rules. */
+.admin-dashboard.dashboard-shell .dashboard-welcome,
+.kepala-desa-dashboard.dashboard-shell .dashboard-welcome {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    min-height: 150px;
+    padding: 28px 32px;
+}
+
+.admin-dashboard.dashboard-shell .dashboard-welcome h2,
+.kepala-desa-dashboard.dashboard-shell .dashboard-welcome h2 {
+    font-size: clamp(25px, 3vw, 36px);
+    line-height: 1.15;
+    margin: 8px 0;
+}
+
+.admin-dashboard.dashboard-shell .dashboard-welcome p,
+.kepala-desa-dashboard.dashboard-shell .dashboard-welcome p {
+    color: #64748b;
+    display: block;
+    line-height: 1.55;
+    margin: 0;
+}
+
+@media (max-width: 640px) {
+    .admin-dashboard.dashboard-shell .dashboard-welcome,
+    .kepala-desa-dashboard.dashboard-shell .dashboard-welcome {
+        align-items: flex-start;
+        flex-direction: column;
+        min-height: 0;
+        padding: 22px 18px;
     }
 }
 

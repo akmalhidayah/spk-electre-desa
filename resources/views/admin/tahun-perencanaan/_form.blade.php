@@ -13,7 +13,8 @@
     </div>
     <div class="form-group full">
         <label for="pagu_anggaran" class="form-label">Pagu Anggaran Pembangunan (Rp)</label>
-        <input id="pagu_anggaran" type="number" name="pagu_anggaran" min="0" step="0.01" value="{{ old('pagu_anggaran', $periode->pagu_anggaran) }}" class="form-control" required>
+        <input id="pagu_anggaran" type="number" name="pagu_anggaran" min="0" step="1" value="{{ old('pagu_anggaran', $periode->pagu_anggaran) }}" class="form-control" required>
+        <small class="form-helper">Masukkan total pagu anggaran pembangunan yang tersedia pada tahun perencanaan ini.</small>
         @error('pagu_anggaran') <small class="form-error">{{ $message }}</small> @enderror
     </div>
     <div class="form-group full">

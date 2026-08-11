@@ -14,6 +14,38 @@
             <a href="{{ route('admin.tahun-perencanaan.create') }}" class="btn btn-primary btn-auto">Tambah Periode</a>
         </section>
 
+        @if ($activePeriode)
+            <section class="panel budget-setting-card">
+                <div class="budget-setting-copy">
+                    <span class="dashboard-eyebrow">Tahun Aktif</span>
+                    <h2 class="panel-title">Pagu Anggaran Pembangunan Tahun {{ $activePeriode->tahun }}</h2>
+                    <p class="panel-text">Atur total anggaran yang tersedia sebelum Kepala Desa menetapkan program pembangunan.</p>
+                </div>
+                <form method="POST" action="{{ route('admin.tahun-perencanaan.update-pagu', $activePeriode) }}" class="budget-setting-form">
+                    @csrf
+                    @method('PATCH')
+                    <div class="form-group">
+                        <label for="active_pagu_anggaran" class="form-label">Pagu Anggaran (Rp)</label>
+                        <input
+                            id="active_pagu_anggaran"
+                            type="number"
+                            name="pagu_anggaran"
+                            min="0"
+                            step="1"
+                            value="{{ old('pagu_anggaran', $activePeriode->pagu_anggaran) }}"
+                            class="form-control"
+                            required
+                        >
+                        <small class="form-helper">Masukkan total pagu anggaran pembangunan yang tersedia pada tahun perencanaan ini.</small>
+                        @error('pagu_anggaran') <small class="form-error">{{ $message }}</small> @enderror
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-auto">Simpan Pagu</button>
+                </form>
+            </section>
+        @else
+            <div class="alert alert-warning">Belum ada tahun perencanaan aktif. Aktifkan salah satu tahun terlebih dahulu untuk mengatur pagu anggaran.</div>
+        @endif
+
         <section class="panel">
             <div class="table-wrap desktop-table">
                 <table class="data-table">
@@ -33,7 +65,13 @@
                             <tr>
                                 <td><strong>{{ $periode->tahun }}</strong></td>
                                 <td>{{ $periode->nama_periode ?? '-' }}</td>
-                                <td>{{ $periode->pagu_anggaran !== null ? 'Rp '.number_format((float) $periode->pagu_anggaran, 0, ',', '.') : '-' }}</td>
+                                <td>
+                                    @if ($periode->pagu_anggaran !== null)
+                                        <strong>Rp {{ number_format((float) $periode->pagu_anggaran, 0, ',', '.') }}</strong>
+                                    @else
+                                        <span class="badge badge-warning">Belum Diatur</span>
+                                    @endif
+                                </td>
                                 <td>
                                     <span class="badge {{ $periode->is_active ? 'badge-success' : 'badge-light' }}">{{ $periode->is_active ? 'Aktif' : 'Tidak Aktif' }}</span>
                                     <span class="badge {{ $periode->is_locked ? 'badge-warning' : 'badge-light' }}">{{ $periode->is_locked ? 'Terkunci' : 'Terbuka' }}</span>
@@ -83,6 +121,30 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <div class="mobile-list">
+                @forelse ($periodes as $periode)
+                    <article class="mobile-card">
+                        <div class="mobile-card-head">
+                            <div><span class="dashboard-eyebrow">Tahun Perencanaan</span><h3>{{ $periode->tahun }}</h3></div>
+                            <span class="badge {{ $periode->is_active ? 'badge-success' : 'badge-light' }}">{{ $periode->is_active ? 'Aktif' : 'Tidak Aktif' }}</span>
+                        </div>
+                        <p>{{ $periode->nama_periode ?? 'Nama periode belum diisi' }}</p>
+                        <dl class="meta-grid">
+                            <div><dt>Pagu Anggaran</dt><dd>{{ $periode->pagu_anggaran !== null ? 'Rp '.number_format((float) $periode->pagu_anggaran, 0, ',', '.') : 'Belum Diatur' }}</dd></div>
+                            <div><dt>Status Periode</dt><dd>{{ $periode->is_locked ? 'Terkunci' : 'Terbuka' }}</dd></div>
+                            <div><dt>Hitung Ulang</dt><dd>{{ $periode->perlu_hitung_ulang ? 'Diperlukan' : 'Sinkron' }}</dd></div>
+                        </dl>
+                        <div class="action-group">
+                            <a href="{{ route('admin.tahun-perencanaan.edit', $periode) }}" class="btn btn-sm btn-light">Edit</a>
+                            <form method="POST" action="{{ route('admin.tahun-perencanaan.set-active', $periode) }}">@csrf @method('PATCH')<button type="submit" class="btn btn-sm btn-secondary" @disabled($periode->is_active)>Jadikan Aktif</button></form>
+                            <form method="POST" action="{{ route('admin.tahun-perencanaan.toggle-lock', $periode) }}">@csrf @method('PATCH')<button type="submit" class="btn btn-sm btn-light">{{ $periode->is_locked ? 'Buka Kunci' : 'Kunci' }}</button></form>
+                        </div>
+                    </article>
+                @empty
+                    <div class="empty-state compact-empty"><h3>Belum ada periode</h3><p>Tambahkan tahun perencanaan untuk mulai memakai filter tahun aktif.</p></div>
+                @endforelse
             </div>
 
             <div class="pagination-wrap">{{ $periodes->links() }}</div>

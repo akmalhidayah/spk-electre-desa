@@ -22,6 +22,9 @@ class TahunPerencanaanController extends Controller
             'periodes' => TahunPerencanaan::with('lastElectreCalculation')
                 ->orderByDesc('tahun')
                 ->paginate(10),
+            'activePeriode' => TahunPerencanaan::query()
+                ->where('is_active', true)
+                ->first(),
         ]);
     }
 
@@ -90,6 +93,35 @@ class TahunPerencanaanController extends Controller
         $tahunAktifService->setActiveYear((int) $tahunPerencanaan->tahun);
 
         return back()->with('success', "Tahun {$tahunPerencanaan->tahun} berhasil dijadikan tahun aktif.");
+    }
+
+    public function updatePagu(Request $request, TahunPerencanaan $tahunPerencanaan, BudgetAllocationService $budgetAllocationService): RedirectResponse
+    {
+        $validated = $request->validate([
+            'pagu_anggaran' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        DB::transaction(function () use ($tahunPerencanaan, $validated, $budgetAllocationService): void {
+            $lockedPeriode = TahunPerencanaan::query()
+                ->whereKey($tahunPerencanaan->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+            $allocated = $budgetAllocationService->summary($lockedPeriode)['total_ditetapkan'];
+
+            if ((float) $validated['pagu_anggaran'] < $allocated) {
+                throw ValidationException::withMessages([
+                    'pagu_anggaran' => 'Pagu anggaran tidak dapat lebih kecil dari total anggaran program yang telah ditetapkan sebesar Rp'.number_format($allocated, 0, ',', '.').'.',
+                ]);
+            }
+
+            $lockedPeriode->update([
+                'pagu_anggaran' => $validated['pagu_anggaran'],
+            ]);
+        });
+
+        return redirect()
+            ->route('admin.tahun-perencanaan.index')
+            ->with('success', "Pagu anggaran pembangunan tahun {$tahunPerencanaan->tahun} berhasil diperbarui.");
     }
 
     public function toggleLock(Request $request, TahunPerencanaan $tahunPerencanaan): RedirectResponse
