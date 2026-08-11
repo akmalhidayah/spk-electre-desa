@@ -27,12 +27,13 @@ class HasilRekomendasiController extends Controller
     public function index(Request $request, TahunAktifService $tahunAktifService): View|RedirectResponse
     {
         try {
-            $tahun = $tahunAktifService->resolveYear($request->filled('tahun') ? $request->integer('tahun') : null);
+            $selectedYear = $request->filled('tahun') ? $request->integer('tahun') : null;
+            $summaryYear = $tahunAktifService->resolveYear($selectedYear);
             $query = ElectreCalculation::with(['calculator', 'keputusanAkhir'])
                 ->selesai()
                 ->latestVersion()
                 ->where('notes', 'like', 'JENIS_PERHITUNGAN=REGULER%')
-                ->tahun($tahun)
+                ->when($selectedYear !== null, fn ($query) => $query->tahun($selectedYear))
                 ->when($request->filled('q'), function ($query) use ($request): void {
                     $keyword = $request->string('q')->toString();
 
@@ -45,11 +46,11 @@ class HasilRekomendasiController extends Controller
             return view('kepala-desa.hasil-rekomendasi.index', [
                 'calculations' => $query->latest('calculated_at')->latest()->paginate(10)->withQueryString(),
                 'tahunList' => TahunPerencanaan::orderByDesc('tahun')->pluck('tahun'),
-                'periode' => TahunPerencanaan::where('tahun', $tahun)->first(),
-                'stats' => $this->stats($tahun),
+                'periode' => TahunPerencanaan::where('tahun', $selectedYear ?? $summaryYear)->first(),
+                'stats' => $this->stats($summaryYear),
                 'filters' => [
                     'q' => $request->string('q')->toString(),
-                    'tahun' => (string) $tahun,
+                    'tahun' => $selectedYear !== null ? (string) $selectedYear : '',
                 ],
             ]);
         } catch (Throwable $e) {

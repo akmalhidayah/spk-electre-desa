@@ -148,6 +148,31 @@ class KeputusanAkhirCancellationTest extends TestCase
         $this->assertFalse(app(BudgetAllocationService::class)->isOfficialCalculation($previous->fresh()));
     }
 
+    public function test_daftar_kepala_desa_tanpa_filter_menampilkan_hasil_reguler_dari_semua_tahun(): void
+    {
+        $kepalaDesa = User::factory()->kepalaDesa()->create();
+        TahunPerencanaan::factory()->create(['tahun' => 2026, 'is_active' => true]);
+        $periodeLain = TahunPerencanaan::factory()->create(['tahun' => 2027, 'is_active' => false]);
+        $calculation = ElectreCalculation::factory()->create([
+            'tahun_perencanaan_id' => $periodeLain->id,
+            'status' => ElectreCalculation::STATUS_SELESAI,
+            'is_latest' => true,
+            'notes' => 'JENIS_PERHITUNGAN=REGULER; hasil tahun berikutnya.',
+            'calculated_at' => now(),
+        ]);
+
+        $this->actingAs($kepalaDesa)
+            ->get(route('kepala-desa.hasil-rekomendasi.index'))
+            ->assertOk()
+            ->assertSee($calculation->kode_perhitungan)
+            ->assertSee('Tahun 2027');
+
+        $this->actingAs($kepalaDesa)
+            ->get(route('kepala-desa.hasil-rekomendasi.index', ['tahun' => 2026]))
+            ->assertOk()
+            ->assertDontSee($calculation->kode_perhitungan);
+    }
+
     /**
      * @param  list<int|float>  $amounts
      * @return array{KeputusanAkhir, ElectreCalculation, Collection<int, UsulanPembangunan>}
