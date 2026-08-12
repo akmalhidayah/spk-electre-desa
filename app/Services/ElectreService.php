@@ -16,17 +16,16 @@ use RuntimeException;
 
 class ElectreService
 {
-    public function calculate(int $tahun, ?int $userId = null, ?array $selectedProgramIds = null): ElectreCalculation
+    public function calculate(int $tahun, ?int $userId = null, ?array $selectedProgramIds = null, bool $isTesting = false): ElectreCalculation
     {
         try {
-            return DB::transaction(function () use ($tahun, $userId, $selectedProgramIds): ElectreCalculation {
+            return DB::transaction(function () use ($tahun, $userId, $selectedProgramIds, $isTesting): ElectreCalculation {
                 $periode = TahunPerencanaan::where('tahun', $tahun)->lockForUpdate()->firstOrFail();
                 $allPrograms = $this->getAcceptedPrograms($periode->id);
                 $codes = $allPrograms->values()->mapWithKeys(fn (UsulanPembangunan $program, int $index) => [$program->id => 'A'.($index + 1)])->all();
-                $isTesting = $selectedProgramIds !== null;
                 $selectedIds = collect($selectedProgramIds)->map(fn ($id) => (int) $id)->unique();
                 $kriterias = $this->getActiveKriterias();
-                $dusuns = $isTesting
+                $dusuns = $selectedProgramIds !== null
                     ? $allPrograms->whereIn('id', $selectedIds)->values()
                     : $this->completePrograms($periode->id, $allPrograms, $kriterias);
                 $this->validateInputs($periode, $dusuns, $kriterias, $isTesting, $allPrograms->count());

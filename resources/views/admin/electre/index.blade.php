@@ -7,6 +7,8 @@
 @section('content')
     @php
         $isReady = $summary['is_ready'];
+        $eligibleProgramCount = $programs->filter(fn ($program) => (int) $program->total_nilai_aktif === $totalKriteriaAktif && ! $processedProgramIds->contains($program->id))->count();
+        $canProcessSelection = $eligibleProgramCount >= 2;
     @endphp
 
     <div class="stack electre-page">
@@ -38,25 +40,45 @@
                     </div>
                 </form>
 
-                <form
-                    method="POST"
-                    action="{{ route('admin.electre.process') }}"
-                    class="js-confirm"
-                    data-title="Proses ELECTRE?"
-                    data-text="Sistem akan membuat histori perhitungan baru untuk tahun ini."
-                    data-icon="question"
-                    data-confirm-button="Ya, Proses"
-                >
-                    @csrf
-                    <input type="hidden" name="tahun" value="{{ $tahun }}">
-                    <input type="hidden" name="mode" value="reguler">
-                    <button type="submit" class="btn btn-primary btn-auto" @disabled(! $isReady)>
-                        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01" /></svg>
-                        Proses ELECTRE
-                    </button>
-                </form>
             </div>
-            <p class="panel-text">Menghitung seluruh program yang penilaiannya sudah lengkap. Program yang belum lengkap akan dilewati.</p>
+            <p class="panel-text">Centang minimal dua program yang penilaiannya sudah lengkap, lalu proses hanya program yang dipilih.</p>
+        </section>
+
+        <section class="panel">
+            <form method="POST" action="{{ route('admin.electre.process') }}" class="stack js-confirm" data-title="Proses ELECTRE?" data-text="Hanya program yang dicentang akan dihitung." data-icon="question" data-confirm-button="Ya, Proses">
+                @csrf
+                <input type="hidden" name="tahun" value="{{ $tahun }}">
+                <input type="hidden" name="mode" value="reguler">
+                <div class="matrix-toolbar">
+                    <div><h2 class="panel-title">Pilih Program yang Diproses</h2><p class="panel-text">Program yang belum lengkap tidak dapat dicentang.</p></div>
+                    <button type="submit" class="btn btn-primary btn-auto" @disabled(! $canProcessSelection)>Proses ELECTRE</button>
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead><tr><th>Pilih</th><th>Kode</th><th>Program dan Lokasi</th><th>Kelengkapan</th></tr></thead>
+                        <tbody>
+                            @forelse ($programs as $program)
+                                @php($programLengkap = (int) $program->total_nilai_aktif === $totalKriteriaAktif)
+                                @php($sudahDiproses = $processedProgramIds->contains($program->id))
+                                <tr>
+                                    <td><input type="checkbox" name="program_ids[]" value="{{ $program->id }}" @checked($programLengkap && ! $sudahDiproses && in_array($program->id, old('program_ids', []))) @disabled(! $programLengkap || $sudahDiproses)></td>
+                                    <td><span class="code-pill">A{{ $loop->iteration }}</span></td>
+                                    <td><strong>{{ $program->nama_kegiatan }}</strong><small>{{ $program->lokasi_label }}</small></td>
+                                    <td>
+                                        @if ($sudahDiproses)
+                                            <span class="badge badge-info">Sudah Diproses</span>
+                                        @else
+                                            <span class="badge {{ $programLengkap ? 'badge-success' : 'badge-warning' }}">{{ $programLengkap ? 'Siap Dipilih' : $program->total_nilai_aktif.'/'.$totalKriteriaAktif }}</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4">Belum ada program diterima pada periode ini.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </form>
         </section>
 
         @if (! $isReady)
@@ -70,6 +92,10 @@
             </section>
         @else
             <section class="alert alert-success electre-status-alert">Data tahun {{ $tahun }} sudah siap diproses dengan metode ELECTRE.</section>
+        @endif
+
+        @if ($isReady && ! $canProcessSelection)
+            <section class="alert alert-warning electre-status-alert">Belum ada minimal dua program baru yang siap diproses. Lengkapi penilaian program berikutnya terlebih dahulu.</section>
         @endif
 
         <section class="panel electre-history-panel">

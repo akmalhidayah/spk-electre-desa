@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ElectreCalculation;
+use App\Models\ElectreResult;
 use App\Models\Kriteria;
 use App\Models\PenilaianAlternatif;
 use App\Models\TahunPerencanaan;
@@ -45,6 +46,15 @@ class ElectreCalculationController extends Controller
                     ->orderBy('id')
                     ->get()
                 : collect();
+            $processedProgramIds = $periode
+                ? ElectreResult::query()
+                    ->whereHas('calculation', fn ($query) => $query
+                        ->where('tahun_perencanaan_id', $periode->id)
+                        ->selesai()
+                        ->regular())
+                    ->pluck('usulan_pembangunan_id')
+                    ->unique()
+                : collect();
             $histories = ElectreCalculation::with('calculator')
                 ->tahun($tahun)
                 ->latest('calculated_at')
@@ -60,6 +70,7 @@ class ElectreCalculationController extends Controller
                 'tahunList' => TahunPerencanaan::orderByDesc('tahun')->pluck('tahun'),
                 'programs' => $programs,
                 'totalKriteriaAktif' => $kriteriaIds->count(),
+                'processedProgramIds' => $processedProgramIds,
             ]);
         } catch (Throwable $e) {
             Log::error('[ELECTRE_INDEX_FAILED] Gagal memuat halaman proses ELECTRE', $this->logContext($e, $request));
@@ -75,7 +86,7 @@ class ElectreCalculationController extends Controller
         $validated = $request->validate([
             'tahun' => ['required', 'integer', 'min:2020', 'max:2100'],
             'mode' => ['nullable', 'in:reguler,pengujian'],
-            'program_ids' => ['required_if:mode,pengujian', 'nullable', 'array', 'min:2'],
+            'program_ids' => ['required', 'array', 'min:2'],
             'program_ids.*' => ['integer', 'distinct', 'exists:usulan_pembangunans,id'],
         ]);
 
@@ -84,7 +95,8 @@ class ElectreCalculationController extends Controller
             $calculation = $electreService->calculate(
                 (int) $validated['tahun'],
                 $request->user()->id,
-                $isTesting ? ($validated['program_ids'] ?? []) : null,
+                $validated['program_ids'],
+                $isTesting,
             );
 
             return redirect()

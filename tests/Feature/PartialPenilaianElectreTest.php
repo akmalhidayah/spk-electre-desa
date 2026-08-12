@@ -12,7 +12,6 @@ use App\Models\TahunPerencanaan;
 use App\Models\User;
 use App\Models\UsulanPembangunan;
 use App\Services\BudgetAllocationService;
-use App\Services\ElectreService;
 use App\Services\RecalculationFlagService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -78,10 +77,21 @@ class PartialPenilaianElectreTest extends TestCase
 
         $reloadResponse->assertSee('value="4" selected', false);
 
-        $regularCalculation = app(ElectreService::class)->calculate(2026, $admin->id);
+        $regularResponse = $this->actingAs($admin)->post(route('admin.electre.process'), [
+            'tahun' => 2026,
+            'mode' => 'reguler',
+            'program_ids' => $programs->take(4)->pluck('id')->all(),
+        ]);
+        $regularCalculation = ElectreCalculation::periode($periode->id)->regular()->latest('id')->firstOrFail();
+        $regularResponse->assertRedirect(route('admin.electre.show', $regularCalculation));
         $this->assertSame(4, $regularCalculation->total_alternatif);
         $this->assertTrue($regularCalculation->isRegular());
         $this->assertSame(['A1', 'A4', 'A2', 'A3'], $regularCalculation->results()->ranking()->pluck('kode_alternatif')->all());
+        $this->actingAs($admin)
+            ->get(route('admin.electre.index', ['tahun' => 2026]))
+            ->assertOk()
+            ->assertSee('Sudah Diproses')
+            ->assertSee('Belum ada minimal dua program baru yang siap diproses.');
 
         $testResponse = $this->actingAs($admin)->post(route('admin.electre.process'), [
             'tahun' => 2026,
