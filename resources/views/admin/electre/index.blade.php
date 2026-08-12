@@ -52,44 +52,11 @@
                     <input type="hidden" name="mode" value="reguler">
                     <button type="submit" class="btn btn-primary btn-auto" @disabled(! $isReady)>
                         <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01" /></svg>
-                        Proses ELECTRE Reguler / Resmi
+                        Proses ELECTRE
                     </button>
                 </form>
             </div>
-            <p class="panel-text">Menghitung seluruh alternatif yang memenuhi syarat. Hasil ini akan ditampilkan kepada Kepala Desa.</p>
-        </section>
-
-        <section class="panel">
-            <div class="matrix-toolbar">
-                <div>
-                    <h2 class="panel-title">Pengujian Alternatif Terpilih</h2>
-                    <p class="panel-text">Hanya untuk pengujian perhitungan. Hasil tidak ditampilkan kepada Kepala Desa.</p>
-                </div>
-            </div>
-            <form method="POST" action="{{ route('admin.electre.process') }}" class="form-stack js-confirm" data-title="Jalankan Pengujian ELECTRE?" data-text="Rumus ELECTRE yang sama akan dijalankan hanya untuk program terpilih." data-icon="question" data-confirm-button="Ya, Uji">
-                @csrf
-                <input type="hidden" name="tahun" value="{{ $tahun }}">
-                <input type="hidden" name="mode" value="pengujian">
-                <div class="table-wrap">
-                    <table class="data-table">
-                        <thead><tr><th>Pilih</th><th>Kode</th><th>Program dan Lokasi</th><th>Kelengkapan</th></tr></thead>
-                        <tbody>
-                            @forelse ($programs as $program)
-                                @php($programLengkap = (int) $program->total_nilai_aktif === $totalKriteriaAktif)
-                                <tr>
-                                    <td><input type="checkbox" name="program_ids[]" value="{{ $program->id }}" @disabled(! $programLengkap)></td>
-                                    <td><span class="code-pill">A{{ $loop->iteration }}</span></td>
-                                    <td><strong>{{ $program->nama_kegiatan }}</strong><small>{{ $program->lokasi_label }}</small></td>
-                                    <td><span class="badge {{ $programLengkap ? 'badge-success' : 'badge-warning' }}">{{ $programLengkap ? 'Lengkap' : $program->total_nilai_aktif.'/'.$totalKriteriaAktif }}</span></td>
-                                </tr>
-                            @empty
-                                <tr><td colspan="4">Belum ada program diterima pada periode ini.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                <button type="submit" class="btn btn-secondary btn-auto">Proses Pengujian Terpilih</button>
-            </form>
+            <p class="panel-text">Menghitung seluruh program yang memenuhi syarat untuk menghasilkan rekomendasi prioritas pembangunan.</p>
         </section>
 
         @if (! $isReady)
