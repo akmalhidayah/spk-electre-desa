@@ -56,7 +56,7 @@
                     </button>
                 </form>
             </div>
-            <p class="panel-text">Menghitung seluruh program yang memenuhi syarat untuk menghasilkan rekomendasi prioritas pembangunan.</p>
+            <p class="panel-text">Menghitung seluruh program yang penilaiannya sudah lengkap. Program yang belum lengkap akan dilewati.</p>
         </section>
 
         @if (! $isReady)
@@ -167,7 +167,7 @@
                 <div class="empty-state">
                     <div class="empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01" /></svg></div>
                     <h3>Belum ada histori perhitungan</h3>
-                    <p>Jalankan proses ELECTRE setelah penilaian alternatif lengkap.</p>
+                    <p>Jalankan proses ELECTRE setelah minimal dua program memiliki penilaian lengkap.</p>
                 </div>
             @endif
         </section>

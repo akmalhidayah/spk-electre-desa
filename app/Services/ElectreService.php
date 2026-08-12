@@ -25,10 +25,10 @@ class ElectreService
                 $codes = $allPrograms->values()->mapWithKeys(fn (UsulanPembangunan $program, int $index) => [$program->id => 'A'.($index + 1)])->all();
                 $isTesting = $selectedProgramIds !== null;
                 $selectedIds = collect($selectedProgramIds)->map(fn ($id) => (int) $id)->unique();
+                $kriterias = $this->getActiveKriterias();
                 $dusuns = $isTesting
                     ? $allPrograms->whereIn('id', $selectedIds)->values()
-                    : $allPrograms;
-                $kriterias = $this->getActiveKriterias();
+                    : $this->completePrograms($periode->id, $allPrograms, $kriterias);
                 $this->validateInputs($periode, $dusuns, $kriterias, $isTesting, $allPrograms->count());
 
                 $decisionMatrix = $this->buildDecisionMatrix($tahun, $dusuns, $kriterias);
@@ -148,12 +148,30 @@ class ElectreService
         return Kriteria::aktif()->ordered()->get();
     }
 
+    private function completePrograms(int $periodeId, Collection $programs, Collection $kriterias): Collection
+    {
+        if ($kriterias->isEmpty()) {
+            return new Collection;
+        }
+
+        $completeProgramIds = PenilaianAlternatif::periode($periodeId)
+            ->whereIn('usulan_pembangunan_id', $programs->pluck('id'))
+            ->whereIn('kriteria_id', $kriterias->pluck('id'))
+            ->whereBetween('nilai', [PenilaianAlternatif::NILAI_MIN, PenilaianAlternatif::NILAI_MAX])
+            ->get(['usulan_pembangunan_id', 'kriteria_id'])
+            ->groupBy('usulan_pembangunan_id')
+            ->filter(fn ($items) => $items->pluck('kriteria_id')->unique()->count() === $kriterias->count())
+            ->keys();
+
+        return $programs->whereIn('id', $completeProgramIds)->values();
+    }
+
     private function validateInputs(TahunPerencanaan $periode, Collection $dusuns, Collection $kriterias, bool $isTesting, int $totalPrograms): void
     {
         if ($dusuns->count() < 2) {
             throw new RuntimeException($isTesting
                 ? 'Pilih minimal dua program untuk pengujian. Kode Error: ELECTRE_MINIMUM_TEST_PROGRAMS'
-                : 'Minimal harus terdapat dua program diterima. Kode Error: ELECTRE_NO_ACCEPTED_PROGRAM');
+                : 'Minimal dua program harus memiliki penilaian lengkap sebelum ELECTRE dapat diproses. Kode Error: ELECTRE_MINIMUM_COMPLETE_PROGRAMS');
         }
 
         if ($kriterias->isEmpty()) {
@@ -186,7 +204,7 @@ class ElectreService
                 throw new RuntimeException("Hanya program yang telah dinilai lengkap yang dapat diuji. {$completePrograms} dari {$dusuns->count()} program terpilih lengkap. Kode Error: ELECTRE_INCOMPLETE_TEST_ASSESSMENT");
             }
 
-            throw new RuntimeException("Penilaian program Tahun {$periode->tahun} belum lengkap. {$completePrograms} dari {$totalPrograms} program lengkap. Kode Error: ELECTRE_INCOMPLETE_ASSESSMENT");
+            throw new RuntimeException("Penilaian program yang akan diproses belum lengkap. {$completePrograms} dari {$dusuns->count()} program terpilih lengkap. Kode Error: ELECTRE_INCOMPLETE_ASSESSMENT");
         }
     }
 

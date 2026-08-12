@@ -232,8 +232,8 @@ class ElectreCalculationController extends Controller
             $reasons[] = 'Total bobot kriteria aktif harus 100%.';
         }
 
-        if ($totalPenilaianTerisi !== $totalPenilaianSeharusnya) {
-            $reasons[] = "Penilaian program Tahun {$tahun} belum lengkap. {$totalProgramLengkap} dari {$totalDusunAktif} program lengkap.";
+        if ($totalProgramLengkap < 2) {
+            $reasons[] = "Minimal dua program harus dinilai lengkap. Saat ini {$totalProgramLengkap} dari {$totalDusunAktif} program lengkap.";
         }
 
         return [

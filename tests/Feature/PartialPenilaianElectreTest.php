@@ -16,7 +16,6 @@ use App\Services\ElectreService;
 use App\Services\RecalculationFlagService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use RuntimeException;
 use Tests\TestCase;
 
 class PartialPenilaianElectreTest extends TestCase
@@ -79,12 +78,10 @@ class PartialPenilaianElectreTest extends TestCase
 
         $reloadResponse->assertSee('value="4" selected', false);
 
-        try {
-            app(ElectreService::class)->calculate(2026, $admin->id);
-            $this->fail('Perhitungan reguler seharusnya ditolak ketika penilaian belum lengkap.');
-        } catch (RuntimeException $exception) {
-            $this->assertStringContainsString('4 dari 64 program lengkap', $exception->getMessage());
-        }
+        $regularCalculation = app(ElectreService::class)->calculate(2026, $admin->id);
+        $this->assertSame(4, $regularCalculation->total_alternatif);
+        $this->assertTrue($regularCalculation->isRegular());
+        $this->assertSame(['A1', 'A4', 'A2', 'A3'], $regularCalculation->results()->ranking()->pluck('kode_alternatif')->all());
 
         $testResponse = $this->actingAs($admin)->post(route('admin.electre.process'), [
             'tahun' => 2026,
