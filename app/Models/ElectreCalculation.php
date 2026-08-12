@@ -21,6 +21,10 @@ class ElectreCalculation extends Model
 
     public const STATUS_DIBATALKAN = 'dibatalkan';
 
+    public const TYPE_REGULAR = 'REGULER';
+
+    public const TYPE_TESTING = 'PENGUJIAN';
+
     public const STATUSES = [
         self::STATUS_DRAFT,
         self::STATUS_SELESAI,
@@ -78,6 +82,31 @@ class ElectreCalculation extends Model
     public function scopeLatestVersion(Builder $query): Builder
     {
         return $query->where('is_latest', true);
+    }
+
+    public function scopeRegular(Builder $query): Builder
+    {
+        return $query->where('notes', 'like', 'JENIS_PERHITUNGAN='.self::TYPE_REGULAR.'%');
+    }
+
+    public function scopeTesting(Builder $query): Builder
+    {
+        return $query->where('notes', 'like', 'JENIS_PERHITUNGAN='.self::TYPE_TESTING.'%');
+    }
+
+    public function isRegular(): bool
+    {
+        return str_contains((string) $this->notes, 'JENIS_PERHITUNGAN='.self::TYPE_REGULAR);
+    }
+
+    public function isTesting(): bool
+    {
+        return str_contains((string) $this->notes, 'JENIS_PERHITUNGAN='.self::TYPE_TESTING);
+    }
+
+    public function isOfficialResult(): bool
+    {
+        return $this->status === self::STATUS_SELESAI && $this->isRegular();
     }
 
     public function calculator(): BelongsTo

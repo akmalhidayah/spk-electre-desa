@@ -6,7 +6,7 @@
 
 @section('content')
     @php
-        $isTesting = str_contains((string) $calculation->notes, 'JENIS_PERHITUNGAN=PENGUJIAN');
+        $isTesting = $calculation->isTesting();
         $matriksKeputusan = $details->get('matriks_keputusan')?->data ?? [];
         $normalisasi = $details->get('normalisasi')?->data ?? [];
         $pembobotan = $details->get('pembobotan')?->data ?? [];
@@ -25,7 +25,7 @@
 
         @if ($isTesting)
             <section class="alert alert-warning electre-status-alert">
-                <strong>Mode Pengujian Alternatif Terpilih</strong>
+                <strong>MODE PENGUJIAN — HASIL INI TIDAK DITAMPILKAN KEPADA KEPALA DESA.</strong>
                 <p>Tahun Perencanaan: {{ $calculation->tahun }} · Alternatif yang diuji: {{ $calculation->total_alternatif }} program.</p>
             </section>
         @endif

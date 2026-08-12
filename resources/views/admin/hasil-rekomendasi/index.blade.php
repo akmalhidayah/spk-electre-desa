@@ -74,7 +74,7 @@
                                 @endphp
                                 <tr>
                                     <td>{{ ($calculations->firstItem() ?? 0) + $loop->index }}</td>
-                                    <td><span class="code-pill">{{ $calculation->kode_perhitungan }}</span></td>
+                                    <td><span class="code-pill">{{ $calculation->kode_perhitungan }}</span><small><span class="badge {{ $calculation->isTesting() ? 'badge-warning' : 'badge-info' }}">{{ $calculation->isTesting() ? 'PENGUJIAN' : 'REGULER' }}</span></small></td>
                                     <td>{{ $calculation->tahun }}</td>
                                     <td><strong>{{ $displayTitle }}</strong></td>
                                     <td><span class="badge {{ $statusClass }}">{{ $statusLabel }}</span></td>
@@ -112,7 +112,8 @@
                         <article class="mobile-card">
                             <div class="mobile-card-head">
                                 <div>
-                                    <span class="code-pill">{{ $calculation->kode_perhitungan }}</span>
+                            <span class="code-pill">{{ $calculation->kode_perhitungan }}</span>
+                            <span class="badge {{ $calculation->isTesting() ? 'badge-warning' : 'badge-info' }}">{{ $calculation->isTesting() ? 'PENGUJIAN' : 'REGULER' }}</span>
                                     <h3>{{ $displayTitle }}</h3>
                                 </div>
                                 <span class="badge {{ $statusClass }}">{{ $statusLabel }}</span>

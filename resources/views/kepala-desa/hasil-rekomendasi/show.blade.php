@@ -17,6 +17,12 @@
     <div class="stack">
         <x-budget-summary :summary="$budgetSummary" />
         @if ($budgetSummary['pagu'] === null)<div class="alert alert-warning">Pagu anggaran pembangunan tahun ini belum diatur.</div>@endif
+        @if ($needsRecalculation)
+            <div class="alert alert-warning">
+                <strong>Perlu dihitung ulang.</strong>
+                Data perencanaan telah berubah. Hasil rekomendasi ini merupakan perhitungan sebelumnya dan perlu dihitung ulang sebelum penetapan keputusan baru. Menunggu Admin melakukan perhitungan ELECTRE terbaru.
+            </div>
+        @endif
         <section class="page-header-card">
             <div>
                 <h2>Rekomendasi Prioritas Pembangunan</h2>

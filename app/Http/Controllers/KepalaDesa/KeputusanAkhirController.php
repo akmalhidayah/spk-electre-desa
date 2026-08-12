@@ -297,6 +297,7 @@ class KeputusanAkhirController extends Controller
         abort_unless($request->user()?->isKepalaDesa(), 403);
 
         $pdfPath = null;
+        $calculationId = $keputusanAkhir->electre_calculation_id;
 
         try {
             DB::transaction(function () use ($keputusanAkhir, &$pdfPath): void {
@@ -322,6 +323,13 @@ class KeputusanAkhirController extends Controller
                 'keputusan_id' => $keputusanAkhir->id,
                 'calculation_id' => $keputusanAkhir->electre_calculation_id,
             ]);
+
+            $calculation = ElectreCalculation::find($calculationId);
+            if ($calculation?->isOfficialResult()) {
+                return redirect()
+                    ->route('kepala-desa.hasil-rekomendasi.show', $calculation)
+                    ->with('success', 'Keputusan berhasil dibatalkan. Program kembali ke hasil rekomendasi dan alokasi anggaran telah diperbarui.');
+            }
 
             return redirect()
                 ->route('kepala-desa.keputusan-akhir.index')

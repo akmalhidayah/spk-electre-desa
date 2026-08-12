@@ -12,6 +12,13 @@
     <div class="stack">
         <x-budget-summary :summary="$budgetSummary" />
         @if ($budgetSummary['pagu'] === null)<div class="alert alert-warning">Pagu anggaran pembangunan tahun ini belum diatur.</div>@endif
+        @if ($calculation->tahunPerencanaan?->perlu_hitung_ulang)
+            <div class="alert alert-warning">
+                <strong>Data telah berubah setelah perhitungan ini.</strong>
+                Jalankan ELECTRE kembali untuk menghasilkan rekomendasi terbaru.
+                <a href="{{ route('admin.electre.index', ['tahun' => $calculation->tahun]) }}" class="btn btn-sm btn-secondary">Proses ELECTRE</a>
+            </div>
+        @endif
         <section class="page-header-card">
             <div>
                 <h2>Detail Hasil Rekomendasi</h2>

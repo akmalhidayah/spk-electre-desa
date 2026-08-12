@@ -29,11 +29,20 @@ class HasilRekomendasiController extends Controller
         try {
             $selectedYear = $request->filled('tahun') ? $request->integer('tahun') : null;
             $summaryYear = $tahunAktifService->resolveYear($selectedYear);
-            $query = ElectreCalculation::with(['calculator', 'keputusanAkhir'])
+            $candidates = ElectreCalculation::query()
                 ->selesai()
-                ->latestVersion()
-                ->where('notes', 'like', 'JENIS_PERHITUNGAN=REGULER%')
-                ->when($selectedYear !== null, fn ($query) => $query->tahun($selectedYear))
+                ->regular()
+                ->when($selectedYear !== null, fn ($query) => $query->tahun($selectedYear));
+            $relevantIds = $candidates
+                ->orderByDesc('is_latest')
+                ->orderByDesc('versi')
+                ->orderByDesc('calculated_at')
+                ->orderByDesc('id')
+                ->get(['id', 'tahun_perencanaan_id'])
+                ->unique('tahun_perencanaan_id')
+                ->pluck('id');
+            $query = ElectreCalculation::with(['calculator', 'keputusanAkhir', 'tahunPerencanaan'])
+                ->whereIn('id', $relevantIds)
                 ->when($request->filled('q'), function ($query) use ($request): void {
                     $keyword = $request->string('q')->toString();
 
@@ -65,7 +74,7 @@ class HasilRekomendasiController extends Controller
     public function show(Request $request, ElectreCalculation $electreCalculation): View|RedirectResponse
     {
         try {
-            $this->ensureFinished($electreCalculation);
+            $this->ensureOfficialResult($electreCalculation);
 
             return view('kepala-desa.hasil-rekomendasi.show', $this->viewData($electreCalculation));
         } catch (HttpException $e) {
@@ -90,7 +99,7 @@ class HasilRekomendasiController extends Controller
                 return back()->with('error', "Hasil rekomendasi selesai untuk tahun {$tahun} belum tersedia.");
             }
 
-            $this->ensureFinished($electreCalculation);
+            $this->ensureOfficialResult($electreCalculation);
 
             $data = $this->viewData($electreCalculation);
             $data['pdfTitle'] = 'Laporan Keputusan Prioritas Pembangunan';
@@ -113,7 +122,7 @@ class HasilRekomendasiController extends Controller
     public function calculationPdf(Request $request, ElectreCalculation $electreCalculation, PejabatDesaService $pejabatDesaService)
     {
         try {
-            $this->ensureFinished($electreCalculation);
+            $this->ensureOfficialResult($electreCalculation);
 
             $data = $this->viewData($electreCalculation);
             $data['pdfTitle'] = 'Laporan Keputusan Prioritas Pembangunan';
@@ -136,7 +145,7 @@ class HasilRekomendasiController extends Controller
     public function dusunPdf(Request $request, ElectreCalculation $electreCalculation, Dusun $dusun, PejabatDesaService $pejabatDesaService)
     {
         try {
-            $this->ensureFinished($electreCalculation);
+            $this->ensureOfficialResult($electreCalculation);
 
             $usulans = $this->acceptedUsulansForDusun($electreCalculation, $dusun);
             $kepalaDusunName = $pejabatDesaService->kepalaDusunName($dusun) ?? $this->kepalaDusunForDusun($dusun)?->name;
@@ -163,15 +172,12 @@ class HasilRekomendasiController extends Controller
     {
         return ElectreCalculation::tahun($tahun)
             ->selesai()
-            ->latestVersion()
+            ->regular()
+            ->orderByDesc('is_latest')
+            ->orderByDesc('versi')
             ->latest('calculated_at')
             ->latest()
-            ->first()
-            ?? ElectreCalculation::tahun($tahun)
-                ->selesai()
-                ->latest('calculated_at')
-                ->latest()
-                ->first();
+            ->first();
     }
 
     private function acceptedUsulansForYear(int $tahun)
@@ -205,10 +211,10 @@ class HasilRekomendasiController extends Controller
             ->first();
     }
 
-    private function ensureFinished(ElectreCalculation $calculation): void
+    private function ensureOfficialResult(ElectreCalculation $calculation): void
     {
-        if ($calculation->status !== ElectreCalculation::STATUS_SELESAI) {
-            Log::warning('[KEPALA_DESA_HASIL_FORBIDDEN] Kepala desa mencoba mengakses hasil belum selesai', [
+        if (! $calculation->isOfficialResult()) {
+            Log::warning('[KEPALA_DESA_HASIL_FORBIDDEN] Kepala desa mencoba mengakses hasil non-reguler atau belum selesai', [
                 'calculation_id' => $calculation->id,
                 'kode_perhitungan' => $calculation->kode_perhitungan,
                 'status' => $calculation->status,
@@ -238,6 +244,7 @@ class HasilRekomendasiController extends Controller
             'details' => $details,
             'threshold' => $details->get('threshold')?->data ?? [],
             'aggregateDominance' => $details->get('aggregate_dominance')?->data ?? [],
+            'needsRecalculation' => (bool) $calculation->tahunPerencanaan?->perlu_hitung_ulang,
         ];
     }
 
@@ -247,9 +254,9 @@ class HasilRekomendasiController extends Controller
     private function stats(int $tahun): array
     {
         return [
-            'total' => ElectreCalculation::tahun($tahun)->selesai()->count(),
-            'terbaru' => ElectreCalculation::tahun($tahun)->selesai()->latestVersion()->latest('calculated_at')->latest()->first(),
-            'tahun_berjalan' => ElectreCalculation::tahun($tahun)->selesai()->count(),
+            'total' => ElectreCalculation::tahun($tahun)->selesai()->regular()->count(),
+            'terbaru' => ElectreCalculation::tahun($tahun)->selesai()->regular()->orderByDesc('is_latest')->latest('versi')->latest()->first(),
+            'tahun_berjalan' => ElectreCalculation::tahun($tahun)->selesai()->regular()->count(),
         ];
     }
 

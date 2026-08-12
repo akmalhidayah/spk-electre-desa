@@ -99,6 +99,6 @@ class BudgetAllocationService
         return $calculation->status === ElectreCalculation::STATUS_SELESAI
             && $calculation->is_latest
             && ! $calculation->tahunPerencanaan?->perlu_hitung_ulang
-            && str_contains((string) $calculation->notes, 'JENIS_PERHITUNGAN=REGULER');
+            && $calculation->isRegular();
     }
 }

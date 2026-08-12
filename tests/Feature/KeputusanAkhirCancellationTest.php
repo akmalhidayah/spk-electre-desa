@@ -46,11 +46,15 @@ class KeputusanAkhirCancellationTest extends TestCase
             ->delete(route('kepala-desa.keputusan-akhir.destroy', $decision));
 
         $response
-            ->assertRedirect(route('kepala-desa.keputusan-akhir.index'))
-            ->assertSessionHas('success', 'Keputusan berhasil dibatalkan. Alokasi anggaran telah diperbarui.');
+            ->assertRedirect(route('kepala-desa.hasil-rekomendasi.show', $calculation))
+            ->assertSessionHas('success', 'Keputusan berhasil dibatalkan. Program kembali ke hasil rekomendasi dan alokasi anggaran telah diperbarui.');
         $this->assertDatabaseMissing('keputusan_akhirs', ['id' => $decision->id]);
         $this->assertDatabaseMissing('keputusan_akhir_details', ['keputusan_akhir_id' => $decision->id]);
         $this->assertDatabaseHas('electre_calculations', ['id' => $calculation->id]);
+        $calculation->refresh();
+        $this->assertSame(ElectreCalculation::STATUS_SELESAI, $calculation->status);
+        $this->assertTrue($calculation->is_latest);
+        $this->assertTrue($calculation->isRegular());
         foreach ($programs as $program) {
             $this->assertDatabaseHas('electre_results', ['electre_calculation_id' => $calculation->id, 'usulan_pembangunan_id' => $program->id]);
         }
@@ -60,6 +64,13 @@ class KeputusanAkhirCancellationTest extends TestCase
         $this->assertSame(500000000.0, (float) $periode->pagu_anggaran);
         $this->assertSame(0.0, $after['total_ditetapkan']);
         $this->assertSame(500000000.0, $after['sisa_pagu']);
+
+        $this->actingAs($kepalaDesa)
+            ->get(route('kepala-desa.hasil-rekomendasi.show', $calculation))
+            ->assertOk()
+            ->assertSee($calculation->results()->first()->nama_program_snapshot)
+            ->assertSee('Tetapkan Keputusan Akhir')
+            ->assertDontSee('Hasil rekomendasi belum tersedia');
 
         $this->actingAs($kepalaDesa)
             ->get(route('kepala-desa.keputusan-akhir.pdf', $decision->id))
@@ -171,6 +182,65 @@ class KeputusanAkhirCancellationTest extends TestCase
             ->get(route('kepala-desa.hasil-rekomendasi.index', ['tahun' => 2026]))
             ->assertOk()
             ->assertDontSee($calculation->kode_perhitungan);
+    }
+
+    public function test_hasil_legacy_tanpa_flag_latest_tetap_tampil_tetapi_pengujian_tidak_pernah_tampil(): void
+    {
+        $kepalaDesa = User::factory()->kepalaDesa()->create();
+        $periode = TahunPerencanaan::factory()->create(['tahun' => 2026, 'is_active' => true]);
+        $legacyRegular = ElectreCalculation::factory()->create([
+            'tahun_perencanaan_id' => $periode->id,
+            'status' => ElectreCalculation::STATUS_SELESAI,
+            'versi' => 1,
+            'is_latest' => false,
+            'notes' => 'JENIS_PERHITUNGAN=REGULER; data legacy.',
+        ]);
+        $testing = ElectreCalculation::factory()->create([
+            'tahun_perencanaan_id' => $periode->id,
+            'status' => ElectreCalculation::STATUS_SELESAI,
+            'versi' => 2,
+            'is_latest' => true,
+            'notes' => 'JENIS_PERHITUNGAN=PENGUJIAN; tidak resmi.',
+        ]);
+
+        $this->actingAs($kepalaDesa)
+            ->get(route('kepala-desa.hasil-rekomendasi.index', ['tahun' => 2026]))
+            ->assertOk()
+            ->assertSee($legacyRegular->kode_perhitungan)
+            ->assertDontSee($testing->kode_perhitungan);
+        $this->actingAs($kepalaDesa)
+            ->get(route('kepala-desa.hasil-rekomendasi.show', $testing))
+            ->assertNotFound();
+    }
+
+    public function test_hasil_lama_tetap_terlihat_saat_perlu_hitung_ulang_tetapi_tidak_dapat_ditetapkan(): void
+    {
+        $kepalaDesa = User::factory()->kepalaDesa()->create();
+        $periode = TahunPerencanaan::factory()->create([
+            'tahun' => 2026,
+            'pagu_anggaran' => 1000000000,
+            'is_active' => true,
+            'perlu_hitung_ulang' => true,
+        ]);
+        [$decision, $calculation, $programs] = $this->createDecision($periode, $kepalaDesa, [700000000]);
+
+        $this->actingAs($kepalaDesa)
+            ->delete(route('kepala-desa.keputusan-akhir.destroy', $decision))
+            ->assertRedirect(route('kepala-desa.hasil-rekomendasi.show', $calculation));
+
+        $this->actingAs($kepalaDesa)
+            ->get(route('kepala-desa.hasil-rekomendasi.show', $calculation))
+            ->assertOk()
+            ->assertSee($calculation->results()->first()->nama_program_snapshot)
+            ->assertSee('Perlu dihitung ulang')
+            ->assertSee('Menunggu Admin melakukan perhitungan ELECTRE terbaru')
+            ->assertDontSee('Tetapkan Keputusan Akhir');
+        $admin = User::factory()->create();
+        $this->actingAs($admin)
+            ->get(route('admin.hasil-rekomendasi.show', $calculation))
+            ->assertOk()
+            ->assertSee('Data telah berubah setelah perhitungan ini')
+            ->assertSee('Proses ELECTRE');
     }
 
     /**

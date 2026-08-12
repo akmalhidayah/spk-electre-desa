@@ -52,17 +52,18 @@
                     <input type="hidden" name="mode" value="reguler">
                     <button type="submit" class="btn btn-primary btn-auto" @disabled(! $isReady)>
                         <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01" /></svg>
-                        Proses ELECTRE
+                        Proses ELECTRE Reguler / Resmi
                     </button>
                 </form>
             </div>
+            <p class="panel-text">Menghitung seluruh alternatif yang memenuhi syarat. Hasil ini akan ditampilkan kepada Kepala Desa.</p>
         </section>
 
         <section class="panel">
             <div class="matrix-toolbar">
                 <div>
                     <h2 class="panel-title">Pengujian Alternatif Terpilih</h2>
-                    <p class="panel-text">Pilih minimal dua program yang seluruh nilai kriterianya telah lengkap. Hasil hanya mewakili program yang dipilih.</p>
+                    <p class="panel-text">Hanya untuk pengujian perhitungan. Hasil tidak ditampilkan kepada Kepala Desa.</p>
                 </div>
             </div>
             <form method="POST" action="{{ route('admin.electre.process') }}" class="form-stack js-confirm" data-title="Jalankan Pengujian ELECTRE?" data-text="Rumus ELECTRE yang sama akan dijalankan hanya untuk program terpilih." data-icon="question" data-confirm-button="Ya, Uji">
@@ -135,7 +136,7 @@
                                     <td>{{ ($histories->firstItem() ?? 0) + $loop->index }}</td>
                                     <td><span class="code-pill">{{ $history->kode_perhitungan }}</span></td>
                                     <td>{{ $history->tahun }}</td>
-                                    <td><strong>{{ $history->judul ?? '-' }}</strong></td>
+                                    <td><strong>{{ $history->judul ?? '-' }}</strong><small><span class="badge {{ $history->isTesting() ? 'badge-warning' : 'badge-info' }}">{{ $history->isTesting() ? 'PENGUJIAN' : 'REGULER' }}</span></small></td>
                                     <td>{{ $history->total_alternatif }}</td>
                                     <td>{{ $history->total_kriteria }}</td>
                                     <td><span class="badge badge-success">{{ ucfirst($history->status) }}</span></td>
@@ -168,6 +169,7 @@
                                 <div>
                                     <span class="code-pill">{{ $history->kode_perhitungan }}</span>
                                     <h3>{{ $history->judul ?? 'Perhitungan ELECTRE' }}</h3>
+                                    <span class="badge {{ $history->isTesting() ? 'badge-warning' : 'badge-info' }}">{{ $history->isTesting() ? 'PENGUJIAN' : 'REGULER' }}</span>
                                 </div>
                                 <span class="badge badge-success">{{ ucfirst($history->status) }}</span>
                             </div>

@@ -64,8 +64,8 @@ class ElectreService
                     'calculated_by' => $userId,
                     'calculated_at' => now(),
                     'notes' => $isTesting
-                        ? 'JENIS_PERHITUNGAN=PENGUJIAN; hasil hanya mewakili alternatif terpilih.'
-                        : 'JENIS_PERHITUNGAN=REGULER; perhitungan mendukung kriteria benefit dan cost.',
+                        ? 'JENIS_PERHITUNGAN='.ElectreCalculation::TYPE_TESTING.'; hasil hanya mewakili alternatif terpilih.'
+                        : 'JENIS_PERHITUNGAN='.ElectreCalculation::TYPE_REGULAR.'; perhitungan mendukung kriteria benefit dan cost.',
                 ]);
 
                 foreach ($ranking as $item) {

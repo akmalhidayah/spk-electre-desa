@@ -155,7 +155,7 @@ class ElectreCalculationController extends Controller
                     $previousRegular = ElectreCalculation::query()
                         ->where('tahun_perencanaan_id', $periode->id)
                         ->where('status', ElectreCalculation::STATUS_SELESAI)
-                        ->where('notes', 'like', 'JENIS_PERHITUNGAN=REGULER%')
+                        ->regular()
                         ->orderByDesc('versi')
                         ->orderByDesc('id')
                         ->lockForUpdate()
