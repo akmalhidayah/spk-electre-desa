@@ -247,14 +247,14 @@ class KeputusanAkhirController extends Controller
         }
     }
 
-    public function show(Request $request, KeputusanAkhir $keputusanAkhir)
+    public function show(Request $request, KeputusanAkhir $keputusanAkhir, BudgetAllocationService $budgetService)
     {
         try {
             if ($request->boolean('pdf')) {
                 return redirect()->route('kepala-desa.keputusan-akhir.pdf', $keputusanAkhir);
             }
 
-            $data = $this->viewData($keputusanAkhir);
+            $data = $this->viewData($keputusanAkhir, $budgetService);
 
             return view('kepala-desa.keputusan-akhir.show', $data);
         } catch (Throwable $e) {
@@ -350,18 +350,21 @@ class KeputusanAkhirController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function viewData(KeputusanAkhir $keputusanAkhir): array
+    private function viewData(KeputusanAkhir $keputusanAkhir, BudgetAllocationService $budgetService): array
     {
         $keputusanAkhir->load(['calculation.results.program.dusun', 'calculation.results.program.dusunsTerkait', 'calculation.calculator', 'calculation.tahunPerencanaan', 'program.dusun', 'program.dusunsTerkait', 'details.program', 'penetap', 'result']);
 
         $selectedDetails = $keputusanAkhir->details->isNotEmpty()
             ? $keputusanAkhir->details
             : collect([$keputusanAkhir->result])->filter();
+        $currentBudget = $keputusanAkhir->calculation && $keputusanAkhir->tahunPerencanaan
+            ? $budgetService->simulate($keputusanAkhir->tahunPerencanaan, $keputusanAkhir->calculation)
+            : null;
 
         return [
             'keputusan' => $keputusanAkhir,
             'calculation' => $keputusanAkhir->calculation,
-            'results' => $keputusanAkhir->calculation?->results?->sortBy('ranking')->values() ?? collect(),
+            'results' => $currentBudget['results'] ?? collect(),
             'selectedDetails' => $selectedDetails,
             'budgetSummary' => data_get($keputusanAkhir->snapshot_data, 'budget_summary', []),
             'cancellationSummary' => [

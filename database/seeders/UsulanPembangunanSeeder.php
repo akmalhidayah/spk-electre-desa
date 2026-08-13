@@ -35,6 +35,10 @@ class UsulanPembangunanSeeder extends Seeder
             'RKP Desa Barambang',
             'Daftar Usulan Rencana Kerja Pemerintah Desa Tahun Anggaran 2023',
         );
+        UsulanPembangunan::where('tahun_perencanaan_id', $periodes[2026]->id)
+            ->where('sumber_dokumen', 'RKP/RPJM Desa Barambang')
+            ->whereNull('nomor_dokumen')
+            ->delete();
         $this->seedItems(
             $this->items2026(),
             $periodes[2026],
@@ -66,13 +70,14 @@ class UsulanPembangunanSeeder extends Seeder
             };
 
             $usulan = UsulanPembangunan::updateOrCreate(
-                [
+                array_filter([
                     'tahun_perencanaan_id' => $periode->id,
+                    'nomor_dokumen' => $item['nomor'] ?? null,
                     'nama_kegiatan' => $item['nama'],
                     'lokasi_kegiatan' => $item['lokasi'],
                     'prakiraan_volume' => $item['volume'],
                     'satuan' => $item['satuan'],
-                ],
+                ], fn ($value, $key) => $key !== 'nomor_dokumen' || $value !== null, ARRAY_FILTER_USE_BOTH),
                 [
                     'dusun_id' => $tipeUsulan === UsulanPembangunan::TIPE_UMUM_DESA ? null : $relatedDusunIds[0],
                     'user_id' => $admin?->id,
@@ -84,7 +89,8 @@ class UsulanPembangunanSeeder extends Seeder
                     'sumber_usulan' => $sumberUsulan,
                     'kategori_kegiatan' => $item['kategori'],
                     'jumlah_usulan' => 1,
-                    'estimasi_anggaran' => null,
+                    'nomor_dokumen' => $item['nomor'] ?? null,
+                    'estimasi_anggaran' => $item['anggaran'] ?? null,
                     'deskripsi' => "Usulan {$item['nama']} pada {$item['lokasi']}.",
                     'sumber_dokumen' => $sumberDokumen,
                     'status_usulan' => UsulanPembangunan::STATUS_DITERIMA,
@@ -222,6 +228,90 @@ class UsulanPembangunanSeeder extends Seeder
      * @return array<int, array<string, mixed>>
      */
     private function items2026(): array
+    {
+        $fixedItems = [
+            [1, 'Pembangunan Duwikker', 'Dusun Batu Massompo', 200000000],
+            [2, 'Tambahan Sarana Air Bersih Pipa', 'Dusun Batu Massompo', 200000000],
+            [3, 'Pengembangan Ternak Sapi', 'Dusun Batu Massompo', 200000000],
+            [4, 'Pembangunan Lanjutan Wisata Batu Barae', 'Dusun Batu Massompo', 200000000],
+            [5, 'Pelatihan Keagamaan', 'Dusun Bonto Manai', 2000000],
+            [6, 'Pengadaan Bibit Pala', 'Dusun Batu Massompo', 5000000],
+            [7, 'Pelatihan Kelompok Tani Pengaplikasian Pupuk dan Penanggulangan Hama Tanaman Padi', 'Dusun Bonto Manai', 4000000],
+            [8, 'Rehabilitasi Gedung PAUD Bunda Apareng', 'Dusun Batu Massompo', 30000000],
+            [9, 'Pembangunan Pagar PAUD Bunda Hapareng', 'Dusun Bonto Manai', 11000000],
+            [10, 'Pengadaan APE Prosotan PAUD Bunda Apareng', 'Dusun Bonto Manai', 7000000],
+            [11, 'Pembangunan Bendungan dan Saluran Irigasi', 'Dusun Bonto Manai', 150000000],
+            [12, 'Rehabilitasi Masjid Haqqul Yakin', 'Dusun Bonto Manai', 10000000],
+            [13, 'Pengadaan Sound System', 'Dusun Balang', 12000000],
+            [14, 'Pembangunan Rabat Beton Jln. Poros Bonto Lasuna', 'Dusun Bonto Manai', 130000000],
+            [15, 'Pelatihan Kerajinan Tangan Pemuda Tani Balang', 'Dusun Balang', 5000000],
+            [16, 'Penambahan Insentif Koordinator dan Kader Posyandu', 'Dusun Balang', 200000000],
+            [17, 'Pembangunan Jembatan Besi', 'Dusun Balang', 100000000],
+            [18, 'Pembangunan Kantor LPM', 'Dusun Balang', 75000000],
+            [19, 'Pelatihan Kerajinan Tangan Pemuda Tani', 'Dusun Balang', 5000000],
+            [20, 'Penambahan/Rehabilitasi Sarana dan Prasarana Air Bersih/Pipa', 'Dusun Balang', 180000000],
+            [21, 'Pengadaan Lampu Jalan', 'Dusun Batu Massompo', 8000000],
+            [22, 'Pemeliharaan Jalan Poros Pasar', 'Dusun Katute', 62000000],
+            [23, 'Pembangunan Talud Masjid Darul Aftar', 'Dusun Katute', 25000000],
+            [24, 'Pengecoran Jln. Bintino', 'Dusun Katute', 130000000],
+            [25, 'Pembangunan Pagar Sekolah PAUD', 'Dusun Katute', 35000000],
+            [26, 'Pembangunan Irigasi Batu Barae', 'Dusun Katute', 70000000],
+            [27, 'Pengadaan Lampu Jalan', 'Dusun Katute', 8000000],
+            [28, 'Pengadaan Bak Sampah', 'Dusun Katute', 5000000],
+            [29, 'Pengecoran Lanjutan Jln. Poros Pasar', 'Dusun Katute', 160000000],
+            [30, 'Rehabilitasi Pagar Kantor Desa', 'Desa Barambang', 65000000],
+            [31, 'Pengadaan Jaringan Internet', 'Desa Barambang', 5000000],
+            [32, 'Penambahan Insentif RT/RW', 'Desa Barambang', 2000000],
+            [33, 'Operasional LPM', 'Desa Barambang', 2000000],
+            [34, 'Pengadaan Bak Sampah', 'Desa Barambang', 5000000],
+            [35, 'Pengecoran Lanjutan Jln. Poros Pasar', 'Dusun Katute', 160000000],
+            [36, 'Pengadaan Lampu Jalan', 'Dusun Katute', 8000000],
+            [37, 'Pengadaan Alat Penanam Jagung', 'Desa Barambang', 1000000],
+            [38, 'Pemberantasan Buta Aksara Al-Quran', 'Desa Barambang', 3000000],
+            [39, 'Peningkatan SDM Kelompok Tani', 'Desa Barambang', 60000000],
+            [40, 'Pengadaan/Pemanfaatan Limbah Kotoran Sapi Menjadi Biogas', 'Desa Barambang', 6000000],
+            [41, 'Pembinaan Guru Mengaji', 'Desa Barambang', 2000000],
+            [42, 'Pengadaan Perlengkapan Pakaian Adat', 'Desa Barambang', 4000000],
+            [43, 'Pengadaan Induk Sapi Pasang Breeding', 'Desa Barambang', 45000000],
+            [44, 'Biaya Kegiatan MTQ/STQ Tingkat Desa/Kecamatan/Kabupaten', 'Desa Barambang', 2000000],
+            [45, 'Insentif Pengurus Adat', 'Desa Barambang', 160000000],
+            [46, 'Pengadaan Perlengkapan Rumah Adat', 'Desa Barambang', 3500000],
+            [47, 'Pengadaan Kendaraan Dinas Kepala Desa dan Perangkat Desa', 'Desa Barambang', 45000000],
+            [48, 'Pelatihan Keterampilan/Kerajinan PKK Pokja 1, 2, 3, 4', 'Desa Barambang', 3000000],
+            [49, 'Pemberdayaan Bidang Seni, Agama, Olahraga, Budaya dan Pendidikan', 'Desa Barambang', 4500000],
+            [50, 'Pengadaan Bibit IB Sapi Pasang', 'Desa Barambang', 100350000],
+            [51, 'Pengadaan Pencacah Rumput', 'Desa Barambang', 1500000],
+            [52, 'Penyertaan Modal BUMDes', 'Desa Barambang', 200000000],
+            [53, 'Pembinaan Majelis Taklim', 'Desa Barambang', 1500000],
+            [54, 'Perlengkapan Sarana dan Prasarana Olahraga', 'Desa Barambang', 3000000],
+            [55, 'Pelatihan Pembuatan Pestisida', 'Desa Barambang', 8000000],
+            [56, 'Pembentukan Guru Mengaji Lanjutan', 'Desa Barambang', 2000000],
+            [57, 'Pengadaan Timbangan Berat Badan Digital untuk Posyandu', 'Desa Barambang', 4000000],
+            [58, 'Pembangunan Lanjutan Jembatan Liu Sirie', 'Dusun Bonto Manai', 100000000],
+            [59, 'Rehabilitasi Posyandu', 'Dusun Katute', 25000000],
+            [60, 'Pembangunan Los Pasar', 'Dusun Balang', 65000000],
+            [61, 'Pengadaan Perlengkapan Sarana Jenazah', 'Desa Barambang', 5000000],
+            [62, 'Pelatihan Pembuatan Pupuk Organik dan PGPR', 'Desa Barambang', 5000000],
+            [63, 'Pengadaan Pakaian Seragam Koordinator dan Kader Posyandu', 'Desa Barambang', 4500000],
+            [64, 'Pembangunan Talud Pasar', 'Dusun Katute', 11000000],
+        ];
+
+        $catalogue = collect($this->catalogue2026())->keyBy('nama');
+
+        return array_map(function (array $fixed) use ($catalogue): array {
+            [$nomor, $nama, $lokasi, $anggaran] = $fixed;
+            $metadata = $catalogue->get($nama, $this->r($nama, $lokasi, null, null, null, null, null, null));
+
+            return array_merge($metadata, compact('nomor', 'nama', 'lokasi', 'anggaran'));
+        }, $fixedItems);
+    }
+
+    /**
+     * Metadata volume, penerima manfaat, dan kategori dari dokumen perencanaan sebelumnya.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function catalogue2026(): array
     {
         return [
             $this->r('Pembangunan Talud Pasar', 'RT.001/RW.001 Dusun Katute', 50, 'Meter', 500, 400, 0, 'Infrastruktur/Talud'),
