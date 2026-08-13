@@ -55,6 +55,7 @@
                     </span>
                     <select id="dusun_id" name="dusun_id" class="form-control">
                         <option value="">Semua</option>
+                        <option value="{{ \App\Models\UsulanPembangunan::TIPE_UMUM_DESA }}" @selected($filters['dusun_id'] === \App\Models\UsulanPembangunan::TIPE_UMUM_DESA)>Desa Barambang</option>
                         @foreach ($dusuns as $dusun)
                             <option value="{{ $dusun->id }}" @selected($filters['dusun_id'] == $dusun->id)>{{ $dusun->nama_dusun }}</option>
                         @endforeach
@@ -92,7 +93,7 @@
                                 <tr>
                                     <td>{{ ($usulans->firstItem() ?? 0) + $loop->index }}</td>
                                     <td><strong>{{ $usulan->tahun }}</strong></td>
-                                    <td>{{ $usulan->dusun?->nama_dusun ?? '-' }}</td>
+                                    <td>{{ $usulan->lokasi_label }}</td>
                                     <td>
                                         <strong>{{ $usulan->nama_kegiatan }}</strong>
                                         @if ($usulan->deskripsi)
@@ -130,7 +131,7 @@
                                 </div>
                             </div>
                             <dl class="meta-grid">
-                                <div><dt>Dusun</dt><dd>{{ $usulan->dusun?->nama_dusun ?? '-' }}</dd></div>
+                                <div><dt>Lokasi</dt><dd>{{ $usulan->lokasi_label }}</dd></div>
                                 <div><dt>Jumlah Anggaran</dt><dd>{{ $usulan->estimasi_anggaran !== null ? 'Rp '.number_format((float) $usulan->estimasi_anggaran, 0, ',', '.') : '-' }}</dd></div>
                             </dl>
                             <div class="mobile-actions icon-actions">

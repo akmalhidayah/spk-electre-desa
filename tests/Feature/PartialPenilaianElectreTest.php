@@ -35,10 +35,10 @@ class PartialPenilaianElectreTest extends TestCase
         $this->assertSame(3350850000.0, (float) $programs->sum('estimasi_anggaran'));
         $this->assertSame(range(1, 64), $programs->pluck('nomor_dokumen')->map(fn ($number) => (int) $number)->all());
         $this->assertSame([
-            'Pembangunan Duwikker',
-            'Tambahan Sarana Air Bersih Pipa',
-            'Pengembangan Ternak Sapi',
-            'Pembangunan Lanjutan Wisata Batu Barae',
+            'Pembangunan Talud Pasar',
+            'Pembangunan Los Pasar',
+            'Rehabilitasi Posyandu',
+            'Pembangunan Lanjutan Jembatan Liu Sirie',
         ], $programs->take(4)->pluck('nama_kegiatan')->all());
 
         $programs->take(4)->each(fn (UsulanPembangunan $program, int $index) => $program->forceFill([
@@ -76,7 +76,7 @@ class PartialPenilaianElectreTest extends TestCase
             ->get(route('admin.penilaian.index', ['tahun' => 2026]))
             ->assertOk()
             ->assertSee('4 dari 64 program telah dinilai lengkap.')
-            ->assertSee('Pembangunan Duwikker');
+            ->assertSee('Pembangunan Talud Pasar');
 
         $reloadResponse->assertSee('value="4" selected', false);
 
@@ -130,7 +130,7 @@ class PartialPenilaianElectreTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.hasil-rekomendasi.show', $calculation))
             ->assertOk()
-            ->assertSee('Pembangunan Duwikker')
+            ->assertSee('Pembangunan Talud Pasar')
             ->assertSee('Rp 10.000.000');
 
         $kepalaDesa = User::where('email', 'kepaladesa@example.com')->firstOrFail();
@@ -145,12 +145,12 @@ class PartialPenilaianElectreTest extends TestCase
         $this->actingAs($kepalaDesa)
             ->get(route('kepala-desa.dashboard', ['tahun' => 2026]))
             ->assertOk()
-            ->assertSee('Pembangunan Duwikker');
+            ->assertSee('Pembangunan Talud Pasar');
 
         $this->actingAs($kepalaDesa)
             ->get(route('kepala-desa.hasil-rekomendasi.show', $calculation))
             ->assertOk()
-            ->assertSee('Pembangunan Duwikker')
+            ->assertSee('Pembangunan Talud Pasar')
             ->assertSee('Rp 10.000.000');
 
         $this->actingAs($kepalaDesa)
@@ -219,7 +219,7 @@ class PartialPenilaianElectreTest extends TestCase
 
         $programs->first()->update(['nama_kegiatan' => 'Nama Live Berubah', 'estimasi_anggaran' => 99000000]);
         $periode->forceFill(['pagu_anggaran' => 200000000])->save();
-        $this->assertSame('Pembangunan Duwikker', data_get($keputusan->fresh()->snapshot_data, 'selected_results.0.nama_program'));
+        $this->assertSame('Pembangunan Talud Pasar', data_get($keputusan->fresh()->snapshot_data, 'selected_results.0.nama_program'));
         $this->assertSame(10000000.0, (float) data_get($keputusan->snapshot_data, 'selected_results.0.estimasi_anggaran'));
         $this->actingAs($kepalaDesa)->get(route('kepala-desa.keputusan-akhir.pdf', $keputusan))
             ->assertOk()

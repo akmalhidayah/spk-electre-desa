@@ -296,6 +296,30 @@ class UsulanPembangunanSeeder extends Seeder
             [64, 'Pembangunan Talud Pasar', 'Dusun Katute', 11000000],
         ];
 
+        // Pertahankan empat alternatif awal yang sudah digunakan pada alur
+        // penilaian dan ELECTRE sebelumnya. Data lainnya tetap mengikuti PDF.
+        $prioritasAlternatif = [
+            'Pembangunan Talud Pasar' => 'RT.001/RW.001 Dusun Katute',
+            'Pembangunan Los Pasar' => 'RT.001/RW.001 Dusun Katute',
+            'Rehabilitasi Posyandu' => 'RT.002 Dusun Balang',
+            'Pembangunan Lanjutan Jembatan Liu Sirie' => 'RT.001 Bonto Manai',
+        ];
+
+        $fixedItems = collect($fixedItems)
+            ->sortBy(function (array $item) use ($prioritasAlternatif): int {
+                $urutan = array_search($item[1], array_keys($prioritasAlternatif), true);
+
+                return $urutan === false ? 4 + $item[0] : $urutan;
+            })
+            ->values()
+            ->map(function (array $item, int $index) use ($prioritasAlternatif): array {
+                $item[0] = $index + 1;
+                $item[2] = $prioritasAlternatif[$item[1]] ?? $item[2];
+
+                return $item;
+            })
+            ->all();
+
         $catalogue = collect($this->catalogue2026())->keyBy('nama');
 
         return array_map(function (array $fixed) use ($catalogue): array {

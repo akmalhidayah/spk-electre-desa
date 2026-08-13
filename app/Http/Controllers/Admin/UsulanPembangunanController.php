@@ -39,6 +39,12 @@ class UsulanPembangunanController extends Controller
                     });
                 })
                 ->when($request->filled('dusun_id'), function ($query) use ($request): void {
+                    if ($request->string('dusun_id')->toString() === UsulanPembangunan::TIPE_UMUM_DESA) {
+                        $query->where('tipe_usulan', UsulanPembangunan::TIPE_UMUM_DESA);
+
+                        return;
+                    }
+
                     $query->where(function ($query) use ($request): void {
                         $dusunId = $request->integer('dusun_id');
 
