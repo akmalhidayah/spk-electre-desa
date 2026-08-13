@@ -50,8 +50,18 @@
                 <input type="hidden" name="tahun" value="{{ $tahun }}">
                 <input type="hidden" name="mode" value="reguler">
                 <div class="matrix-toolbar">
-                    <div><h2 class="panel-title">Pilih Program yang Diproses</h2><p class="panel-text">Program yang belum lengkap tidak dapat dicentang.</p></div>
-                    <button type="submit" class="btn btn-primary btn-auto" @disabled(! $canProcessSelection)>Proses ELECTRE</button>
+                    <div>
+                        <h2 class="panel-title">Pilih Program yang Diproses</h2>
+                        <p class="panel-text">Program yang belum lengkap tidak dapat dicentang.</p>
+                        @if ($eligibleProgramCount > 0)
+                            <label class="checkbox-row select-all-row">
+                                <input type="checkbox" data-electre-select-all>
+                                <span>Centang semua yang siap dipilih</span>
+                            </label>
+                            <small data-electre-selection-count>0 dari {{ $eligibleProgramCount }} program dipilih</small>
+                        @endif
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-auto" data-electre-submit disabled>Proses ELECTRE</button>
                 </div>
                 <div class="table-wrap">
                     <table class="data-table">
@@ -61,9 +71,18 @@
                                 @php($programLengkap = (int) $program->total_nilai_aktif === $totalKriteriaAktif)
                                 @php($sudahDiproses = $processedProgramIds->contains($program->id))
                                 <tr>
-                                    <td><input type="checkbox" name="program_ids[]" value="{{ $program->id }}" @checked($programLengkap && ! $sudahDiproses && in_array($program->id, old('program_ids', []))) @disabled(! $programLengkap || $sudahDiproses)></td>
+                                    <td><input type="checkbox" name="program_ids[]" value="{{ $program->id }}" data-electre-program @checked($programLengkap && ! $sudahDiproses && in_array($program->id, old('program_ids', []))) @disabled(! $programLengkap || $sudahDiproses)></td>
                                     <td><span class="code-pill">A{{ $loop->iteration }}</span></td>
-                                    <td><strong>{{ $program->nama_kegiatan }}</strong><small>{{ $program->lokasi_label }}</small></td>
+                                    <td>
+                                        <strong>{{ $program->nama_kegiatan }}</strong>
+                                        <small>{{ $program->lokasi_label }}</small>
+                                        <small>
+                                            Anggaran:
+                                            {{ $program->estimasi_anggaran !== null
+                                                ? 'Rp '.number_format((float) $program->estimasi_anggaran, 0, ',', '.')
+                                                : 'Belum diisi' }}
+                                        </small>
+                                    </td>
                                     <td>
                                         @if ($sudahDiproses)
                                             <span class="badge badge-info">Sudah Diproses</span>
@@ -80,6 +99,66 @@
                 </div>
             </form>
         </section>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var form = document.querySelector('form[action="{{ route('admin.electre.process') }}"]');
+
+                if (!form) return;
+
+                var storageKey = 'electre-program-selection-{{ $tahun }}';
+                var checkboxes = Array.prototype.slice.call(form.querySelectorAll('[data-electre-program]:not(:disabled)'));
+                var selectAll = form.querySelector('[data-electre-select-all]');
+                var counter = form.querySelector('[data-electre-selection-count]');
+                var submit = form.querySelector('[data-electre-submit]');
+                var oldSelection = @json(array_map('intval', old('program_ids', [])));
+
+                function readSelection() {
+                    try {
+                        var saved = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
+                        return Array.isArray(saved) ? saved.map(String) : [];
+                    } catch (error) {
+                        return [];
+                    }
+                }
+
+                var selectedIds = new Set((oldSelection.length ? oldSelection : readSelection()).map(String));
+
+                checkboxes.forEach(function (checkbox) {
+                    if (selectedIds.has(checkbox.value)) checkbox.checked = true;
+                });
+
+                function updateSelection() {
+                    checkboxes.forEach(function (checkbox) {
+                        if (checkbox.checked) selectedIds.add(checkbox.value);
+                        else selectedIds.delete(checkbox.value);
+                    });
+
+                    sessionStorage.setItem(storageKey, JSON.stringify(Array.from(selectedIds)));
+
+                    var selectedCount = checkboxes.filter(function (checkbox) { return checkbox.checked; }).length;
+                    if (selectAll) {
+                        selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+                        selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+                    }
+                    if (counter) counter.textContent = selectedCount + ' dari ' + checkboxes.length + ' program dipilih';
+                    if (submit) submit.disabled = selectedCount < 2;
+                }
+
+                if (selectAll) {
+                    selectAll.addEventListener('change', function () {
+                        checkboxes.forEach(function (checkbox) { checkbox.checked = selectAll.checked; });
+                        updateSelection();
+                    });
+                }
+
+                checkboxes.forEach(function (checkbox) {
+                    checkbox.addEventListener('change', updateSelection);
+                });
+
+                updateSelection();
+            });
+        </script>
 
         @if (! $isReady)
             <section class="alert alert-warning electre-status-alert">
