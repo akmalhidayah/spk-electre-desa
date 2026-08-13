@@ -45,7 +45,7 @@
         </section>
 
         <section class="panel">
-            <form method="POST" action="{{ route('admin.electre.process') }}" class="stack js-confirm" data-title="Proses ELECTRE?" data-text="Hanya program yang dicentang akan dihitung." data-icon="question" data-confirm-button="Ya, Proses">
+            <form id="electre-process-form" method="POST" action="{{ route('admin.electre.process') }}" class="stack js-confirm" data-title="Proses ELECTRE?" data-text="Hanya program yang dicentang akan dihitung." data-icon="question" data-confirm-button="Ya, Proses">
                 @csrf
                 <input type="hidden" name="tahun" value="{{ $tahun }}">
                 <input type="hidden" name="mode" value="reguler">
@@ -55,7 +55,19 @@
                 </div>
                 <div class="table-wrap">
                     <table class="data-table">
-                        <thead><tr><th>Pilih</th><th>Kode</th><th>Program dan Lokasi</th><th>Kelengkapan</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>
+                                    <label title="Centang semua program yang siap dipilih">
+                                        <input type="checkbox" onchange="document.querySelectorAll('#electre-process-form input[name=\'program_ids[]\']:not(:disabled)').forEach((checkbox) => checkbox.checked = this.checked)">
+                                        Pilih
+                                    </label>
+                                </th>
+                                <th>Kode</th>
+                                <th>Program dan Lokasi</th>
+                                <th>Kelengkapan</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @forelse ($programs as $program)
                                 @php($programLengkap = (int) $program->total_nilai_aktif === $totalKriteriaAktif)
