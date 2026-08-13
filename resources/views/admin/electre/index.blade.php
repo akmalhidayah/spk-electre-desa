@@ -101,63 +101,74 @@
         </section>
 
         <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                var form = document.querySelector('form[action="{{ route('admin.electre.process') }}"]');
+            (function () {
+                function initializeElectreSelection() {
+                    var form = document.querySelector('form[action="{{ route('admin.electre.process') }}"]');
 
-                if (!form) return;
+                    if (!form || form.dataset.selectionInitialized === 'true') return;
+                    form.dataset.selectionInitialized = 'true';
 
-                var storageKey = 'electre-program-selection-{{ $tahun }}';
-                var checkboxes = Array.prototype.slice.call(form.querySelectorAll('[data-electre-program]:not(:disabled)'));
-                var selectAll = form.querySelector('[data-electre-select-all]');
-                var counter = form.querySelector('[data-electre-selection-count]');
-                var submit = form.querySelector('[data-electre-submit]');
-                var oldSelection = @json(array_map('intval', old('program_ids', [])));
+                    var storageKey = 'electre-program-selection-{{ $tahun }}';
+                    var checkboxes = Array.prototype.slice.call(form.querySelectorAll('[data-electre-program]:not(:disabled)'));
+                    var selectAll = form.querySelector('[data-electre-select-all]');
+                    var counter = form.querySelector('[data-electre-selection-count]');
+                    var submit = form.querySelector('[data-electre-submit]');
+                    var oldSelection = @json(array_map('intval', old('program_ids', [])));
 
-                function readSelection() {
-                    try {
-                        var saved = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
-                        return Array.isArray(saved) ? saved.map(String) : [];
-                    } catch (error) {
-                        return [];
+                    function readSelection() {
+                        try {
+                            var saved = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
+                            return Array.isArray(saved) ? saved.map(String) : [];
+                        } catch (error) {
+                            return [];
+                        }
                     }
-                }
 
-                var selectedIds = new Set((oldSelection.length ? oldSelection : readSelection()).map(String));
+                    var selectedIds = new Set((oldSelection.length ? oldSelection : readSelection()).map(String));
 
-                checkboxes.forEach(function (checkbox) {
-                    if (selectedIds.has(checkbox.value)) checkbox.checked = true;
-                });
-
-                function updateSelection() {
                     checkboxes.forEach(function (checkbox) {
-                        if (checkbox.checked) selectedIds.add(checkbox.value);
-                        else selectedIds.delete(checkbox.value);
+                        if (selectedIds.has(checkbox.value)) checkbox.checked = true;
                     });
 
-                    sessionStorage.setItem(storageKey, JSON.stringify(Array.from(selectedIds)));
+                    function updateSelection() {
+                        checkboxes.forEach(function (checkbox) {
+                            if (checkbox.checked) selectedIds.add(checkbox.value);
+                            else selectedIds.delete(checkbox.value);
+                        });
 
-                    var selectedCount = checkboxes.filter(function (checkbox) { return checkbox.checked; }).length;
-                    if (selectAll) {
-                        selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
-                        selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+                        sessionStorage.setItem(storageKey, JSON.stringify(Array.from(selectedIds)));
+
+                        var selectedCount = checkboxes.filter(function (checkbox) { return checkbox.checked; }).length;
+                        if (selectAll) {
+                            selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+                            selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+                        }
+                        if (counter) counter.textContent = selectedCount + ' dari ' + checkboxes.length + ' program dipilih';
+                        if (submit) submit.disabled = selectedCount < 2;
                     }
-                    if (counter) counter.textContent = selectedCount + ' dari ' + checkboxes.length + ' program dipilih';
-                    if (submit) submit.disabled = selectedCount < 2;
-                }
 
-                if (selectAll) {
-                    selectAll.addEventListener('change', function () {
-                        checkboxes.forEach(function (checkbox) { checkbox.checked = selectAll.checked; });
-                        updateSelection();
+                    if (selectAll) {
+                        selectAll.addEventListener('click', function () {
+                            checkboxes.forEach(function (checkbox) { checkbox.checked = selectAll.checked; });
+                            updateSelection();
+                        });
+                    }
+
+                    checkboxes.forEach(function (checkbox) {
+                        checkbox.addEventListener('change', updateSelection);
                     });
+
+                    updateSelection();
                 }
 
-                checkboxes.forEach(function (checkbox) {
-                    checkbox.addEventListener('change', updateSelection);
-                });
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initializeElectreSelection);
+                } else {
+                    initializeElectreSelection();
+                }
 
-                updateSelection();
-            });
+                window.addEventListener('pageshow', initializeElectreSelection);
+            })();
         </script>
 
         @if (! $isReady)
